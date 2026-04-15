@@ -1,0 +1,16 @@
+{
+  "name": "Konforme",
+  "short_name": "Konforme",
+  "description": "Accessibilité web RGAA & WCAG automatisée par IA",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#0a0e1a",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
