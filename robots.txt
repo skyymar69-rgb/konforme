@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://www.konforme.fr/sitemap.xml
+Sitemap: https://konforme.kayzen-lyon.fr/sitemap.xml
