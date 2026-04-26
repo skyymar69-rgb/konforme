@@ -51,6 +51,31 @@ html { scrollbar-color: #3b82f6 #131a2c; scrollbar-width: thin; }
 }
 @media (prefers-reduced-motion: reduce) { #kf-fab { transition: none; } }
 
+/* When the SPA header button is mounted, hide the FAB on desktop */
+@media (min-width: 768px) {
+  #kf-fab.kf-has-header-btn { display: none; }
+}
+
+/* === Header button injected into the SPA <nav> ============== */
+#kf-header-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin-left: 12px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+  color: #fff;
+  font: 600 13px/1 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: 0.01em;
+  border: 0; cursor: pointer; text-decoration: none;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+  transition: transform 150ms ease, box-shadow 150ms ease;
+  vertical-align: middle;
+}
+#kf-header-btn:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(37,99,235,0.45); }
+#kf-header-btn svg { display: inline-block; }
+@media (max-width: 540px) { #kf-header-btn span { display: none; } #kf-header-btn { padding: 8px; } }
+@media (prefers-reduced-motion: reduce) { #kf-header-btn { transition: none; } }
+
 /* === Backdrop + drawer ====================================== */
 #kf-drawer-backdrop {
   position: fixed; inset: 0; background: rgba(10, 14, 26, 0.7);

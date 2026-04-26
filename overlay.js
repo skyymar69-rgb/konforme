@@ -107,5 +107,42 @@
     fab.addEventListener('click', open);
     backdrop.addEventListener('click', close);
     drawer.querySelector('#kf-drawer-close').addEventListener('click', close);
+
+    // ---- Inject "Carte de contact" button into the SPA header ------------
+    // The SPA renders client-side; wait for its <nav> or <header> to appear.
+    var injected = false;
+    function tryInjectHeader() {
+      if (injected) return true;
+      var root = document.getElementById('root');
+      if (!root) return false;
+      var host =
+        root.querySelector('header nav') ||
+        root.querySelector('header') ||
+        root.querySelector('nav');
+      if (!host) return false;
+      var btn = html(
+        '<button id="kf-header-btn" type="button" aria-haspopup="dialog" aria-controls="kf-drawer" aria-label="Ouvrir la carte de contact (vCard et QR codes)">' +
+          '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+            '<rect x="3" y="4" width="18" height="16" rx="2"/>' +
+            '<path d="M7 8h6M7 12h10M7 16h7"/>' +
+          '</svg>' +
+          '<span>Contact</span>' +
+        '</button>'
+      );
+      btn.addEventListener('click', open);
+      host.appendChild(btn);
+      injected = true;
+      // FAB now redundant on this layout: hide on >= 768px
+      fab.classList.add('kf-has-header-btn');
+      return true;
+    }
+    if (!tryInjectHeader()) {
+      var obs = new MutationObserver(function () {
+        if (tryInjectHeader()) obs.disconnect();
+      });
+      obs.observe(document.getElementById('root') || document.body, { childList: true, subtree: true });
+      // safety: stop observing after 30s
+      setTimeout(function () { obs.disconnect(); }, 30000);
+    }
   });
 })();
