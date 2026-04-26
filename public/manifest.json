@@ -1,0 +1,63 @@
+{
+  "name": "Konforme — Accessibilité web RGAA & WCAG",
+  "short_name": "Konforme",
+  "description": "Plateforme SaaS d'accessibilité web RGAA 4.1 & WCAG 2.2 automatisée par IA. Audit, corrections et déclaration légale.",
+  "lang": "fr-FR",
+  "dir": "ltr",
+  "scope": "/",
+  "start_url": "/?source=pwa",
+  "id": "konforme.kayzen-lyon.fr",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#0a0e1a",
+  "theme_color": "#2563eb",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/apple-touch-icon.svg", "sizes": "180x180", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/apple-touch-icon.svg", "sizes": "180x180", "type": "image/svg+xml", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Lancer un scan",
+      "short_name": "Scan",
+      "description": "Démarrer un nouvel audit d'accessibilité",
+      "url": "/dashboard/scan?source=pwa-shortcut",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Carte de contact",
+      "short_name": "Contact",
+      "description": "vCard et QR codes KAYZEN",
+      "url": "/carte-contact.html",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Tableau de bord",
+      "short_name": "Dashboard",
+      "url": "/dashboard?source=pwa-shortcut",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.svg",
+      "sizes": "1200x630",
+      "type": "image/svg+xml",
+      "form_factor": "wide",
+      "label": "Konforme — Plateforme d'accessibilité web automatisée"
+    }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "protocol_handlers": [],
+  "share_target": {
+    "action": "/dashboard/scan",
+    "method": "GET",
+    "params": {
+      "url": "url",
+      "title": "title"
+    }
+  }
+}
