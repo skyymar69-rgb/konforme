@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="fr">
+  <id>https://konforme.kayzen-lyon.fr/blog</id>
+  <title>Konforme — Blog accessibilité web</title>
+  <subtitle>Articles d'expertise RGAA 4.1, WCAG 2.2, EAA 2025 par KAYZEN SASU</subtitle>
+  <link href="https://konforme.kayzen-lyon.fr/blog.atom" rel="self" type="application/atom+xml"/>
+  <link href="https://konforme.kayzen-lyon.fr/blog" rel="alternate" type="text/html"/>
+  <updated>2026-04-26T00:00:00Z</updated>
+  <author>
+    <name>KAYZEN SASU — Konforme</name>
+    <email>contact@kayzen-lyon.fr</email>
+    <uri>https://konforme.kayzen-lyon.fr</uri>
+  </author>
+  <rights>© 2026 KAYZEN SASU — Tous droits réservés.</rights>
+  <generator uri="https://konforme.kayzen-lyon.fr">Konforme Static</generator>
+  <icon>https://konforme.kayzen-lyon.fr/favicon.svg</icon>
+  <logo>https://konforme.kayzen-lyon.fr/og-image.svg</logo>
+
+  <entry>
+    <id>https://konforme.kayzen-lyon.fr/blog/european-accessibility-act-2025</id>
+    <title>European Accessibility Act 2025 : ce que la loi impose vraiment</title>
+    <link href="https://konforme.kayzen-lyon.fr/blog/european-accessibility-act-2025"/>
+    <updated>2026-04-15T00:00:00Z</updated>
+    <summary>L'EAA est entré en vigueur en juin 2025. Quelles entreprises sont concernées, quelles sanctions, et comment se mettre en conformité.</summary>
+    <category term="EAA"/><category term="Conformité"/>
+  </entry>
+
+  <entry>
+    <id>https://konforme.kayzen-lyon.fr/blog/rgaa-vs-wcag</id>
+    <title>RGAA 4.1 vs WCAG 2.2 : quelles différences pour vos sites ?</title>
+    <link href="https://konforme.kayzen-lyon.fr/blog/rgaa-vs-wcag"/>
+    <updated>2026-04-15T00:00:00Z</updated>
+    <summary>Comparatif des deux référentiels : niveaux, méthodologies, applicabilité légale en France.</summary>
+    <category term="RGAA"/><category term="WCAG"/>
+  </entry>
+
+  <entry>
+    <id>https://konforme.kayzen-lyon.fr/blog/overlays-accessibilite-fausse-bonne-idee</id>
+    <title>Les overlays d'accessibilité : pourquoi c'est une fausse bonne idée</title>
+    <link href="https://konforme.kayzen-lyon.fr/blog/overlays-accessibilite-fausse-bonne-idee"/>
+    <updated>2026-04-15T00:00:00Z</updated>
+    <summary>Pourquoi les widgets d'accessibilité ne mettent pas votre site en conformité — et exposent à des poursuites.</summary>
+    <category term="Pratiques"/>
+  </entry>
+
+  <entry>
+    <id>https://konforme.kayzen-lyon.fr/blog/ia-corrections-accessibilite</id>
+    <title>L'IA peut-elle vraiment corriger l'accessibilité de votre code ?</title>
+    <link href="https://konforme.kayzen-lyon.fr/blog/ia-corrections-accessibilite"/>
+    <updated>2026-04-15T00:00:00Z</updated>
+    <summary>Comment Konforme génère des corrections de code prêtes à merger, et ce qui reste à valider humainement.</summary>
+    <category term="IA"/>
+  </entry>
+
+  <entry>
+    <id>https://konforme.kayzen-lyon.fr/blog/erreurs-accessibilite-ecommerce</id>
+    <title>Top 10 des erreurs d'accessibilité sur les sites e-commerce</title>
+    <link href="https://konforme.kayzen-lyon.fr/blog/erreurs-accessibilite-ecommerce"/>
+    <updated>2026-04-15T00:00:00Z</updated>
+    <summary>Les fautes les plus fréquentes (tunnel d'achat, fiches produit, formulaires) et comment les corriger.</summary>
+    <category term="E-commerce"/>
+  </entry>
+
+  <entry>
+    <id>https://konforme.kayzen-lyon.fr/blog/declaration-accessibilite-guide</id>
+    <title>Déclaration d'accessibilité : guide pratique 2026</title>
+    <link href="https://konforme.kayzen-lyon.fr/blog/declaration-accessibilite-guide"/>
+    <updated>2026-04-15T00:00:00Z</updated>
+    <summary>Modèle officiel RGAA, mentions obligatoires, taux de conformité, dérogations et plan pluriannuel.</summary>
+    <category term="Légal"/>
+  </entry>
+
+  <entry>
+    <id>https://konforme.kayzen-lyon.fr/blog/wcag-2-2-nouveaux-criteres</id>
+    <title>WCAG 2.2 : les 9 nouveaux critères à connaître</title>
+    <link href="https://konforme.kayzen-lyon.fr/blog/wcag-2-2-nouveaux-criteres"/>
+    <updated>2026-04-15T00:00:00Z</updated>
+    <summary>Tour d'horizon des nouvelles règles ajoutées en 2023 et désormais reprises dans le RGAA 4.1.</summary>
+    <category term="WCAG"/>
+  </entry>
+
+  <entry>
+    <id>https://konforme.kayzen-lyon.fr/blog/accessibilite-cicd-github-actions</id>
+    <title>Intégrer un test d'accessibilité dans GitHub Actions</title>
+    <link href="https://konforme.kayzen-lyon.fr/blog/accessibilite-cicd-github-actions"/>
+    <updated>2026-04-15T00:00:00Z</updated>
+    <summary>Configurer un job CI qui bloque les régressions a11y sur chaque pull request.</summary>
+    <category term="DevOps"/>
+  </entry>
+
+  <entry>
+    <id>https://konforme.kayzen-lyon.fr/blog/tests-lecteurs-ecran-guide-developpeurs</id>
+    <title>Tester avec un lecteur d'écran : guide pour développeurs</title>
+    <link href="https://konforme.kayzen-lyon.fr/blog/tests-lecteurs-ecran-guide-developpeurs"/>
+    <updated>2026-04-15T00:00:00Z</updated>
+    <summary>NVDA, VoiceOver, JAWS : raccourcis essentiels et erreurs fréquentes à valider.</summary>
+    <category term="Développement"/>
+  </entry>
+
+  <entry>
+    <id>https://konforme.kayzen-lyon.fr/blog/conformite-eaa-saas-checklist</id>
+    <title>Checklist EAA pour éditeurs SaaS</title>
+    <link href="https://konforme.kayzen-lyon.fr/blog/conformite-eaa-saas-checklist"/>
+    <updated>2026-04-15T00:00:00Z</updated>
+    <summary>30 points concrets à valider avant le contrôle pour les services BtoB et BtoC en Europe.</summary>
+    <category term="EAA"/><category term="SaaS"/>
+  </entry>
+
+  <entry>
+    <id>https://konforme.kayzen-lyon.fr/blog/cout-audit-rgaa-automatisation</id>
+    <title>Coût d'un audit RGAA : manuel vs automatisé</title>
+    <link href="https://konforme.kayzen-lyon.fr/blog/cout-audit-rgaa-automatisation"/>
+    <updated>2026-04-15T00:00:00Z</updated>
+    <summary>Comparatif chiffré entre audit cabinet, scan automatisé et approche hybride.</summary>
+    <category term="Budget"/>
+  </entry>
+
+  <entry>
+    <id>https://konforme.kayzen-lyon.fr/blog/rgaa-13-thematiques-explication</id>
+    <title>Les 13 thématiques RGAA expliquées simplement</title>
+    <link href="https://konforme.kayzen-lyon.fr/blog/rgaa-13-thematiques-explication"/>
+    <updated>2026-04-15T00:00:00Z</updated>
+    <summary>De « Images » à « Consultation », vue d'ensemble des 13 catégories qui structurent le référentiel.</summary>
+    <category term="RGAA"/>
+  </entry>
+</feed>
