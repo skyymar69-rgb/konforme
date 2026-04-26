@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Politique de gestion des cookies — Konforme</title>
+<meta name="description" content="Politique cookies du site Konforme : finalités, durées, traceurs déposés, gestion du consentement et procédure de retrait." />
+<link rel="canonical" href="https://konforme.kayzen-lyon.fr/legal/cookies" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<meta name="theme-color" content="#2563eb" />
+<meta name="robots" content="index, follow" />
+<link rel="stylesheet" href="/legal/_styles.css" />
+<style>
+  .pref { display: grid; gap: 12px; margin: 16px 0 24px; }
+  .pref-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 14px 16px; border-radius: 12px; gap: 16px;
+  }
+  .pref-row .meta { flex: 1; }
+  .pref-row strong { display: block; }
+  .pref-row span { color: var(--text-muted); font-size: 0.9rem; }
+  .switch { position: relative; display: inline-block; width: 46px; height: 26px; flex-shrink: 0; }
+  .switch input { position: absolute; opacity: 0; pointer-events: none; }
+  .switch .slider {
+    position: absolute; inset: 0; background: #2a3654; border-radius: 999px;
+    transition: background-color 200ms ease; cursor: pointer;
+  }
+  .switch .slider::before {
+    content: ""; position: absolute; height: 20px; width: 20px; left: 3px; top: 3px;
+    background: #fff; border-radius: 50%; transition: transform 200ms ease;
+  }
+  .switch input:checked + .slider { background: var(--primary); }
+  .switch input:checked + .slider::before { transform: translateX(20px); }
+  .switch input:disabled + .slider { opacity: 0.6; cursor: not-allowed; }
+  .switch input:focus-visible + .slider { outline: 3px solid var(--focus); outline-offset: 3px; }
+  @media (prefers-reduced-motion: reduce) { .switch .slider, .switch .slider::before { transition: none; } }
+  .actions-bar { display: flex; gap: 10px; flex-wrap: wrap; }
+  .actions-bar button {
+    padding: 11px 16px; border-radius: 10px; font-weight: 600; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  }
+  .actions-bar button.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .actions-bar button:hover { filter: brightness(1.1); }
+  .status { color: var(--text-muted); font-size: 0.9rem; margin-top: 10px; min-height: 1.4em; }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Aller au contenu principal</a>
+<header class="site"><a class="brand" href="/" aria-label="Accueil Konforme"><span class="brand-mark" aria-hidden="true"></span><span>Konforme</span></a></header>
+
+<main id="main">
+  <p class="page-meta">Dernière mise à jour : 26 avril 2026</p>
+  <h1>Politique de gestion des cookies</h1>
+
+  <p>Cette page décrit la politique de KAYZEN SASU concernant l'utilisation de cookies et autres traceurs sur le site <a href="https://konforme.kayzen-lyon.fr">konforme.kayzen-lyon.fr</a>, conformément à l'article 82 de la loi « Informatique et Libertés » (transposant la directive ePrivacy 2002/58/CE) et aux <a href="https://www.cnil.fr/fr/cookies-et-autres-traceurs/regles/cookies-solutions-pour-les-outils-de-mesure-daudience" rel="noopener">recommandations de la CNIL</a>.</p>
+
+  <h2 id="qu-est-ce">1. Qu'est-ce qu'un cookie ?</h2>
+  <p>Un cookie est un petit fichier texte déposé par votre navigateur sur votre terminal lorsque vous consultez un site. Il permet, notamment, d'identifier votre session, de mémoriser vos préférences et — selon les cas — de mesurer l'audience.</p>
+
+  <h2 id="categories">2. Catégories de traceurs utilisés</h2>
+  <table>
+    <thead><tr><th>Catégorie</th><th>Finalité</th><th>Durée max.</th><th>Consentement</th></tr></thead>
+    <tbody>
+      <tr><td>Strictement nécessaires</td><td>Session, sécurité (CSRF), équilibrage de charge</td><td>Session</td><td>Non requis</td></tr>
+      <tr><td>Préférences</td><td>Choix de cookies, langue, thème</td><td>13 mois</td><td>Non requis (préférence utilisateur)</td></tr>
+      <tr><td>Mesure d'audience</td><td>Statistiques anonymisées (Plausible, sans cookie tiers)</td><td>—</td><td>Non requis (exemption CNIL)</td></tr>
+      <tr><td>Marketing / tiers</td><td>Aucun à ce jour</td><td>—</td><td>Consentement explicite si activé</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="duree">3. Durée de conservation</h2>
+  <p>La durée de vie de chaque cookie n'excède pas <strong>13 mois</strong> conformément aux recommandations de la CNIL (délibération n° 2020-091).</p>
+
+  <h2 id="gerer">4. Gérer vos préférences</h2>
+  <p>Vous pouvez à tout moment modifier vos préférences ci-dessous. Vos choix sont conservés localement (cookie de préférences valable 13 mois).</p>
+
+  <form class="pref" id="prefs" aria-labelledby="prefs-h">
+    <h2 id="prefs-h" class="visually-hidden" style="position:absolute;left:-9999px">Préférences cookies</h2>
+
+    <div class="pref-row">
+      <div class="meta">
+        <strong>Cookies strictement nécessaires</strong>
+        <span>Indispensables au fonctionnement du Service (session, sécurité). Ne peuvent être désactivés.</span>
+      </div>
+      <label class="switch" aria-label="Cookies nécessaires (toujours actifs)">
+        <input type="checkbox" checked disabled />
+        <span class="slider" aria-hidden="true"></span>
+      </label>
+    </div>
+
+    <div class="pref-row">
+      <div class="meta">
+        <strong>Mesure d'audience anonymisée</strong>
+        <span>Statistiques agrégées sans cookie tiers ni identifiant personnel.</span>
+      </div>
+      <label class="switch" aria-label="Activer la mesure d'audience">
+        <input type="checkbox" name="analytics" />
+        <span class="slider" aria-hidden="true"></span>
+      </label>
+    </div>
+
+    <div class="pref-row">
+      <div class="meta">
+        <strong>Marketing / réseaux sociaux</strong>
+        <span>Aucun traceur de cette catégorie n'est actuellement déposé.</span>
+      </div>
+      <label class="switch" aria-label="Activer les cookies marketing">
+        <input type="checkbox" name="marketing" />
+        <span class="slider" aria-hidden="true"></span>
+      </label>
+    </div>
+
+    <div class="actions-bar">
+      <button type="button" id="accept-all" class="primary">Tout accepter</button>
+      <button type="button" id="refuse-all">Tout refuser</button>
+      <button type="submit" id="save">Enregistrer mes choix</button>
+    </div>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+  </form>
+
+  <h2 id="navigateur">5. Désactivation côté navigateur</h2>
+  <p>Vous pouvez également configurer votre navigateur pour bloquer ou supprimer les cookies :</p>
+  <ul>
+    <li><a href="https://support.mozilla.org/fr/kb/protection-renforcee-contre-pistage-firefox-ordinateur" rel="noopener">Firefox</a></li>
+    <li><a href="https://support.google.com/chrome/answer/95647" rel="noopener">Chrome</a></li>
+    <li><a href="https://support.microsoft.com/fr-fr/microsoft-edge/supprimer-les-cookies-dans-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09" rel="noopener">Edge</a></li>
+    <li><a href="https://support.apple.com/fr-fr/guide/safari/sfri11471/mac" rel="noopener">Safari</a></li>
+  </ul>
+  <p>Le refus de certains cookies peut affecter le bon fonctionnement du Service.</p>
+
+  <h2 id="contact">6. Contact</h2>
+  <p>Pour toute question : <a href="mailto:dpo@kayzen-lyon.fr">dpo@kayzen-lyon.fr</a>.</p>
+</main>
+
+<footer class="legal" role="contentinfo">
+  <nav aria-label="Pages légales">
+    <a href="/legal/mentions-legales.html">Mentions légales</a>
+    <a href="/legal/cgu.html">CGU</a>
+    <a href="/legal/cgv.html">CGV</a>
+    <a href="/legal/confidentialite.html">Confidentialité</a>
+    <a href="/legal/rgpd.html">RGPD</a>
+    <a href="/legal/cookies.html" aria-current="page">Cookies</a>
+    <a href="/carte-contact.html">Carte de contact</a>
+  </nav>
+  <p class="credit">Fièrement réalisé par <a href="https://internet.kayzen-lyon.fr" rel="noopener">Kayzen Web</a> — © 2026 KAYZEN SASU.</p>
+</footer>
+
+<script>
+(function(){
+  var KEY = 'konforme.cookie-consent.v1';
+  var form = document.getElementById('prefs');
+  var status = document.getElementById('status');
+  var inputs = { analytics: form.elements['analytics'], marketing: form.elements['marketing'] };
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (!raw) return;
+      var v = JSON.parse(raw);
+      inputs.analytics.checked = !!v.analytics;
+      inputs.marketing.checked = !!v.marketing;
+      status.textContent = 'Vos préférences enregistrées le ' + new Date(v.ts).toLocaleString('fr-FR') + '.';
+    } catch (_) {}
+  }
+  function save(consent) {
+    try {
+      localStorage.setItem(KEY, JSON.stringify({
+        analytics: !!consent.analytics,
+        marketing: !!consent.marketing,
+        ts: Date.now()
+      }));
+      status.textContent = 'Préférences enregistrées. Vous pouvez les modifier à tout moment.';
+    } catch (_) {
+      status.textContent = "Impossible d'enregistrer vos préférences (stockage local désactivé).";
+    }
+  }
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    save({ analytics: inputs.analytics.checked, marketing: inputs.marketing.checked });
+  });
+  document.getElementById('accept-all').addEventListener('click', function(){
+    inputs.analytics.checked = true; inputs.marketing.checked = true;
+    save({ analytics: true, marketing: true });
+  });
+  document.getElementById('refuse-all').addEventListener('click', function(){
+    inputs.analytics.checked = false; inputs.marketing.checked = false;
+    save({ analytics: false, marketing: false });
+  });
+  load();
+})();
+</script>
+</body>
+</html>

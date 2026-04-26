@@ -178,5 +178,34 @@
 
   <body>
     <div id="root"></div>
+
+    <!-- Bandeau cookies (CNIL ePrivacy art. 82) — n'affecte pas le bundle React -->
+    <div id="kf-cookie-banner" hidden role="dialog" aria-labelledby="kf-cb-title" aria-describedby="kf-cb-desc"
+         style="position:fixed;left:16px;right:16px;bottom:16px;z-index:9999;max-width:560px;margin:0 auto;background:#131a2c;color:#f1f5fb;border:1px solid #2a3654;border-radius:14px;padding:18px 20px;box-shadow:0 18px 48px rgba(0,0,0,0.45);font:14px/1.5 ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+      <h2 id="kf-cb-title" style="margin:0 0 6px;font-size:1rem">Vos préférences cookies</h2>
+      <p id="kf-cb-desc" style="margin:0 0 12px;color:#a3b0c9">
+        Konforme utilise uniquement des cookies strictement nécessaires et, avec votre accord, une mesure d'audience anonymisée.
+        <a href="/legal/cookies.html" style="color:#3b82f6;text-decoration:underline">En savoir plus</a>.
+      </p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button id="kf-cb-accept" type="button"
+                style="flex:1;min-width:120px;padding:10px 14px;border-radius:10px;border:0;background:#2563eb;color:#fff;font-weight:600;cursor:pointer">Tout accepter</button>
+        <button id="kf-cb-refuse" type="button"
+                style="flex:1;min-width:120px;padding:10px 14px;border-radius:10px;border:1px solid #2a3654;background:transparent;color:#f1f5fb;font-weight:600;cursor:pointer">Tout refuser</button>
+        <a id="kf-cb-prefs" href="/legal/cookies.html"
+           style="flex:1;min-width:120px;padding:10px 14px;border-radius:10px;border:1px solid #2a3654;background:transparent;color:#f1f5fb;font-weight:600;text-align:center;text-decoration:none">Personnaliser</a>
+      </div>
+    </div>
+    <script>
+      (function(){
+        var KEY='konforme.cookie-consent.v1';
+        var el=document.getElementById('kf-cookie-banner');
+        function set(v){try{localStorage.setItem(KEY,JSON.stringify({analytics:!!v.analytics,marketing:!!v.marketing,ts:Date.now()}))}catch(_){}el.hidden=true}
+        try{if(localStorage.getItem(KEY))return}catch(_){return}
+        el.hidden=false;
+        document.getElementById('kf-cb-accept').addEventListener('click',function(){set({analytics:true,marketing:true})});
+        document.getElementById('kf-cb-refuse').addEventListener('click',function(){set({analytics:false,marketing:false})});
+      })();
+    </script>
   </body>
 </html>
