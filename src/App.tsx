@@ -1,50 +1,81 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { PublicLayout } from '@/components/layout/PublicLayout'
-import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { Landing } from '@/pages/Landing'
-import { Login } from '@/pages/Login'
-import { AuthCallback } from '@/pages/AuthCallback'
-import { DashboardHome } from '@/pages/DashboardHome'
-import { DashboardStub } from '@/pages/DashboardStub'
+
+// Code-splitting par route : seul l'accueil est chargé immédiatement.
+const DashboardLayout = lazy(() =>
+  import('@/components/layout/DashboardLayout').then((m) => ({ default: m.DashboardLayout })),
+)
+const Login = lazy(() => import('@/pages/Login').then((m) => ({ default: m.Login })))
+const AuthCallback = lazy(() => import('@/pages/AuthCallback').then((m) => ({ default: m.AuthCallback })))
+const DashboardHome = lazy(() => import('@/pages/DashboardHome').then((m) => ({ default: m.DashboardHome })))
+const Sites = lazy(() => import('@/pages/dashboard/Sites').then((m) => ({ default: m.Sites })))
+const Scans = lazy(() => import('@/pages/dashboard/Scans').then((m) => ({ default: m.Scans })))
+const ScanDetail = lazy(() => import('@/pages/dashboard/ScanDetail').then((m) => ({ default: m.ScanDetail })))
+const Declarations = lazy(() => import('@/pages/dashboard/Declarations').then((m) => ({ default: m.Declarations })))
+const Settings = lazy(() => import('@/pages/dashboard/Settings').then((m) => ({ default: m.Settings })))
+const Blog = lazy(() => import('@/pages/Blog').then((m) => ({ default: m.Blog })))
+const BlogPost = lazy(() => import('@/pages/BlogPost').then((m) => ({ default: m.BlogPost })))
+const Rgaa = lazy(() => import('@/pages/Rgaa').then((m) => ({ default: m.Rgaa })))
+const About = lazy(() => import('@/pages/About').then((m) => ({ default: m.About })))
+const Contact = lazy(() => import('@/pages/Contact').then((m) => ({ default: m.Contact })))
+const LegalPage = lazy(() => import('@/pages/LegalPage').then((m) => ({ default: m.LegalPage })))
+const Accessibilite = lazy(() => import('@/pages/Accessibilite').then((m) => ({ default: m.Accessibilite })))
+const NotFound = lazy(() => import('@/pages/NotFound').then((m) => ({ default: m.NotFound })))
+
+function PageLoader() {
+  return (
+    <div className="min-h-[50vh] grid place-items-center" role="status">
+      <div className="size-10 rounded-full border-4 border-[#2a3654] border-t-[#3b82f6] animate-spin" aria-hidden="true" />
+      <span className="sr-only">Chargement…</span>
+    </div>
+  )
+}
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Routes>
-          {/* Public */}
-          <Route element={<PublicLayout />}>
-            <Route index element={<Landing />} />
-            <Route path="blog" element={<DashboardStub title="Blog" description="Articles d'expertise RGAA, WCAG et EAA." />} />
-            <Route path="rgaa" element={<DashboardStub title="Guide RGAA 4.1" description="Les 106 critères du référentiel français expliqués." />} />
-            <Route path="a-propos" element={<DashboardStub title="À propos" description="L'équipe et la mission de Konforme." />} />
-            <Route path="contact" element={<DashboardStub title="Contact" description="Une question ? On vous répond sous 24 h." />} />
-          </Route>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            {/* Public */}
+            <Route element={<PublicLayout />}>
+              <Route index element={<Landing />} />
+              <Route path="blog" element={<Blog />} />
+              <Route path="blog/:slug" element={<BlogPost />} />
+              <Route path="rgaa" element={<Rgaa />} />
+              <Route path="a-propos" element={<About />} />
+              <Route path="contact" element={<Contact />} />
+              <Route path="accessibilite" element={<Accessibilite />} />
+              <Route path="legal/:slug" element={<LegalPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
 
-          {/* Auth */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
+            {/* Auth */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
 
-          {/* Dashboard (protected) */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<DashboardHome />} />
-            <Route path="sites" element={<DashboardStub title="Sites" description="Gérer les sites surveillés." />} />
-            <Route path="scans" element={<DashboardStub title="Scans" description="Historique des audits d'accessibilité." />} />
-            <Route path="declarations" element={<DashboardStub title="Déclarations" description="Documents légaux RGAA / EAA." />} />
-            <Route path="settings" element={<DashboardStub title="Paramètres" description="Compte, organisation, facturation." />} />
-          </Route>
-
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            {/* Dashboard (protégé) */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<DashboardHome />} />
+              <Route path="sites" element={<Sites />} />
+              <Route path="scans" element={<Scans />} />
+              <Route path="scans/:scanId" element={<ScanDetail />} />
+              <Route path="declarations" element={<Declarations />} />
+              <Route path="settings" element={<Settings />} />
+            </Route>
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </AuthProvider>
   )

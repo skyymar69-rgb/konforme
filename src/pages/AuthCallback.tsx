@@ -1,28 +1,28 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/contexts/AuthContext'
 
 export function AuthCallback() {
   const navigate = useNavigate()
+  const { refresh } = useAuth()
+
   useEffect(() => {
     let cancelled = false
     async function run() {
-      // Supabase auto-detects the session in the URL (PKCE).
-      // We just wait briefly for the session to be persisted, then redirect.
+      // Appwrite a posé le cookie de session pendant la redirection OAuth :
+      // on recharge le compte puis on route.
       try {
-        const { data } = await supabase.auth.getSession()
-        if (cancelled) return
-        if (data.session) navigate('/dashboard', { replace: true })
-        else navigate('/login?error=session', { replace: true })
+        await refresh()
+        if (!cancelled) navigate('/dashboard', { replace: true })
       } catch {
-        navigate('/login?error=callback', { replace: true })
+        if (!cancelled) navigate('/login?error=callback', { replace: true })
       }
     }
     void run()
     return () => {
       cancelled = true
     }
-  }, [navigate])
+  }, [navigate, refresh])
 
   return (
     <div className="min-h-screen grid place-items-center px-6 py-10">

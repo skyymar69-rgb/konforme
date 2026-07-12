@@ -1,28 +1,75 @@
+import { lazy, Suspense, useMemo } from 'react'
+import { Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Seo } from '@/components/Seo'
 import { useAuth } from '@/contexts/AuthContext'
-import { Link } from 'react-router-dom'
-import { useEffect, useRef, useState } from 'react'
+import { countCriticalIssues, useMembership, useScans, useSites } from '@/lib/queries'
+import { scoreColor } from '@/lib/format'
+import type { ScorePoint } from '@/components/ScoreChart'
 
-const KPIS = [
-  { label: 'Sites surveillés', value: 0, hint: 'Aucun site pour le moment', accent: '#2563eb' },
-  { label: 'Score moyen', value: '—', hint: 'Lance ton premier scan', accent: '#06b6d4' },
-  { label: 'Issues critiques', value: 0, hint: 'À corriger en priorité', accent: '#ef4444' },
-  { label: 'Conformité EAA', value: '—', hint: 'Statut global', accent: '#22c55e' },
-]
+const ScoreChart = lazy(() => import('@/components/ScoreChart'))
 
 export function DashboardHome() {
   const { user } = useAuth()
-  const name = user?.user_metadata?.full_name?.split(' ')[0] || 'à toi'
+  const name = user?.name?.split(' ')[0] || 'à vous'
+  const { data: membership } = useMembership()
+  const orgId = membership?.organization_id
+  const { data: sites } = useSites(orgId)
+  const { data: scans } = useScans(orgId)
+
+  const doneScans = useMemo(() => (scans ?? []).filter((s) => s.status === 'done'), [scans])
+
+  // Issues critiques ouvertes sur le dernier scan terminé de chaque site
+  const latestIds = useMemo(
+    () => latestScanPerSite(doneScans).map((s) => s.id),
+    [doneScans],
+  )
+  const { data: criticalCount } = useQuery({
+    queryKey: ['critical-count', orgId, latestIds.join(',')],
+    enabled: latestIds.length > 0,
+    queryFn: () => countCriticalIssues(latestIds),
+  })
+
+  const stats = useMemo(() => {
+    const latest = latestScanPerSite(doneScans)
+    const scores = latest.map((s) => s.score).filter((s): s is number => s !== null)
+    const avg = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null
+    return {
+      sitesCount: sites?.length ?? 0,
+      avgScore: avg,
+      eaa: avg === null ? null : avg >= 100 ? 'Conforme' : avg >= 50 ? 'Partielle' : 'Non conforme',
+    }
+  }, [sites, doneScans])
+
+  const chartData: ScorePoint[] = useMemo(
+    () =>
+      [...doneScans]
+        .reverse()
+        .filter((s) => s.score !== null)
+        .slice(-20)
+        .map((s) => ({
+          date: new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit' }).format(
+            new Date(s.created_at),
+          ),
+          score: Math.round(s.score!),
+          site: s.sites?.name ?? '',
+        })),
+    [doneScans],
+  )
+
+  const hasSites = (sites?.length ?? 0) > 0
 
   return (
     <div className="space-y-8">
+      <Seo title="Tableau de bord" description="État de l'accessibilité de vos sites." path="/dashboard" noindex />
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
             Bonjour, <span className="gradient-text">{name}</span>
           </h1>
-          <p className="text-[#a3b0c9] mt-1">Voici l'état de l'accessibilité de tes sites.</p>
+          <p className="text-[#a3b0c9] mt-1">Voici l'état de l'accessibilité de vos sites.</p>
         </div>
         <Link to="/dashboard/sites">
           <Button variant="primary">+ Ajouter un site</Button>
@@ -30,40 +77,90 @@ export function DashboardHome() {
       </header>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {KPIS.map((k) => (
-          <KpiCard key={k.label} {...k} />
-        ))}
+        <KpiCard
+          label="Sites surveillés"
+          value={String(stats.sitesCount)}
+          hint={hasSites ? 'Sites suivis par Konforme' : 'Ajoutez votre premier site'}
+          accent="#2563eb"
+        />
+        <KpiCard
+          label="Score moyen"
+          value={stats.avgScore !== null ? `${stats.avgScore}%` : '—'}
+          hint={stats.avgScore !== null ? 'Dernier audit par site' : 'Lancez votre premier scan'}
+          accent={stats.avgScore !== null ? scoreColor(stats.avgScore) : '#06b6d4'}
+        />
+        <KpiCard
+          label="Issues critiques"
+          value={String(criticalCount ?? 0)}
+          hint="À corriger en priorité"
+          accent="#ef4444"
+        />
+        <KpiCard
+          label="Conformité EAA"
+          value={stats.eaa ?? '—'}
+          hint="Statut global (WCAG 2.2)"
+          accent="#22c55e"
+        />
       </div>
 
-      <Card>
-        <h2 className="text-lg font-bold mb-1">Démarre ton audit</h2>
-        <p className="text-sm text-[#a3b0c9] mb-6">
-          Quelques étapes pour mettre tes sites en conformité RGAA &amp; WCAG.
-        </p>
-        <ol className="space-y-3">
-          {[
-            { title: 'Ajoute ton premier site', desc: 'URL, nom, configuration de fréquence de scan.' },
-            { title: 'Lance un scan complet', desc: '~2 minutes pour 106 critères RGAA 4.1 + 50 WCAG 2.2.' },
-            { title: 'Reçois les corrections IA', desc: 'Snippets prêts à coller, validés par des experts.' },
-            { title: 'Génère ta déclaration légale', desc: 'PDF conforme RGAA, signé et publiable.' },
-          ].map((step, i) => (
-            <li key={step.title} className="flex gap-4 items-start">
-              <span
-                className="size-8 shrink-0 rounded-[10px] bg-gradient-to-br from-[#2563eb] to-[#06b6d4] flex items-center justify-center text-white text-sm font-bold"
-                aria-hidden="true"
-              >
-                {i + 1}
-              </span>
-              <div>
-                <h3 className="font-semibold text-[#f1f5fb]">{step.title}</h3>
-                <p className="text-sm text-[#a3b0c9]">{step.desc}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </Card>
+      {chartData.length >= 2 && (
+        <Card>
+          <h2 className="text-lg font-bold mb-1">Évolution du score</h2>
+          <p className="text-sm text-[#a3b0c9] mb-4">
+            Taux de conformité des {chartData.length} derniers audits.
+          </p>
+          <Suspense fallback={<div className="h-[260px] rounded-[10px] bg-white/5 animate-pulse" aria-hidden="true" />}>
+            <ScoreChart data={chartData} />
+          </Suspense>
+        </Card>
+      )}
+
+      {!hasSites && (
+        <Card>
+          <h2 className="text-lg font-bold mb-1">Démarrez votre audit</h2>
+          <p className="text-sm text-[#a3b0c9] mb-6">
+            Quatre étapes pour mettre vos sites en conformité RGAA &amp; WCAG.
+          </p>
+          <ol className="space-y-3">
+            {[
+              { title: 'Ajoutez votre premier site', desc: 'URL et nom du site, en 30 secondes.' },
+              { title: 'Lancez un scan complet', desc: "Jusqu'à 5 pages analysées sur ~30 règles RGAA 4.1 / WCAG 2.2." },
+              { title: 'Corrigez avec les suggestions', desc: 'Chaque non-conformité vient avec le code concerné et la correction.' },
+              { title: 'Générez votre déclaration légale', desc: "Document conforme à l'article 47 de la loi de 2005, prêt à publier." },
+            ].map((step, i) => (
+              <li key={step.title} className="flex gap-4 items-start">
+                <span
+                  className="size-8 shrink-0 rounded-[10px] bg-gradient-to-br from-[#2563eb] to-[#0e7490] flex items-center justify-center text-white text-sm font-bold"
+                  aria-hidden="true"
+                >
+                  {i + 1}
+                </span>
+                <div>
+                  <h3 className="font-semibold text-[#f1f5fb]">{step.title}</h3>
+                  <p className="text-sm text-[#a3b0c9]">{step.desc}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <div className="mt-6">
+            <Link to="/dashboard/sites">
+              <Button variant="primary">Ajouter un site</Button>
+            </Link>
+          </div>
+        </Card>
+      )}
     </div>
   )
+}
+
+/** Garde le scan terminé le plus récent de chaque site. */
+function latestScanPerSite<T extends { site_id: string; created_at: string }>(scans: T[]): T[] {
+  const bySite = new Map<string, T>()
+  for (const s of scans) {
+    const cur = bySite.get(s.site_id)
+    if (!cur || s.created_at > cur.created_at) bySite.set(s.site_id, s)
+  }
+  return [...bySite.values()]
 }
 
 function KpiCard({
@@ -73,66 +170,20 @@ function KpiCard({
   accent,
 }: {
   label: string
-  value: string | number
+  value: string
   hint: string
   accent: string
 }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [animated, setAnimated] = useState(typeof value === 'string')
-
-  useEffect(() => {
-    if (typeof value !== 'number' || animated || !ref.current) return
-    const obs = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) {
-          setAnimated(true)
-          obs.disconnect()
-        }
-      },
-      { threshold: 0.4 }
-    )
-    obs.observe(ref.current)
-    return () => obs.disconnect()
-  }, [value, animated])
-
   return (
-    <Card
-      ref={ref}
-      className="relative overflow-hidden p-5 hover:-translate-y-px transition-transform"
-    >
+    <Card className="relative overflow-hidden p-5">
       <div
         aria-hidden="true"
         className="absolute -top-12 -right-12 size-28 rounded-full opacity-20 blur-2xl"
         style={{ background: accent }}
       />
-      <div className="text-xs font-semibold uppercase tracking-wider text-[#a3b0c9]">
-        {label}
-      </div>
-      <div className="mt-2 text-3xl font-extrabold tracking-tight">
-        {typeof value === 'number' ? <Counter target={animated ? value : 0} /> : value}
-      </div>
-      <div className="mt-1 text-xs text-[#6b7794]">{hint}</div>
+      <div className="text-xs font-semibold uppercase tracking-wider text-[#a3b0c9]">{label}</div>
+      <div className="mt-2 text-3xl font-extrabold tracking-tight">{value}</div>
+      <div className="mt-1 text-xs text-[#8b98b8]">{hint}</div>
     </Card>
   )
-}
-
-function Counter({ target }: { target: number }) {
-  const [n, setN] = useState(0)
-  useEffect(() => {
-    if (target === 0) {
-      setN(0)
-      return
-    }
-    let raf = 0
-    const start = performance.now()
-    const dur = 800
-    function tick(t: number) {
-      const p = Math.min(1, (t - start) / dur)
-      setN(Math.round(p * target))
-      if (p < 1) raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [target])
-  return <span>{n}</span>
 }

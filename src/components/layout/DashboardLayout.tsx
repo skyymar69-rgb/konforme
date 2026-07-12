@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { NavLink, Outlet, Link } from 'react-router-dom'
 import { Logo } from '@/components/ui/logo'
 import { Button } from '@/components/ui/button'
@@ -14,7 +15,7 @@ const NAV = [
 
 export function DashboardLayout() {
   const { user, signOut } = useAuth()
-  const initial = (user?.user_metadata?.full_name?.[0] || user?.email?.[0] || 'K').toUpperCase()
+  const initial = (user?.name?.[0] || user?.email?.[0] || 'K').toUpperCase()
 
   return (
     <div className="min-h-screen flex bg-[#0a0e1a]">
@@ -47,14 +48,14 @@ export function DashboardLayout() {
         </nav>
         <div className="p-3 border-t border-[#2a3654]">
           <div className="flex items-center gap-3 rounded-[10px] p-2.5 bg-white/5">
-            <div className="size-9 rounded-full bg-gradient-to-br from-[#2563eb] to-[#06b6d4] flex items-center justify-center text-white text-sm font-bold shrink-0">
+            <div className="size-9 rounded-full bg-gradient-to-br from-[#2563eb] to-[#0e7490] flex items-center justify-center text-white text-sm font-bold shrink-0">
               {initial}
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-sm font-medium truncate">
-                {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Invité'}
+                {user?.name || user?.email?.split('@')[0] || 'Invité'}
               </div>
-              <div className="text-xs text-[#6b7794] truncate">{user?.email}</div>
+              <div className="text-xs text-[#8b98b8] truncate">{user?.email}</div>
             </div>
           </div>
           <Button size="sm" variant="ghost" className="w-full mt-2" onClick={() => signOut()}>
@@ -73,7 +74,16 @@ export function DashboardLayout() {
           </Button>
         </header>
         <main className="flex-1 px-4 py-6 md:px-8 md:py-10 max-w-7xl w-full mx-auto">
-          <Outlet />
+          <Suspense
+            fallback={
+              <div className="min-h-[40vh] grid place-items-center" role="status">
+                <div className="size-10 rounded-full border-4 border-[#2a3654] border-t-[#3b82f6] animate-spin" aria-hidden="true" />
+                <span className="sr-only">Chargement…</span>
+              </div>
+            }
+          >
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </div>

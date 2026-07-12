@@ -1,0 +1,10 @@
+{
+  "name": "scan-site",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/main.js",
+  "dependencies": {
+    "node-appwrite": "^26.2.0",
+    "node-html-parser": "^7.0.1"
+  }
+}

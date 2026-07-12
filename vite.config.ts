@@ -15,4 +15,19 @@ export default defineConfig({
     strictPort: true,
     open: false,
   },
+  build: {
+    target: 'es2020',
+    rollupOptions: {
+      output: {
+        manualChunks(id: string) {
+          if (!id.includes('node_modules')) return undefined
+          if (id.includes('recharts') || id.includes('d3-') || id.includes('victory')) return 'charts'
+          if (id.includes('@supabase')) return 'supabase'
+          if (id.includes('@tanstack')) return 'query'
+          if (id.includes('react') || id.includes('scheduler')) return 'react'
+          return 'vendor'
+        },
+      },
+    },
+  },
 })

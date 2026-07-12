@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Logo } from '@/components/ui/logo'
 import { useAuth } from '@/contexts/AuthContext'
+import { Seo } from '@/components/Seo'
 
 export function Login() {
   const { signInWithGoogle, user } = useAuth()
@@ -11,9 +12,9 @@ export function Login() {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
-  if (user) {
-    navigate('/dashboard', { replace: true })
-  }
+  useEffect(() => {
+    if (user) navigate('/dashboard', { replace: true })
+  }, [user, navigate])
 
   async function handleGoogle() {
     setError(null)
@@ -30,6 +31,7 @@ export function Login() {
 
   return (
     <div className="min-h-screen grid place-items-center px-6 py-10">
+      <Seo title="Connexion" description="Connectez-vous à votre tableau de bord Konforme." path="/login" noindex />
       <div className="w-full max-w-md">
         <div className="mb-6 flex justify-center">
           <Link to="/" aria-label="Konforme accueil">
@@ -74,7 +76,7 @@ export function Login() {
             </p>
           )}
 
-          <p className="mt-6 text-center text-xs text-[#6b7794] leading-relaxed">
+          <p className="mt-6 text-center text-xs text-[#8b98b8] leading-relaxed">
             En continuant vous acceptez nos{' '}
             <Link to="/legal/cgu" className="text-[#67e8f9] hover:underline">
               CGU

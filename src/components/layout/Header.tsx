@@ -65,7 +65,7 @@ export function Header() {
             aria-controls="kf-contact-drawer"
             aria-expanded={contactOpen}
             onClick={() => setContactOpen(true)}
-            className="hidden sm:inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-[#2563eb] to-[#06b6d4] px-3.5 py-2 text-xs font-semibold text-white shadow-[0_6px_16px_rgba(37,99,235,0.35)] hover:-translate-y-px transition-transform"
+            className="hidden sm:inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-[#2563eb] to-[#0e7490] px-3.5 py-2 text-xs font-semibold text-white shadow-[0_6px_16px_rgba(37,99,235,0.35)] hover:-translate-y-px transition-transform"
           >
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
               <rect x="3" y="4" width="18" height="16" rx="2" />
@@ -92,7 +92,9 @@ export function Header() {
           <button
             type="button"
             className="md:hidden rounded-[10px] border border-[#2a3654] p-2 text-[#f1f5fb]"
-            aria-label="Ouvrir le menu"
+            aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+            aria-expanded={menuOpen}
+            aria-controls="kf-mobile-nav"
             onClick={() => setMenuOpen((v) => !v)}
           >
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -103,7 +105,7 @@ export function Header() {
       </div>
 
       {menuOpen && (
-        <nav className="md:hidden border-t border-[#2a3654] px-4 py-3" aria-label="Navigation mobile">
+        <nav id="kf-mobile-nav" className="md:hidden border-t border-[#2a3654] px-4 py-3" aria-label="Navigation mobile">
           {NAV.map((n) => (
             <NavLink
               key={n.to}

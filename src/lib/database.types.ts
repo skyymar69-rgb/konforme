@@ -1,0 +1,81 @@
+/** Types du domaine Konforme, mappés depuis les rows Appwrite (voir src/lib/queries.ts). */
+
+export type Severity = 'critical' | 'serious' | 'moderate' | 'minor'
+export type ScanStatus = 'pending' | 'running' | 'done' | 'failed'
+export type IssueStatus = 'open' | 'in_progress' | 'fixed' | 'wont_fix' | 'false_positive'
+export type ConformityLevel = 'total' | 'partial' | 'non_conforme'
+
+export type Organization = {
+  id: string
+  name: string
+  plan: 'free' | 'pro' | 'enterprise'
+}
+
+export type Membership = {
+  organization_id: string
+  user_id: string
+  role: 'owner' | 'admin' | 'member' | 'viewer'
+  organizations: Organization
+}
+
+export type Site = {
+  id: string
+  organization_id: string
+  name: string
+  url: string
+  description: string | null
+  monitoring_enabled: boolean
+  monitoring_frequency: 'daily' | 'weekly' | 'monthly'
+  last_scan_at: string | null
+  last_score: number | null
+  created_at: string
+}
+
+export type Scan = {
+  id: string
+  site_id: string
+  organization_id: string
+  status: ScanStatus
+  trigger: 'manual' | 'schedule' | 'api' | 'ci'
+  started_at: string | null
+  finished_at: string | null
+  duration_ms: number | null
+  pages_count: number
+  issues_count: number
+  score: number | null
+  rgaa_score: number | null
+  wcag_score: number | null
+  error: string | null
+  created_at: string
+  sites?: { name: string; url: string }
+}
+
+export type ScanIssue = {
+  id: string
+  scan_id: string
+  rule_id: string
+  severity: Severity
+  category: string | null
+  title: string
+  description: string | null
+  page_url: string | null
+  selector: string | null
+  html_snippet: string | null
+  suggested_fix: string | null
+  status: IssueStatus
+  created_at: string
+}
+
+export type Declaration = {
+  id: string
+  site_id: string
+  organization_id: string
+  conformity_level: ConformityLevel
+  conformity_rate: number | null
+  reference_standard: string
+  audit_method: string
+  contact_email: string | null
+  published_at: string
+  created_at: string
+  sites?: { name: string; url: string }
+}

@@ -1,62 +1,70 @@
+/* eslint-disable react-refresh/only-export-components -- hook useAuth co-localisé avec le provider */
 import * as React from 'react'
-import type { Session, User } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase'
+import { OAuthProvider } from 'appwrite'
+import { account, type AppUser } from '@/lib/appwrite'
 
 type AuthState = {
-  session: Session | null
-  user: User | null
+  user: AppUser | null
   loading: boolean
   signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
+  refresh: () => Promise<void>
 }
 
 const AuthContext = React.createContext<AuthState | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = React.useState<Session | null>(null)
+  const [user, setUser] = React.useState<AppUser | null>(null)
   const [loading, setLoading] = React.useState(true)
+
+  const refresh = React.useCallback(async () => {
+    try {
+      const me = await account.get()
+      setUser({ id: me.$id, email: me.email, name: me.name })
+    } catch {
+      // 401 = simple visiteur non connecté
+      setUser(null)
+    }
+  }, [])
 
   React.useEffect(() => {
     let mounted = true
-    supabase.auth.getSession().then(({ data }) => {
-      if (mounted) {
-        setSession(data.session)
-        setLoading(false)
-      }
-    })
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s)
-    })
+    account
+      .get()
+      .then((me) => {
+        if (mounted) setUser({ id: me.$id, email: me.email, name: me.name })
+      })
+      .catch(() => {
+        // 401 = simple visiteur non connecté
+        if (mounted) setUser(null)
+      })
+      .finally(() => {
+        if (mounted) setLoading(false)
+      })
     return () => {
       mounted = false
-      sub.subscription.unsubscribe()
     }
   }, [])
 
   const signInWithGoogle = React.useCallback(async () => {
-    const redirectTo = `${window.location.origin}/auth/callback`
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo,
-        queryParams: { access_type: 'offline', prompt: 'consent' },
-      },
+    const origin = window.location.origin
+    // Redirection complète vers Google via Appwrite, puis retour sur /auth/callback
+    account.createOAuth2Session({
+      provider: OAuthProvider.Google,
+      success: `${origin}/auth/callback`,
+      failure: `${origin}/login?error=oauth`,
     })
-    if (error) throw error
   }, [])
 
   const signOut = React.useCallback(async () => {
-    await supabase.auth.signOut()
-    setSession(null)
+    try {
+      await account.deleteSession({ sessionId: 'current' })
+    } finally {
+      setUser(null)
+    }
   }, [])
 
-  const value: AuthState = {
-    session,
-    user: session?.user ?? null,
-    loading,
-    signInWithGoogle,
-    signOut,
-  }
+  const value: AuthState = { user, loading, signInWithGoogle, signOut, refresh }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

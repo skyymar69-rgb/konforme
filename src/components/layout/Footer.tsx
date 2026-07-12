@@ -15,9 +15,8 @@ const SECTIONS = [
     title: 'Entreprise',
     links: [
       { to: '/a-propos', label: 'À propos' },
-      { to: '/carrieres', label: 'Carrières' },
-      { to: '/partenaires', label: 'Partenaires' },
       { to: '/contact', label: 'Contact' },
+      { to: '/accessibilite', label: "Déclaration d'accessibilité" },
     ],
   },
   {
@@ -43,7 +42,7 @@ export function Footer() {
             <p className="mt-3 text-sm text-[#a3b0c9] max-w-xs leading-relaxed">
               Plateforme d'accessibilité web RGAA 4.1 &amp; WCAG 2.2 automatisée par IA. Édité par KAYZEN SASU.
             </p>
-            <p className="mt-4 text-xs text-[#6b7794]">
+            <p className="mt-4 text-xs text-[#8b98b8]">
               6 rue Pierre Termier, 69009 Lyon
               <br />
               SIREN 999 418 346 — TVA FR85 999 418 346
@@ -70,7 +69,7 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="mt-10 flex flex-col gap-3 border-t border-[#2a3654] pt-6 text-xs text-[#6b7794] md:flex-row md:items-center md:justify-between">
+        <div className="mt-10 flex flex-col gap-3 border-t border-[#2a3654] pt-6 text-xs text-[#8b98b8] md:flex-row md:items-center md:justify-between">
           <p>© {new Date().getFullYear()} KAYZEN SASU — Tous droits réservés.</p>
           <p>
             Fièrement réalisé par{' '}
