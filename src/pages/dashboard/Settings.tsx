@@ -1,10 +1,19 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Seo } from '@/components/Seo'
 import { useAuth } from '@/contexts/AuthContext'
-import { useMembership, useProfile, useUpdateOrganization, useUpdateProfile } from '@/lib/queries'
+import {
+  useMembership,
+  useProfile,
+  useScans,
+  useSites,
+  useUpdateOrganization,
+  useUpdateProfile,
+} from '@/lib/queries'
+import { PLANS, scansUsedThisMonth } from '@/lib/plans'
 
 export function Settings() {
   const { user, signOut } = useAuth()
@@ -18,6 +27,10 @@ export function Settings() {
 
   const org = membership?.organizations
   const isAdmin = membership?.role === 'owner' || membership?.role === 'admin'
+  const plan = PLANS[org?.plan ?? 'free']
+  const { data: sites } = useSites(membership?.organization_id)
+  const { data: scans } = useScans(membership?.organization_id)
+  const usedScans = scansUsedThisMonth(scans)
 
   async function onSaveProfile(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -112,6 +125,38 @@ export function Settings() {
             </Button>
           )}
         </form>
+      </Card>
+
+      <Card>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold">Abonnement</h2>
+          <Badge className="border-[#3b4970] text-[#a3b0c9]">
+            {plan.name} — {plan.price}
+            {plan.id !== 'enterprise' ? `/${plan.period.replace('par ', '')}` : ''}
+          </Badge>
+        </div>
+        <dl className="grid gap-3 sm:grid-cols-2 text-sm">
+          <div className="rounded-[10px] border border-[#2a3654] px-4 py-3">
+            <dt className="text-xs text-[#8b98b8]">Sites surveillés</dt>
+            <dd className="mt-1 font-bold">
+              {sites?.length ?? '—'} / {Number.isFinite(plan.maxSites) ? plan.maxSites : '∞'}
+            </dd>
+          </div>
+          <div className="rounded-[10px] border border-[#2a3654] px-4 py-3">
+            <dt className="text-xs text-[#8b98b8]">Audits ce mois-ci</dt>
+            <dd className="mt-1 font-bold">
+              {scans ? usedScans : '—'} / {Number.isFinite(plan.scansPerMonth) ? plan.scansPerMonth : '∞'}
+            </dd>
+          </div>
+        </dl>
+        {plan.id === 'free' && (
+          <p className="mt-4 text-sm text-[#a3b0c9]">
+            Besoin de plus de sites ou d'audits ?{' '}
+            <Link to="/tarifs" className="text-[#67e8f9] font-semibold hover:underline">
+              Découvrir le plan Pro
+            </Link>
+          </p>
+        )}
       </Card>
 
       <Card>

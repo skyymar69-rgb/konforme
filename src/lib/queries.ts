@@ -16,6 +16,7 @@ import type {
   ScanIssue,
   Site,
 } from '@/lib/database.types'
+import { monthStartIso, PLANS, type PlanId } from '@/lib/plans'
 
 /* ------------------------------------------------------------------ */
 /* Mapping rows Appwrite → types du domaine                            */
@@ -121,6 +122,15 @@ export function useMembership() {
         list = await teams.list()
       }
       const team = list.teams[0]
+      // Le plan de l'organisation est stocké dans les préférences de la team
+      // (modifiable uniquement côté serveur lors d'un changement d'offre).
+      let plan: PlanId = 'free'
+      try {
+        const prefs = await teams.getPrefs({ teamId: team.$id })
+        if (prefs.plan === 'pro' || prefs.plan === 'enterprise') plan = prefs.plan
+      } catch {
+        /* prefs inaccessibles : plan gratuit par défaut */
+      }
       let role: Membership['role'] = 'member'
       try {
         const memberships = await teams.listMemberships({
@@ -136,7 +146,7 @@ export function useMembership() {
         organization_id: team.$id,
         user_id: me.$id,
         role,
-        organizations: { id: team.$id, name: team.name, plan: 'free' },
+        organizations: { id: team.$id, name: team.name, plan },
       }
     },
     staleTime: 5 * 60_000,
@@ -197,11 +207,23 @@ export function useSites(orgId: string | undefined) {
   })
 }
 
-export function useAddSite(orgId: string | undefined) {
+export function useAddSite(orgId: string | undefined, plan: PlanId = 'free') {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (input: { name: string; url: string; description?: string }) => {
       if (!orgId) throw new Error('Organisation introuvable')
+      const limits = PLANS[plan]
+      const existing = await tables.listRows({
+        databaseId: DB_ID,
+        tableId: TABLES.sites,
+        queries: [Query.equal('team_id', orgId), Query.limit(1)],
+        total: true,
+      })
+      if ((existing.total ?? 0) >= limits.maxSites) {
+        throw new Error(
+          `Votre plan ${limits.name} est limité à ${limits.maxSites} site${limits.maxSites > 1 ? 's' : ''}. Passez au plan supérieur pour en ajouter d'autres.`,
+        )
+      }
       const row = await tables.createRow({
         databaseId: DB_ID,
         tableId: TABLES.sites,
@@ -350,10 +372,26 @@ export async function countCriticalIssues(scanIds: string[]): Promise<number> {
  * Lance un audit : crée le scan côté client (statut pending) puis déclenche
  * la fonction serverless `scan-site` qui l'exécute et le complète.
  */
-export function useLaunchScan() {
+export function useLaunchScan(plan: PlanId = 'free') {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (site: Site): Promise<{ scan_id: string }> => {
+      const limits = PLANS[plan]
+      const used = await tables.listRows({
+        databaseId: DB_ID,
+        tableId: TABLES.scans,
+        queries: [
+          Query.equal('team_id', site.organization_id),
+          Query.greaterThanEqual('$createdAt', monthStartIso()),
+          Query.limit(1),
+        ],
+        total: true,
+      })
+      if ((used.total ?? 0) >= limits.scansPerMonth) {
+        throw new Error(
+          `Quota mensuel atteint : ${limits.scansPerMonth} audits/mois sur le plan ${limits.name}. Le compteur se réinitialise le 1er du mois — ou passez au plan supérieur.`,
+        )
+      }
       const scanRow = await tables.createRow({
         databaseId: DB_ID,
         tableId: TABLES.scans,

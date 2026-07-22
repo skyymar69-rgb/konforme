@@ -10,9 +10,11 @@ import {
   useDeleteSite,
   useLaunchScan,
   useMembership,
+  useScans,
   useSites,
 } from '@/lib/queries'
 import { formatDate, scoreColor } from '@/lib/format'
+import { PLANS, scansUsedThisMonth, type PlanId } from '@/lib/plans'
 import type { Site } from '@/lib/database.types'
 
 const siteSchema = z.object({
@@ -27,8 +29,14 @@ const siteSchema = z.object({
 export function Sites() {
   const { data: membership, isLoading: orgLoading } = useMembership()
   const orgId = membership?.organization_id
+  const plan: PlanId = membership?.organizations.plan ?? 'free'
   const { data: sites, isLoading } = useSites(orgId)
+  const { data: scans } = useScans(orgId)
   const [formOpen, setFormOpen] = useState(false)
+
+  const limits = PLANS[plan]
+  const usedScans = scansUsedThisMonth(scans)
+  const siteLimitReached = (sites?.length ?? 0) >= limits.maxSites
 
   return (
     <div className="space-y-6">
@@ -37,13 +45,28 @@ export function Sites() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Sites</h1>
           <p className="text-[#a3b0c9] mt-1">Ajoutez un site puis lancez un audit d'accessibilité.</p>
+          {sites && (
+            <p className="text-xs text-[#8b98b8] mt-1.5">
+              Plan {limits.name} · {sites.length}/{Number.isFinite(limits.maxSites) ? limits.maxSites : '∞'} site{limits.maxSites > 1 ? 's' : ''} ·{' '}
+              {usedScans}/{Number.isFinite(limits.scansPerMonth) ? limits.scansPerMonth : '∞'} audits ce mois-ci
+            </p>
+          )}
         </div>
         <Button variant="primary" onClick={() => setFormOpen((o) => !o)} aria-expanded={formOpen}>
           {formOpen ? 'Fermer' : '+ Ajouter un site'}
         </Button>
       </header>
 
-      {formOpen && orgId && <AddSiteForm orgId={orgId} onDone={() => setFormOpen(false)} />}
+      {siteLimitReached && !formOpen && (
+        <p className="rounded-[10px] border border-[#38bdf8]/30 bg-[#1e3a5f]/30 px-4 py-2.5 text-sm text-[#bae6fd]">
+          Vous avez atteint la limite de votre plan {limits.name}.{' '}
+          <Link to="/tarifs" className="font-semibold underline hover:text-white">
+            Découvrir le plan Pro
+          </Link>
+        </p>
+      )}
+
+      {formOpen && orgId && <AddSiteForm orgId={orgId} plan={plan} onDone={() => setFormOpen(false)} />}
 
       {(isLoading || orgLoading) && <p role="status" className="text-[#a3b0c9]">Chargement des sites…</p>}
 
@@ -63,7 +86,7 @@ export function Sites() {
       <ul className="grid gap-4 md:grid-cols-2" aria-label="Liste des sites">
         {sites?.map((site) => (
           <li key={site.id}>
-            <SiteCard site={site} />
+            <SiteCard site={site} plan={plan} />
           </li>
         ))}
       </ul>
@@ -71,9 +94,9 @@ export function Sites() {
   )
 }
 
-function AddSiteForm({ orgId, onDone }: { orgId: string; onDone: () => void }) {
-  const addSite = useAddSite(orgId)
-  const launchScan = useLaunchScan()
+function AddSiteForm({ orgId, plan, onDone }: { orgId: string; plan: PlanId; onDone: () => void }) {
+  const addSite = useAddSite(orgId, plan)
+  const launchScan = useLaunchScan(plan)
   const [errors, setErrors] = useState<{ name?: string; url?: string; global?: string }>({})
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -158,8 +181,8 @@ function AddSiteForm({ orgId, onDone }: { orgId: string; onDone: () => void }) {
   )
 }
 
-function SiteCard({ site }: { site: Site }) {
-  const launchScan = useLaunchScan()
+function SiteCard({ site, plan }: { site: Site; plan: PlanId }) {
+  const launchScan = useLaunchScan(plan)
   const deleteSite = useDeleteSite()
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [error, setError] = useState<string | null>(null)
