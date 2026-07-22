@@ -8,6 +8,11 @@ import { Seo } from '@/components/Seo'
 
 type Mode = 'signin' | 'signup'
 
+// Le bouton Google n'est proposé que si le provider est configuré côté
+// Appwrite (sinon la redirection OAuth aboutit sur une erreur 412 plein
+// écran). Mettre VITE_GOOGLE_AUTH=on une fois le provider activé.
+const GOOGLE_AUTH_ENABLED = import.meta.env.VITE_GOOGLE_AUTH === 'on'
+
 export function Login() {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail, user } = useAuth()
   const [mode, setMode] = useState<Mode>('signin')
@@ -174,31 +179,35 @@ export function Login() {
             )}
           </p>
 
-          <div className="my-5 flex items-center gap-3" role="presentation">
-            <span className="h-px flex-1 bg-border" />
-            <span className="text-xs text-text-dim">ou</span>
-            <span className="h-px flex-1 bg-border" />
-          </div>
+          {GOOGLE_AUTH_ENABLED && (
+            <>
+              <div className="my-5 flex items-center gap-3" role="presentation">
+                <span className="h-px flex-1 bg-border" />
+                <span className="text-xs text-text-dim">ou</span>
+                <span className="h-px flex-1 bg-border" />
+              </div>
 
-          <Button
-            onClick={handleGoogle}
-            disabled={googleLoading}
-            variant="ghost"
-            size="lg"
-            className="w-full"
-          >
-            {googleLoading ? (
-              <>
-                <span className="size-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                Redirection...
-              </>
-            ) : (
-              <>
-                <GoogleIcon />
-                Continuer avec Google
-              </>
-            )}
-          </Button>
+              <Button
+                onClick={handleGoogle}
+                disabled={googleLoading}
+                variant="ghost"
+                size="lg"
+                className="w-full"
+              >
+                {googleLoading ? (
+                  <>
+                    <span className="size-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                    Redirection...
+                  </>
+                ) : (
+                  <>
+                    <GoogleIcon />
+                    Continuer avec Google
+                  </>
+                )}
+              </Button>
+            </>
+          )}
 
           <p className="mt-6 text-center text-xs text-text-dim leading-relaxed">
             En continuant vous acceptez nos{' '}
