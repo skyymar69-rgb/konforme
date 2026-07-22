@@ -45,12 +45,12 @@ export function Sites() {
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Sites</h1>
-          <p className="text-[#a3b0c9] mt-1">Ajoutez un site puis lancez un audit d'accessibilité.</p>
+          <p className="text-text-muted mt-1">Ajoutez un site puis lancez un audit d'accessibilité.</p>
           {sites && (
-            <p className="text-xs text-[#8b98b8] mt-1.5">
+            <p className="text-xs text-text-dim mt-1.5">
               Plan {limits.name}
               {(membership?.trial_days_left ?? 0) > 0 && (
-                <span className="text-[#67e8f9]"> (essai — {membership!.trial_days_left} j restants)</span>
+                <span className="text-link"> (essai — {membership!.trial_days_left} j restants)</span>
               )}{' '}
               · {sites.length}/{Number.isFinite(limits.maxSites) ? limits.maxSites : '∞'} site{limits.maxSites > 1 ? 's' : ''} ·{' '}
               {usedScans}/{Number.isFinite(limits.scansPerMonth) ? limits.scansPerMonth : '∞'} audits ce mois-ci
@@ -63,7 +63,7 @@ export function Sites() {
       </header>
 
       {siteLimitReached && !formOpen && (
-        <p className="rounded-[10px] border border-[#38bdf8]/30 bg-[#1e3a5f]/30 px-4 py-2.5 text-sm text-[#bae6fd]">
+        <p className="rounded-[10px] border border-info/30 bg-info-bg/30 px-4 py-2.5 text-sm text-info-soft">
           Vous avez atteint la limite de votre plan {limits.name}.{' '}
           <Link to="/tarifs" className="font-semibold underline hover:text-white">
             Découvrir le plan Pro
@@ -73,12 +73,12 @@ export function Sites() {
 
       {formOpen && orgId && <AddSiteForm orgId={orgId} plan={plan} onDone={() => setFormOpen(false)} />}
 
-      {(isLoading || orgLoading) && <p role="status" className="text-[#a3b0c9]">Chargement des sites…</p>}
+      {(isLoading || orgLoading) && <p role="status" className="text-text-muted">Chargement des sites…</p>}
 
       {!isLoading && !orgLoading && (sites?.length ?? 0) === 0 && (
         <Card className="text-center py-14">
           <h2 className="text-lg font-bold mb-2">Aucun site pour le moment</h2>
-          <p className="text-sm text-[#a3b0c9] mb-6 max-w-md mx-auto">
+          <p className="text-sm text-text-muted mb-6 max-w-md mx-auto">
             Ajoutez l'URL de votre site pour lancer votre premier audit RGAA / WCAG. L'analyse
             couvre jusqu'à 5 pages et dure environ une minute.
           </p>
@@ -141,11 +141,11 @@ function AddSiteForm({ orgId, plan, onDone }: { orgId: string; plan: PlanId; onD
               autoComplete="off"
               aria-invalid={!!errors.name}
               aria-describedby={errors.name ? 'site-name-error' : undefined}
-              className="w-full rounded-[10px] border border-[#3b4970] bg-[#0a0e1a] px-3.5 py-2.5 text-sm text-[#f1f5fb] placeholder:text-[#8b98b8]"
+              className="w-full rounded-[10px] border border-border-strong bg-bg px-3.5 py-2.5 text-sm text-text placeholder:text-text-dim"
               placeholder="Mon site vitrine"
             />
             {errors.name && (
-              <p id="site-name-error" className="mt-1.5 text-sm text-[#fecaca]">{errors.name}</p>
+              <p id="site-name-error" className="mt-1.5 text-sm text-danger-soft">{errors.name}</p>
             )}
           </div>
           <div>
@@ -160,16 +160,16 @@ function AddSiteForm({ orgId, plan, onDone }: { orgId: string; plan: PlanId; onD
               inputMode="url"
               aria-invalid={!!errors.url}
               aria-describedby={errors.url ? 'site-url-error' : undefined}
-              className="w-full rounded-[10px] border border-[#3b4970] bg-[#0a0e1a] px-3.5 py-2.5 text-sm text-[#f1f5fb] placeholder:text-[#8b98b8]"
+              className="w-full rounded-[10px] border border-border-strong bg-bg px-3.5 py-2.5 text-sm text-text placeholder:text-text-dim"
               placeholder="https://exemple.fr"
             />
             {errors.url && (
-              <p id="site-url-error" className="mt-1.5 text-sm text-[#fecaca]">{errors.url}</p>
+              <p id="site-url-error" className="mt-1.5 text-sm text-danger-soft">{errors.url}</p>
             )}
           </div>
         </div>
         {errors.global && (
-          <p role="alert" className="mt-4 rounded-[10px] border border-[#f87171]/40 bg-[#7f1d1d]/30 px-4 py-2.5 text-sm text-[#fecaca]">
+          <p role="alert" className="mt-4 rounded-[10px] border border-danger/40 bg-danger-bg/30 px-4 py-2.5 text-sm text-danger-soft">
             {errors.global}
           </p>
         )}
@@ -211,44 +211,44 @@ function SiteCard({ site, plan }: { site: Site; plan: PlanId }) {
             href={site.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-[#67e8f9] hover:underline break-all"
+            className="text-sm text-link hover:underline break-all"
           >
             {site.url}
             <span className="sr-only"> (nouvelle fenêtre)</span>
           </a>
         </div>
         {site.last_score !== null && (
-          <Badge className="border-[#3b4970]" >
+          <Badge className="border-border-strong" >
             <span aria-hidden="true" className="size-2 rounded-full" style={{ background: scoreColor(site.last_score) }} />
             {Math.round(site.last_score)}%
           </Badge>
         )}
       </div>
 
-      <p className="mt-3 text-xs text-[#8b98b8]">
+      <p className="mt-3 text-xs text-text-dim">
         Dernier audit : {formatDate(site.last_scan_at, true)}
       </p>
 
-      <label className="mt-3 inline-flex items-center gap-2 text-xs font-medium text-[#a3b0c9]">
+      <label className="mt-3 inline-flex items-center gap-2 text-xs font-medium text-text-muted">
         <input
           type="checkbox"
           role="switch"
           checked={site.monitoring_enabled}
           disabled={updateSite.isPending}
           onChange={(e) => updateSite.mutate({ id: site.id, monitoring_enabled: e.target.checked })}
-          className="size-4 accent-[#2563eb]"
+          className="size-4 accent-primary"
         />
         Surveillance hebdomadaire automatique
-        {site.monitoring_enabled && <span aria-hidden="true" className="text-[#4ade80]">●</span>}
+        {site.monitoring_enabled && <span aria-hidden="true" className="text-success">●</span>}
       </label>
 
       {error && (
-        <p role="alert" className="mt-3 rounded-[10px] border border-[#f87171]/40 bg-[#7f1d1d]/30 px-3 py-2 text-xs text-[#fecaca]">
+        <p role="alert" className="mt-3 rounded-[10px] border border-danger/40 bg-danger-bg/30 px-3 py-2 text-xs text-danger-soft">
           {error}
         </p>
       )}
 
-      <div className="mt-4 pt-4 border-t border-[#2a3654] flex flex-wrap gap-2">
+      <div className="mt-4 pt-4 border-t border-border flex flex-wrap gap-2">
         <Button size="sm" variant="primary" onClick={onScan} disabled={launchScan.isPending}>
           {launchScan.isPending ? 'Audit en cours…' : 'Lancer un audit'}
         </Button>

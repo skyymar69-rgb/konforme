@@ -17,7 +17,7 @@ function AnimatedWord() {
   return (
     <>
       <span className="sr-only">site web</span>
-      <span aria-hidden="true" className="text-[#67e8f9] inline-block min-w-[7ch]">
+      <span aria-hidden="true" className="text-link inline-block min-w-[7ch]">
         {HERO_WORDS[i]}
       </span>
     </>
@@ -32,13 +32,13 @@ function ProductMockup() {
     const c = 2 * Math.PI * r
     return (
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#2a3654" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--color-border)" strokeWidth={stroke} />
         <circle
           cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke}
           strokeLinecap="round" strokeDasharray={`${(pct / 100) * c} ${c}`}
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
         />
-        <text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" fill="#f1f5fb" fontSize={size / 4} fontWeight="800">
+        <text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" fill="var(--color-text)" fontSize={size / 4} fontWeight="800">
           {pct}%
         </text>
       </svg>
@@ -46,48 +46,48 @@ function ProductMockup() {
   }
   return (
     <div aria-hidden="true" className="relative select-none">
-      <div className="rounded-[16px] border border-[#2a3654] bg-[#0d1322] shadow-[0_30px_80px_rgba(0,0,0,0.5)] overflow-hidden">
-        <div className="flex items-center gap-1.5 border-b border-[#2a3654] bg-[#131a2c] px-4 py-2.5">
-          <span className="size-2.5 rounded-full bg-[#f87171]/70" />
-          <span className="size-2.5 rounded-full bg-[#fbbf24]/70" />
-          <span className="size-2.5 rounded-full bg-[#4ade80]/70" />
-          <span className="ml-3 flex-1 truncate rounded-[6px] bg-[#0a0e1a] px-3 py-1 text-[0.65rem] text-[#8b98b8]">
+      <div className="rounded-[16px] border border-border bg-bg-deep shadow-[0_30px_80px_rgba(0,0,0,0.5)] overflow-hidden">
+        <div className="flex items-center gap-1.5 border-b border-border bg-surface px-4 py-2.5">
+          <span className="size-2.5 rounded-full bg-danger/70" />
+          <span className="size-2.5 rounded-full bg-warning/70" />
+          <span className="size-2.5 rounded-full bg-success/70" />
+          <span className="ml-3 flex-1 truncate rounded-[6px] bg-bg px-3 py-1 text-[0.65rem] text-text-dim">
             konforme — rapport d'audit · votre-site.fr
           </span>
         </div>
         <div className="p-5">
           <div className="flex items-center gap-4">
-            {ring(87, '#4ade80')}
+            {ring(87, 'var(--color-success)')}
             <div className="flex-1 space-y-2">
-              <div className="h-2.5 w-2/3 rounded bg-[#2a3654]" />
-              <div className="h-2 w-1/2 rounded bg-[#1f2a44]" />
+              <div className="h-2.5 w-2/3 rounded bg-border" />
+              <div className="h-2 w-1/2 rounded bg-border" />
               <div className="flex gap-2 pt-1">
-                <span className="rounded-full bg-[#14532d]/70 px-2 py-0.5 text-[0.6rem] font-bold text-[#bbf7d0]">RGAA 85%</span>
-                <span className="rounded-full bg-[#14532d]/70 px-2 py-0.5 text-[0.6rem] font-bold text-[#bbf7d0]">WCAG 92%</span>
+                <span className="rounded-full bg-success-bg/70 px-2 py-0.5 text-[0.6rem] font-bold text-success-soft">RGAA 85%</span>
+                <span className="rounded-full bg-success-bg/70 px-2 py-0.5 text-[0.6rem] font-bold text-success-soft">WCAG 92%</span>
               </div>
             </div>
           </div>
           <div className="mt-4 space-y-2">
             {[
-              { c: 'bg-[#7f1d1d]/70 text-[#fecaca]', label: 'Critique', w: 'w-3/4' },
-              { c: 'bg-[#713f12]/70 text-[#fde68a]', label: 'Modéré', w: 'w-2/3' },
-              { c: 'bg-[#1e3a5f]/70 text-[#bae6fd]', label: 'Mineur', w: 'w-1/2' },
+              { c: 'bg-danger-bg/70 text-danger-soft', label: 'Critique', w: 'w-3/4' },
+              { c: 'bg-warning-bg/70 text-warning-soft', label: 'Modéré', w: 'w-2/3' },
+              { c: 'bg-info-bg/70 text-info-soft', label: 'Mineur', w: 'w-1/2' },
             ].map((row) => (
-              <div key={row.label} className="flex items-center gap-2.5 rounded-[10px] border border-[#2a3654] px-3 py-2">
+              <div key={row.label} className="flex items-center gap-2.5 rounded-[10px] border border-border px-3 py-2">
                 <span className={`rounded-full px-2 py-0.5 text-[0.6rem] font-bold ${row.c}`}>{row.label}</span>
-                <span className={`h-2 rounded bg-[#2a3654] ${row.w}`} />
+                <span className={`h-2 rounded bg-border ${row.w}`} />
               </div>
             ))}
           </div>
-          <div className="mt-4 flex items-center justify-between rounded-[10px] border border-[#4ade80]/30 bg-[#14532d]/25 px-3 py-2">
-            <span className="text-[0.65rem] font-semibold text-[#d1fae5]">Déclaration d'accessibilité générée</span>
-            <span className="text-[0.65rem] font-bold text-[#4ade80]">✓ prête à publier</span>
+          <div className="mt-4 flex items-center justify-between rounded-[10px] border border-success/30 bg-success-bg/25 px-3 py-2">
+            <span className="text-[0.65rem] font-semibold text-success-soft">Déclaration d'accessibilité générée</span>
+            <span className="text-[0.65rem] font-bold text-success">✓ prête à publier</span>
           </div>
         </div>
       </div>
-      <div className="absolute -bottom-4 -left-4 rounded-[12px] border border-[#2a3654] bg-[#131a2c] px-3.5 py-2 shadow-xl">
-        <span className="text-[0.65rem] text-[#8b98b8]">Surveillance</span>
-        <span className="ml-2 text-[0.65rem] font-bold text-[#4ade80]">● hebdo active</span>
+      <div className="absolute -bottom-4 -left-4 rounded-[12px] border border-border bg-surface px-3.5 py-2 shadow-xl">
+        <span className="text-[0.65rem] text-text-dim">Surveillance</span>
+        <span className="ml-2 text-[0.65rem] font-bold text-success">● hebdo active</span>
       </div>
     </div>
   )
@@ -181,7 +181,7 @@ export function Landing() {
       <section className="relative overflow-hidden">
         <div className="mx-auto max-w-7xl px-6 pt-16 pb-16 md:pt-24 md:pb-24 grid items-center gap-12 lg:grid-cols-2">
           <div className="text-center lg:text-left">
-            <p className="inline-block rounded-full border border-[#2563eb]/40 bg-[#2563eb]/10 px-4 py-1.5 text-xs font-semibold tracking-wide text-[#67e8f9] uppercase mb-6">
+            <p className="inline-block rounded-full border border-primary/40 bg-primary/10 px-4 py-1.5 text-xs font-semibold tracking-wide text-link uppercase mb-6">
               EAA 2025 · RGAA 4.1 · WCAG 2.2
             </p>
             <h1 className="gradient-text text-balance text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.08] mb-6">
@@ -189,7 +189,7 @@ export function Landing() {
               <br />
               enfin automatisée
             </h1>
-            <p className="text-lg md:text-xl text-[#a3b0c9] max-w-2xl mx-auto lg:mx-0 mb-8 leading-relaxed text-balance">
+            <p className="text-lg md:text-xl text-text-muted max-w-2xl mx-auto lg:mx-0 mb-8 leading-relaxed text-balance">
               Une centaine de règles RGAA 4.1 / WCAG 2.2 vérifiées automatiquement, chaque
               correction expliquée, la déclaration légale générée, et vos sites surveillés
               semaine après semaine.
@@ -202,7 +202,7 @@ export function Landing() {
                 <Button size="lg" variant="ghost">Créer un compte</Button>
               </Link>
             </div>
-            <ul className="flex flex-wrap justify-center lg:justify-start gap-x-5 gap-y-2 text-xs font-semibold text-[#a3b0c9]">
+            <ul className="flex flex-wrap justify-center lg:justify-start gap-x-5 gap-y-2 text-xs font-semibold text-text-muted">
               <li className="inline-flex items-center gap-1.5"><CheckDot /> Conçu pour le RGAA 🇫🇷</li>
               <li className="inline-flex items-center gap-1.5"><CheckDot /> Données hébergées en UE</li>
               <li className="inline-flex items-center gap-1.5"><CheckDot /> Sans script à installer</li>
@@ -220,7 +220,7 @@ export function Landing() {
         <PublicChecker />
       </section>
 
-      <section className="border-y border-[#2a3654]/60 bg-[#0d1322]/60 mb-16" aria-label="Chiffres clés">
+      <section className="border-y border-border/60 bg-bg-deep/60 mb-16" aria-label="Chiffres clés">
         <dl className="mx-auto max-w-6xl px-6 py-8 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           {[
             { v: '≈100', l: 'règles vérifiées automatiquement' },
@@ -229,7 +229,7 @@ export function Landing() {
             { v: 'Hebdo', l: 'surveillance planifiée des sites' },
           ].map((s) => (
             <div key={s.l}>
-              <dt className="order-2 text-xs text-[#8b98b8] mt-1">{s.l}</dt>
+              <dt className="order-2 text-xs text-text-dim mt-1">{s.l}</dt>
               <dd className="order-1 text-2xl md:text-3xl font-extrabold gradient-text">{s.v}</dd>
             </div>
           ))}
@@ -242,7 +242,7 @@ export function Landing() {
           {FEATURES.map((f) => (
             <Card key={f.title} className="hover:-translate-y-1 transition-transform">
               <CardContent>
-                <div className="mb-4 inline-flex size-11 items-center justify-center rounded-[12px] bg-[#2563eb]/15 border border-[#2563eb]/30 text-[#93c5fd]">
+                <div className="mb-4 inline-flex size-11 items-center justify-center rounded-[12px] bg-primary/15 border border-primary/30 text-primary-soft">
                   {f.icon}
                 </div>
                 <CardTitle className="mb-2">{f.title}</CardTitle>
@@ -263,9 +263,9 @@ export function Landing() {
             { t: '2. Recevez le rapport', d: "En ~1 minute, chaque non-conformité est listée avec sa sévérité, le code fautif et la correction." },
             { t: '3. Publiez votre déclaration', d: "Corrigez, re-scannez, puis générez votre déclaration d'accessibilité prête à mettre en ligne." },
           ].map((s) => (
-            <li key={s.t} className="rounded-[14px] border border-[#2a3654] bg-[#131a2c]/60 p-6">
+            <li key={s.t} className="rounded-[14px] border border-border bg-surface/60 p-6">
               <h3 className="font-bold mb-2">{s.t}</h3>
-              <p className="text-sm text-[#a3b0c9] leading-relaxed">{s.d}</p>
+              <p className="text-sm text-text-muted leading-relaxed">{s.d}</p>
             </li>
           ))}
         </ol>
@@ -277,14 +277,14 @@ export function Landing() {
         </h2>
         <div className="space-y-3">
           {FAQ.map((f) => (
-            <details key={f.q} className="group rounded-[12px] border border-[#2a3654] bg-[#131a2c]/60 px-5 py-1">
+            <details key={f.q} className="group rounded-[12px] border border-border bg-surface/60 px-5 py-1">
               <summary className="cursor-pointer py-3.5 font-semibold list-none flex items-center justify-between gap-3">
                 {f.q}
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true" className="shrink-0 transition-transform group-open:rotate-180">
                   <path d="M6 9l6 6 6-6" />
                 </svg>
               </summary>
-              <p className="pb-4 text-sm text-[#a3b0c9] leading-relaxed">{f.a}</p>
+              <p className="pb-4 text-sm text-text-muted leading-relaxed">{f.a}</p>
             </details>
           ))}
         </div>
@@ -292,11 +292,11 @@ export function Landing() {
 
       <section className="mx-auto max-w-4xl px-6 pb-16" aria-labelledby="trust-title">
         <h2 id="trust-title" className="sr-only">Qui sommes-nous</h2>
-        <div className="rounded-[16px] border border-[#2a3654] bg-[#0d1322]/60 px-6 py-6 md:px-10 flex flex-col md:flex-row items-center gap-5 text-center md:text-left">
+        <div className="rounded-[16px] border border-border bg-bg-deep/60 px-6 py-6 md:px-10 flex flex-col md:flex-row items-center gap-5 text-center md:text-left">
           <span aria-hidden="true" className="text-3xl">🇫🇷</span>
           <div className="flex-1">
             <p className="font-bold">Conçu et opéré à Lyon par l'agence Kayzen</p>
-            <p className="text-sm text-[#a3b0c9] mt-1">
+            <p className="text-sm text-text-muted mt-1">
               Konforme est développé en France, les données sont hébergées dans l'Union
               européenne (Francfort), et l'audit manuel de l'offre Accompagné est réalisé par
               nos experts. Pas d'overlay, pas de boîte noire : de vraies corrections dans votre code.
@@ -312,7 +312,7 @@ export function Landing() {
         <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-balance mb-4">
           Prêt pour l'European Accessibility Act ?
         </h2>
-        <p className="text-[#a3b0c9] mb-8 max-w-xl mx-auto">
+        <p className="text-text-muted mb-8 max-w-xl mx-auto">
           Depuis juin 2025, les sites e-commerce et services numériques européens doivent être
           accessibles. Konforme identifie vos non-conformités dès aujourd'hui.
         </p>
@@ -327,7 +327,7 @@ export function Landing() {
 /* Icônes SVG inline (stroke currentColor, décoratives) */
 function CheckDot() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
       <path d="M5 13l4 4L19 7" />
     </svg>
   )

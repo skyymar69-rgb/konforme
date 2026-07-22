@@ -39,7 +39,7 @@ export function Scans() {
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Scans</h1>
-          <p className="text-[#a3b0c9] mt-1">Historique des audits d'accessibilité.</p>
+          <p className="text-text-muted mt-1">Historique des audits d'accessibilité.</p>
         </div>
         <div>
           <label htmlFor="site-filter" className="sr-only">Filtrer par site</label>
@@ -50,7 +50,7 @@ export function Scans() {
               const v = e.target.value
               setParams(v ? { site: v } : {})
             }}
-            className="rounded-[10px] border border-[#3b4970] bg-[#0a0e1a] px-3 py-2 text-sm text-[#f1f5fb]"
+            className="rounded-[10px] border border-border-strong bg-bg px-3 py-2 text-sm text-text"
           >
             <option value="">Tous les sites</option>
             {sites?.map((s) => (
@@ -72,7 +72,7 @@ export function Scans() {
       {!isLoading && (scans?.length ?? 0) === 0 && (
         <Card className="text-center py-14">
           <h2 className="text-lg font-bold mb-2">Aucun audit pour l'instant</h2>
-          <p className="text-sm text-[#a3b0c9] mb-6">
+          <p className="text-sm text-text-muted mb-6">
             Lancez votre premier audit depuis la page Sites.
           </p>
           <Link to="/dashboard/sites">
@@ -84,7 +84,7 @@ export function Scans() {
       {siteFilter && chartData.length >= 2 && (
         <Card>
           <h2 className="text-lg font-bold mb-2">Évolution du score</h2>
-          <p className="text-xs text-[#8b98b8] mb-3">
+          <p className="text-xs text-text-dim mb-3">
             Taux de conformité des {chartData.length} derniers audits terminés de ce site.
           </p>
           <Suspense fallback={<Skeleton className="h-64" />}>
@@ -98,7 +98,7 @@ export function Scans() {
           <table className="w-full text-sm">
             <caption className="sr-only">Historique des audits d'accessibilité</caption>
             <thead>
-              <tr className="border-b border-[#2a3654] text-left text-xs uppercase tracking-wider text-[#a3b0c9]">
+              <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-text-muted">
                 <th scope="col" className="px-5 py-3.5 font-semibold">Site</th>
                 <th scope="col" className="px-5 py-3.5 font-semibold">Date</th>
                 <th scope="col" className="px-5 py-3.5 font-semibold">Statut</th>
@@ -113,32 +113,32 @@ export function Scans() {
               {scans!.map((scan) => {
                 const st = STATUS_META[scan.status]
                 return (
-                  <tr key={scan.id} className="border-b border-[#2a3654]/60 last:border-0 hover:bg-white/[0.03]">
+                  <tr key={scan.id} className="border-b border-border/60 last:border-0 hover:bg-white/[0.03]">
                     <td className="px-5 py-3.5 font-medium">{scan.sites?.name ?? '—'}</td>
-                    <td className="px-5 py-3.5 text-[#a3b0c9]">{formatDate(scan.created_at, true)}</td>
+                    <td className="px-5 py-3.5 text-text-muted">{formatDate(scan.created_at, true)}</td>
                     <td className="px-5 py-3.5"><Badge className={st.className}>{st.label}</Badge></td>
                     <td className="px-5 py-3.5 font-bold" style={{ color: scoreColor(scan.score) }}>
                       {scan.score !== null ? `${Math.round(scan.score)}%` : '—'}
                     </td>
                     <td className="px-5 py-3.5">{scan.status === 'done' ? scan.issues_count : '—'}</td>
                     <td className="px-5 py-3.5">{scan.status === 'done' ? scan.pages_count : '—'}</td>
-                    <td className="px-5 py-3.5 text-[#a3b0c9]">{formatDuration(scan.duration_ms)}</td>
+                    <td className="px-5 py-3.5 text-text-muted">{formatDuration(scan.duration_ms)}</td>
                     <td className="px-5 py-3.5">
                       {scan.status === 'done' ? (
                         <Link
                           to={`/dashboard/scans/${scan.id}`}
-                          className="text-[#67e8f9] font-semibold hover:underline"
+                          className="text-link font-semibold hover:underline"
                         >
                           Rapport<span className="sr-only"> du scan de {scan.sites?.name} du {formatDate(scan.created_at)}</span>
                         </Link>
                       ) : scan.status === 'failed' ? (
-                        <span className="text-xs text-[#fecaca]" title={scan.error ?? undefined}>
+                        <span className="text-xs text-danger-soft" title={scan.error ?? undefined}>
                           {scan.error ? scan.error.slice(0, 60) : 'Erreur'}
                         </span>
                       ) : (
                         <Link
                           to={`/dashboard/scans/${scan.id}`}
-                          className="text-[#93c5fd] font-semibold hover:underline"
+                          className="text-primary-soft font-semibold hover:underline"
                         >
                           Suivre<span className="sr-only"> le scan en cours de {scan.sites?.name}</span>
                         </Link>

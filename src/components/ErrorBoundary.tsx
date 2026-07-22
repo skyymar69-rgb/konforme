@@ -27,10 +27,10 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
       >
         <div className="max-w-md">
           <h1 className="text-2xl font-bold mb-3">Une erreur est survenue</h1>
-          <p className="text-[#a3b0c9] mb-6 text-sm leading-relaxed">
+          <p className="text-text-muted mb-6 text-sm leading-relaxed">
             L'application a rencontré un problème inattendu. Rechargez la page ; si le problème
             persiste, contactez-nous à{' '}
-            <a href="mailto:contact@kayzen-lyon.fr" className="text-[#67e8f9] underline">
+            <a href="mailto:contact@kayzen-lyon.fr" className="text-link underline">
               contact@kayzen-lyon.fr
             </a>
             .
@@ -38,7 +38,7 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="rounded-[10px] bg-[#2563eb] px-5 py-2.5 font-semibold text-white hover:bg-[#3b82f6]"
+            className="rounded-[10px] bg-primary px-5 py-2.5 font-semibold text-white hover:bg-primary-2"
           >
             Recharger la page
           </button>

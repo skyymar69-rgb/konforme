@@ -26,9 +26,9 @@ export function Contact() {
         path="/contact"
         jsonLd={[ORGANIZATION_JSONLD]}
       />
-      <p className="text-xs font-semibold uppercase tracking-wider text-[#67e8f9] mb-3">Contact</p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-link mb-3">Contact</p>
       <h1 className="text-4xl font-extrabold tracking-tight mb-4">Parlons de votre conformité</h1>
-      <p className="text-lg text-[#a3b0c9] mb-10">
+      <p className="text-lg text-text-muted mb-10">
         Audit accompagné, question technique ou demande de devis : nous répondons sous 24 h ouvrées.
       </p>
 
@@ -44,7 +44,7 @@ export function Contact() {
                 type="text"
                 required
                 autoComplete="name"
-                className="w-full rounded-[10px] border border-[#3b4970] bg-[#0a0e1a] px-3.5 py-2.5 text-sm text-[#f1f5fb]"
+                className="w-full rounded-[10px] border border-border-strong bg-bg px-3.5 py-2.5 text-sm text-text"
               />
             </div>
             <div>
@@ -52,7 +52,7 @@ export function Contact() {
               <select
                 id="ct-subject"
                 name="subject"
-                className="w-full rounded-[10px] border border-[#3b4970] bg-[#0a0e1a] px-3.5 py-2.5 text-sm text-[#f1f5fb]"
+                className="w-full rounded-[10px] border border-border-strong bg-bg px-3.5 py-2.5 text-sm text-text"
               >
                 <option>Demande de devis</option>
                 <option>Question sur un audit</option>
@@ -67,12 +67,12 @@ export function Contact() {
                 name="message"
                 required
                 rows={5}
-                className="w-full rounded-[10px] border border-[#3b4970] bg-[#0a0e1a] px-3.5 py-2.5 text-sm text-[#f1f5fb]"
+                className="w-full rounded-[10px] border border-border-strong bg-bg px-3.5 py-2.5 text-sm text-text"
               />
             </div>
             <Button type="submit" variant="primary">Envoyer via votre messagerie</Button>
             {sent && (
-              <p role="status" className="text-sm text-[#bbf7d0]">
+              <p role="status" className="text-sm text-success-soft">
                 Votre logiciel de messagerie s'est ouvert avec le message pré-rempli. Si rien ne
                 s'est passé, écrivez-nous directement à contact@kayzen-lyon.fr.
               </p>
@@ -82,18 +82,18 @@ export function Contact() {
 
         <Card>
           <h2 className="text-lg font-bold mb-4">Coordonnées</h2>
-          <address className="not-italic space-y-3 text-sm text-[#cbd5e1] leading-relaxed">
+          <address className="not-italic space-y-3 text-sm text-text-soft leading-relaxed">
             <p>
-              <strong className="text-[#f1f5fb]">KAYZEN SASU</strong>
+              <strong className="text-text">KAYZEN SASU</strong>
               <br />6 rue Pierre Termier
               <br />69009 Lyon, France
             </p>
             <p>
-              <a href="tel:+33487776861" className="text-[#67e8f9] hover:underline">+33 (0)4 87 77 68 61</a>
+              <a href="tel:+33487776861" className="text-link hover:underline">+33 (0)4 87 77 68 61</a>
               <br />
-              <a href="mailto:contact@kayzen-lyon.fr" className="text-[#67e8f9] hover:underline">contact@kayzen-lyon.fr</a>
+              <a href="mailto:contact@kayzen-lyon.fr" className="text-link hover:underline">contact@kayzen-lyon.fr</a>
             </p>
-            <p className="text-xs text-[#8b98b8]">Du lundi au vendredi, 9 h – 18 h.</p>
+            <p className="text-xs text-text-dim">Du lundi au vendredi, 9 h – 18 h.</p>
           </address>
         </Card>
       </div>

@@ -61,7 +61,7 @@ export function Settings() {
       <Seo title="Paramètres" description="Compte et organisation." path="/dashboard/settings" noindex />
       <header>
         <h1 className="text-2xl font-bold tracking-tight">Paramètres</h1>
-        <p className="text-[#a3b0c9] mt-1">Votre compte et votre organisation.</p>
+        <p className="text-text-muted mt-1">Votre compte et votre organisation.</p>
       </header>
 
       <Card>
@@ -74,9 +74,9 @@ export function Settings() {
               type="email"
               value={user?.email ?? ''}
               disabled
-              className="w-full rounded-[10px] border border-[#2a3654] bg-[#131a2c] px-3.5 py-2.5 text-sm text-[#a3b0c9]"
+              className="w-full rounded-[10px] border border-border bg-surface px-3.5 py-2.5 text-sm text-text-muted"
             />
-            <p className="mt-1 text-xs text-[#8b98b8]">Géré par votre compte Google.</p>
+            <p className="mt-1 text-xs text-text-dim">Géré par votre compte Google.</p>
           </div>
           <div>
             <label htmlFor="pf-name" className="block text-sm font-semibold mb-1.5">Nom complet</label>
@@ -86,10 +86,10 @@ export function Settings() {
               type="text"
               defaultValue={profile?.full_name ?? ''}
               autoComplete="name"
-              className="w-full rounded-[10px] border border-[#3b4970] bg-[#0a0e1a] px-3.5 py-2.5 text-sm text-[#f1f5fb]"
+              className="w-full rounded-[10px] border border-border-strong bg-bg px-3.5 py-2.5 text-sm text-text"
             />
           </div>
-          {profileMsg && <p role="status" className="text-sm text-[#bbf7d0]">{profileMsg}</p>}
+          {profileMsg && <p role="status" className="text-sm text-success-soft">{profileMsg}</p>}
           <Button type="submit" variant="primary" size="sm" disabled={updateProfile.isPending}>
             {updateProfile.isPending ? 'Enregistrement…' : 'Enregistrer'}
           </Button>
@@ -99,7 +99,7 @@ export function Settings() {
       <Card>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold">Organisation</h2>
-          <Badge className="border-[#3b4970] text-[#a3b0c9]">
+          <Badge className="border-border-strong text-text-muted">
             Plan {org?.plan === 'free' ? 'Gratuit' : org?.plan === 'pro' ? 'Pro' : 'Entreprise'}
           </Badge>
         </div>
@@ -112,13 +112,13 @@ export function Settings() {
               type="text"
               defaultValue={org?.name ?? ''}
               disabled={!isAdmin}
-              className="w-full rounded-[10px] border border-[#3b4970] bg-[#0a0e1a] px-3.5 py-2.5 text-sm text-[#f1f5fb] disabled:opacity-60"
+              className="w-full rounded-[10px] border border-border-strong bg-bg px-3.5 py-2.5 text-sm text-text disabled:opacity-60"
             />
             {!isAdmin && (
-              <p className="mt-1 text-xs text-[#8b98b8]">Seul un administrateur peut modifier ce nom.</p>
+              <p className="mt-1 text-xs text-text-dim">Seul un administrateur peut modifier ce nom.</p>
             )}
           </div>
-          {orgMsg && <p role="status" className="text-sm text-[#bbf7d0]">{orgMsg}</p>}
+          {orgMsg && <p role="status" className="text-sm text-success-soft">{orgMsg}</p>}
           {isAdmin && (
             <Button type="submit" variant="primary" size="sm" disabled={updateOrg.isPending}>
               {updateOrg.isPending ? 'Enregistrement…' : 'Enregistrer'}
@@ -130,30 +130,30 @@ export function Settings() {
       <Card>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold">Abonnement</h2>
-          <Badge className="border-[#3b4970] text-[#a3b0c9]">
+          <Badge className="border-border-strong text-text-muted">
             {(membership?.trial_days_left ?? 0) > 0
               ? `Essai Pro — ${membership!.trial_days_left} j restants`
               : `${plan.name} — ${plan.price}${plan.id !== 'enterprise' ? `/${plan.period.replace('par ', '')}` : ''}`}
           </Badge>
         </div>
         <dl className="grid gap-3 sm:grid-cols-2 text-sm">
-          <div className="rounded-[10px] border border-[#2a3654] px-4 py-3">
-            <dt className="text-xs text-[#8b98b8]">Sites surveillés</dt>
+          <div className="rounded-[10px] border border-border px-4 py-3">
+            <dt className="text-xs text-text-dim">Sites surveillés</dt>
             <dd className="mt-1 font-bold">
               {sites?.length ?? '—'} / {Number.isFinite(plan.maxSites) ? plan.maxSites : '∞'}
             </dd>
           </div>
-          <div className="rounded-[10px] border border-[#2a3654] px-4 py-3">
-            <dt className="text-xs text-[#8b98b8]">Audits ce mois-ci</dt>
+          <div className="rounded-[10px] border border-border px-4 py-3">
+            <dt className="text-xs text-text-dim">Audits ce mois-ci</dt>
             <dd className="mt-1 font-bold">
               {scans ? usedScans : '—'} / {Number.isFinite(plan.scansPerMonth) ? plan.scansPerMonth : '∞'}
             </dd>
           </div>
         </dl>
         {plan.id === 'free' && (
-          <p className="mt-4 text-sm text-[#a3b0c9]">
+          <p className="mt-4 text-sm text-text-muted">
             Besoin de plus de sites ou d'audits ?{' '}
-            <Link to="/tarifs" className="text-[#67e8f9] font-semibold hover:underline">
+            <Link to="/tarifs" className="text-link font-semibold hover:underline">
               Découvrir le plan Pro
             </Link>
           </p>
@@ -162,7 +162,7 @@ export function Settings() {
 
       <Card>
         <h2 className="text-lg font-bold mb-2">Session</h2>
-        <p className="text-sm text-[#a3b0c9] mb-4">Vous êtes connecté avec {user?.email}.</p>
+        <p className="text-sm text-text-muted mb-4">Vous êtes connecté avec {user?.email}.</p>
         <Button variant="ghost" onClick={() => signOut()}>Se déconnecter</Button>
       </Card>
     </div>

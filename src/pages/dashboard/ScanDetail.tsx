@@ -77,7 +77,7 @@ export function ScanDetail() {
 
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <nav aria-label="Fil d'Ariane" className="text-sm text-[#8b98b8] mb-1">
+          <nav aria-label="Fil d'Ariane" className="text-sm text-text-dim mb-1">
             <Link to="/dashboard/scans" className="hover:text-white hover:underline">Scans</Link>
             {' / '}
             <span aria-current="page">Rapport</span>
@@ -86,7 +86,7 @@ export function ScanDetail() {
             {scan.sites?.name ?? 'Site'}{' '}
             <Badge className={st.className}>{st.label}</Badge>
           </h1>
-          <p className="text-[#a3b0c9] mt-1">
+          <p className="text-text-muted mt-1">
             Audit du {formatDate(scan.created_at, true)} · {scan.pages_count} page{scan.pages_count > 1 ? 's' : ''} analysée{scan.pages_count > 1 ? 's' : ''}
           </p>
         </div>
@@ -110,14 +110,14 @@ export function ScanDetail() {
       </header>
 
       {(scan.status === 'pending' || scan.status === 'running') && (
-        <Card role="status" className="flex items-center gap-4 border-[#38bdf8]/40">
+        <Card role="status" className="flex items-center gap-4 border-info/40">
           <span
             aria-hidden="true"
-            className="size-5 shrink-0 animate-spin rounded-full border-2 border-[#38bdf8] border-t-transparent"
+            className="size-5 shrink-0 animate-spin rounded-full border-2 border-info border-t-transparent"
           />
           <div>
             <p className="font-semibold text-sm">Analyse en cours…</p>
-            <p className="text-xs text-[#8b98b8]">
+            <p className="text-xs text-text-dim">
               Le moteur crawle et audite les pages du site. Cette page se met à jour automatiquement.
             </p>
           </div>
@@ -125,9 +125,9 @@ export function ScanDetail() {
       )}
 
       {scan.status === 'failed' && (
-        <Card role="alert" className="border-[#f87171]/40">
-          <p className="font-semibold text-sm text-[#fecaca]">L'audit a échoué</p>
-          <p className="text-xs text-[#a3b0c9] mt-1">{scan.error ?? 'Erreur inconnue.'}</p>
+        <Card role="alert" className="border-danger/40">
+          <p className="font-semibold text-sm text-danger-soft">L'audit a échoué</p>
+          <p className="text-xs text-text-muted mt-1">{scan.error ?? 'Erreur inconnue.'}</p>
         </Card>
       )}
 
@@ -136,7 +136,7 @@ export function ScanDetail() {
           <ScoreRing score={scan.score} label="Taux de conformité global" />
           <div>
             <div className="text-sm font-semibold">Conformité globale</div>
-            <p className="text-xs text-[#8b98b8] mt-1">
+            <p className="text-xs text-text-dim mt-1">
               Règles respectées / règles applicables sur l'échantillon audité.
             </p>
           </div>
@@ -145,14 +145,14 @@ export function ScanDetail() {
           <ScoreRing score={scan.rgaa_score} size={72} label="Score RGAA 4.1" />
           <div>
             <div className="text-sm font-semibold">RGAA 4.1</div>
-            <p className="text-xs text-[#8b98b8] mt-1">Référentiel français</p>
+            <p className="text-xs text-text-dim mt-1">Référentiel français</p>
           </div>
         </Card>
         <Card className="flex items-center gap-5">
           <ScoreRing score={scan.wcag_score} size={72} label="Score WCAG 2.2" />
           <div>
             <div className="text-sm font-semibold">WCAG 2.2 AA</div>
-            <p className="text-xs text-[#8b98b8] mt-1">Standard international / EAA</p>
+            <p className="text-xs text-text-dim mt-1">Standard international / EAA</p>
           </div>
         </Card>
       </div>
@@ -160,19 +160,19 @@ export function ScanDetail() {
       {scan.status === 'done' && (scan.page_scores?.length ?? 0) > 1 && (
         <Card>
           <h2 className="text-lg font-bold mb-4">
-            Score par page <span className="text-[#8b98b8] font-normal">({scan.page_scores!.length})</span>
+            Score par page <span className="text-text-dim font-normal">({scan.page_scores!.length})</span>
           </h2>
           <ul className="space-y-2">
             {scan.page_scores!.map((p) => (
-              <li key={p.url} className="flex items-center gap-3 rounded-[10px] border border-[#2a3654] px-4 py-2.5 text-sm">
+              <li key={p.url} className="flex items-center gap-3 rounded-[10px] border border-border px-4 py-2.5 text-sm">
                 <span
                   className="shrink-0 font-bold tabular-nums w-12 text-right"
                   style={{ color: scoreColor(p.score) }}
                 >
                   {p.score !== null ? `${Math.round(p.score)}%` : '—'}
                 </span>
-                <span className="flex-1 min-w-0 truncate text-[#cbd5e1]">{p.url}</span>
-                <span className="shrink-0 text-xs text-[#8b98b8]">
+                <span className="flex-1 min-w-0 truncate text-text-soft">{p.url}</span>
+                <span className="shrink-0 text-xs text-text-dim">
                   {p.issues} issue{p.issues > 1 ? 's' : ''}
                 </span>
               </li>
@@ -185,7 +185,7 @@ export function ScanDetail() {
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
           <h2 className="text-lg font-bold">
-            Non-conformités <span className="text-[#8b98b8] font-normal">({filtered.length})</span>
+            Non-conformités <span className="text-text-dim font-normal">({filtered.length})</span>
           </h2>
           <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer par sévérité">
             <FilterChip active={severityFilter === 'all'} onClick={() => setSeverityFilter('all')}>
@@ -196,12 +196,12 @@ export function ScanDetail() {
                 {SEVERITY_META[s].label} ({counts[s]})
               </FilterChip>
             ))}
-            <label className="ml-2 inline-flex items-center gap-2 text-sm text-[#a3b0c9]">
+            <label className="ml-2 inline-flex items-center gap-2 text-sm text-text-muted">
               <input
                 type="checkbox"
                 checked={hideFixed}
                 onChange={(e) => setHideFixed(e.target.checked)}
-                className="size-4 accent-[#2563eb]"
+                className="size-4 accent-primary"
               />
               Masquer les corrigées
             </label>
@@ -209,7 +209,7 @@ export function ScanDetail() {
         </div>
 
         {filtered.length === 0 ? (
-          <p className="text-sm text-[#a3b0c9] py-8 text-center">
+          <p className="text-sm text-text-muted py-8 text-center">
             {issues?.length === 0
               ? '🎉 Aucune non-conformité détectée sur les règles automatisables.'
               : 'Aucune issue ne correspond aux filtres.'}
@@ -224,7 +224,7 @@ export function ScanDetail() {
       </Card>
       )}
 
-      <p className="text-xs text-[#8b98b8]">
+      <p className="text-xs text-text-dim">
         Un audit automatique couvre les critères détectables par machine (~30 % du RGAA). Pour une
         conformité totale opposable, complétez avec un audit manuel — c'est inclus dans notre offre
         accompagnée.
@@ -249,8 +249,8 @@ function FilterChip({
       aria-pressed={active}
       className={
         active
-          ? 'rounded-full bg-[#2563eb] px-3 py-1.5 text-xs font-semibold text-white'
-          : 'rounded-full border border-[#3b4970] px-3 py-1.5 text-xs font-semibold text-[#a3b0c9] hover:bg-white/5 hover:text-white'
+          ? 'rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-white'
+          : 'rounded-full border border-border-strong px-3 py-1.5 text-xs font-semibold text-text-muted hover:bg-raise hover:text-white'
       }
     >
       {children}
@@ -300,7 +300,7 @@ function IssueRow({ issue }: { issue: ScanIssue }) {
   }
 
   return (
-    <li className={`rounded-[12px] border border-[#2a3654] ${isDone ? 'opacity-60' : ''}`}>
+    <li className={`rounded-[12px] border border-border ${isDone ? 'opacity-60' : ''}`}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -310,12 +310,12 @@ function IssueRow({ issue }: { issue: ScanIssue }) {
         <Badge className={sev.className}>{sev.label}</Badge>
         <span className="flex-1 min-w-0">
           <span className="block font-semibold text-sm truncate">{issue.title}</span>
-          <span className="block text-xs text-[#8b98b8] truncate">
+          <span className="block text-xs text-text-dim truncate">
             {issue.rule_id}
             {issue.page_url ? ` · ${issue.page_url}` : ''}
           </span>
         </span>
-        {isDone && <Badge className="bg-[#14532d]/60 text-[#bbf7d0] border-[#4ade80]/40">Traitée</Badge>}
+        {isDone && <Badge className="bg-success-bg/60 text-success-soft border-success/40">Traitée</Badge>}
         <svg
           viewBox="0 0 24 24"
           width="16"
@@ -332,13 +332,13 @@ function IssueRow({ issue }: { issue: ScanIssue }) {
       </button>
 
       {open && (
-        <div className="border-t border-[#2a3654] px-4 py-4 space-y-4 text-sm">
-          {issue.description && <p className="text-[#cbd5e1] whitespace-pre-line">{issue.description}</p>}
+        <div className="border-t border-border px-4 py-4 space-y-4 text-sm">
+          {issue.description && <p className="text-text-soft whitespace-pre-line">{issue.description}</p>}
 
           {issue.selector && (
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#a3b0c9] mb-1">Sélecteur</h3>
-              <code className="block rounded-[8px] bg-[#0a0e1a] border border-[#2a3654] px-3 py-2 text-xs text-[#93c5fd] overflow-x-auto">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-text-muted mb-1">Sélecteur</h3>
+              <code className="block rounded-[8px] bg-bg border border-border px-3 py-2 text-xs text-primary-soft overflow-x-auto">
                 {issue.selector}
               </code>
             </div>
@@ -346,8 +346,8 @@ function IssueRow({ issue }: { issue: ScanIssue }) {
 
           {issue.html_snippet && (
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#a3b0c9] mb-1">Code concerné</h3>
-              <pre className="rounded-[8px] bg-[#0a0e1a] border border-[#2a3654] px-3 py-2 text-xs text-[#e2e8f0] overflow-x-auto">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-text-muted mb-1">Code concerné</h3>
+              <pre className="rounded-[8px] bg-bg border border-border px-3 py-2 text-xs text-text-soft overflow-x-auto">
                 <code>{issue.html_snippet}</code>
               </pre>
             </div>
@@ -355,8 +355,8 @@ function IssueRow({ issue }: { issue: ScanIssue }) {
 
           {issue.suggested_fix && (
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#a3b0c9] mb-1">Correction suggérée</h3>
-              <p className="rounded-[8px] border border-[#4ade80]/30 bg-[#14532d]/25 px-3 py-2 text-[#d1fae5]">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-text-muted mb-1">Correction suggérée</h3>
+              <p className="rounded-[8px] border border-success/30 bg-success-bg/25 px-3 py-2 text-success-soft">
                 {issue.suggested_fix}
               </p>
             </div>
@@ -370,23 +370,23 @@ function IssueRow({ issue }: { issue: ScanIssue }) {
                 </Button>
               )}
               {aiState === 'loading' && (
-                <p role="status" className="inline-flex items-center gap-2 text-xs text-[#a3b0c9]">
-                  <span aria-hidden="true" className="size-3.5 rounded-full border-2 border-[#38bdf8] border-t-transparent animate-spin" />
+                <p role="status" className="inline-flex items-center gap-2 text-xs text-text-muted">
+                  <span aria-hidden="true" className="size-3.5 rounded-full border-2 border-info border-t-transparent animate-spin" />
                   L'assistant analyse votre code…
                 </p>
               )}
               {aiState === 'error' && (
-                <p className="text-xs text-[#fecaca]">
+                <p className="text-xs text-danger-soft">
                   L'assistant IA n'a pas répondu.{' '}
                   <button type="button" onClick={onExplain} className="underline font-semibold">Réessayer</button>
                 </p>
               )}
               {aiState === 'done' && (
                 <div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#a3b0c9] mb-1">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-text-muted mb-1">
                     ✦ Explication et correctif (IA)
                   </h3>
-                  <pre className="rounded-[8px] border border-[#38bdf8]/30 bg-[#0a1420] px-3.5 py-3 text-xs text-[#dbeafe] whitespace-pre-wrap font-sans leading-relaxed overflow-x-auto">
+                  <pre className="rounded-[8px] border border-info/30 bg-bg-deep px-3.5 py-3 text-xs text-info-soft whitespace-pre-wrap font-sans leading-relaxed overflow-x-auto">
                     {aiText}
                   </pre>
                 </div>

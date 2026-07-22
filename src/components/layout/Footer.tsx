@@ -34,15 +34,15 @@ const SECTIONS = [
 
 export function Footer() {
   return (
-    <footer className="mt-24 border-t border-[#2a3654] bg-[#0a0e1a]/60" role="contentinfo">
+    <footer className="mt-24 border-t border-border bg-bg/60" role="contentinfo">
       <div className="mx-auto max-w-7xl px-6 py-12">
         <div className="grid gap-10 md:grid-cols-[1.4fr_repeat(3,1fr)]">
           <div>
             <Logo />
-            <p className="mt-3 text-sm text-[#a3b0c9] max-w-xs leading-relaxed">
+            <p className="mt-3 text-sm text-text-muted max-w-xs leading-relaxed">
               Plateforme d'accessibilité web RGAA 4.1 &amp; WCAG 2.2 automatisée par IA. Édité par KAYZEN SASU.
             </p>
-            <p className="mt-4 text-xs text-[#8b98b8]">
+            <p className="mt-4 text-xs text-text-dim">
               6 rue Pierre Termier, 69009 Lyon
               <br />
               SIREN 999 418 346 — TVA FR85 999 418 346
@@ -50,7 +50,7 @@ export function Footer() {
           </div>
           {SECTIONS.map((s) => (
             <div key={s.title}>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#a3b0c9] mb-4">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-text-muted mb-4">
                 {s.title}
               </h3>
               <ul className="space-y-2.5">
@@ -58,7 +58,7 @@ export function Footer() {
                   <li key={l.to}>
                     <Link
                       to={l.to}
-                      className="text-sm text-[#cbd5e1] hover:text-white hover:underline underline-offset-4"
+                      className="text-sm text-text-soft hover:text-white hover:underline underline-offset-4"
                     >
                       {l.label}
                     </Link>
@@ -69,11 +69,11 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="mt-10 flex flex-col gap-3 border-t border-[#2a3654] pt-6 text-xs text-[#8b98b8] md:flex-row md:items-center md:justify-between">
+        <div className="mt-10 flex flex-col gap-3 border-t border-border pt-6 text-xs text-text-dim md:flex-row md:items-center md:justify-between">
           <p>© {new Date().getFullYear()} KAYZEN SASU — Tous droits réservés.</p>
           <p>
             Fièrement réalisé par{' '}
-            <a href="https://internet.kayzen-lyon.fr" rel="noopener" target="_blank" className="text-[#67e8f9] hover:underline">
+            <a href="https://internet.kayzen-lyon.fr" rel="noopener" target="_blank" className="text-link hover:underline">
               Kayzen Web
             </a>
             .

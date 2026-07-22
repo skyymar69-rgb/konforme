@@ -37,24 +37,24 @@ export function Rgaa() {
         ]}
       />
 
-      <p className="text-xs font-semibold uppercase tracking-wider text-[#67e8f9] mb-3">Guide</p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-link mb-3">Guide</p>
       <h1 className="text-4xl font-extrabold tracking-tight mb-6">
         RGAA 4.1 : le référentiel français d'accessibilité
       </h1>
-      <p className="text-lg text-[#a3b0c9] leading-relaxed mb-10">
-        Le <strong className="text-[#f1f5fb]">Référentiel Général d'Amélioration de l'Accessibilité</strong> (RGAA)
+      <p className="text-lg text-text-muted leading-relaxed mb-10">
+        Le <strong className="text-text">Référentiel Général d'Amélioration de l'Accessibilité</strong> (RGAA)
         est la méthode officielle française pour vérifier qu'un site web respecte les standards
-        internationaux WCAG. Sa version 4.1 compte <strong className="text-[#f1f5fb]">106 critères</strong> répartis
+        internationaux WCAG. Sa version 4.1 compte <strong className="text-text">106 critères</strong> répartis
         en 13 thématiques, chacun décliné en tests concrets.
       </p>
 
       <section className="mb-12" aria-labelledby="qui-title">
         <h2 id="qui-title" className="text-2xl font-bold tracking-tight mb-4">Qui est concerné ?</h2>
-        <ul className="space-y-2.5 text-[#cbd5e1] leading-relaxed list-disc pl-5">
-          <li>Les <strong className="text-[#f1f5fb]">services publics</strong> et organismes délégataires : obligation RGAA depuis 2019.</li>
-          <li>Les <strong className="text-[#f1f5fb]">entreprises réalisant plus de 250 M€ de CA</strong> en France : obligation de déclaration depuis 2020.</li>
+        <ul className="space-y-2.5 text-text-soft leading-relaxed list-disc pl-5">
+          <li>Les <strong className="text-text">services publics</strong> et organismes délégataires : obligation RGAA depuis 2019.</li>
+          <li>Les <strong className="text-text">entreprises réalisant plus de 250 M€ de CA</strong> en France : obligation de déclaration depuis 2020.</li>
           <li>
-            Depuis le <strong className="text-[#f1f5fb]">28 juin 2025</strong>, l'European Accessibility Act étend
+            Depuis le <strong className="text-text">28 juin 2025</strong>, l'European Accessibility Act étend
             l'obligation à la plupart des services numériques grand public : e-commerce, banques,
             transports, médias, télécoms — y compris les PME (hors micro-entreprises de services).
           </li>
@@ -65,11 +65,11 @@ export function Rgaa() {
         <h2 id="themes-title" className="text-2xl font-bold tracking-tight mb-4">
           Les 13 thématiques du RGAA
         </h2>
-        <div className="overflow-x-auto rounded-[14px] border border-[#2a3654]">
+        <div className="overflow-x-auto rounded-[14px] border border-border">
           <table className="w-full text-sm">
             <caption className="sr-only">Les 13 thématiques du RGAA 4.1 et leurs critères</caption>
             <thead>
-              <tr className="border-b border-[#2a3654] bg-[#131a2c] text-left text-xs uppercase tracking-wider text-[#a3b0c9]">
+              <tr className="border-b border-border bg-surface text-left text-xs uppercase tracking-wider text-text-muted">
                 <th scope="col" className="px-4 py-3 font-semibold">N°</th>
                 <th scope="col" className="px-4 py-3 font-semibold">Thématique</th>
                 <th scope="col" className="px-4 py-3 font-semibold">Critères</th>
@@ -78,11 +78,11 @@ export function Rgaa() {
             </thead>
             <tbody>
               {THEMES.map((t) => (
-                <tr key={t.n} className="border-b border-[#2a3654]/60 last:border-0">
-                  <td className="px-4 py-3 text-[#8b98b8]">{t.n}</td>
+                <tr key={t.n} className="border-b border-border/60 last:border-0">
+                  <td className="px-4 py-3 text-text-dim">{t.n}</td>
                   <th scope="row" className="px-4 py-3 font-semibold text-left">{t.name}</th>
                   <td className="px-4 py-3">{t.criteres}</td>
-                  <td className="px-4 py-3 text-[#a3b0c9]">{t.ex}</td>
+                  <td className="px-4 py-3 text-text-muted">{t.ex}</td>
                 </tr>
               ))}
             </tbody>
@@ -92,14 +92,14 @@ export function Rgaa() {
 
       <section className="mb-12" aria-labelledby="conf-title">
         <h2 id="conf-title" className="text-2xl font-bold tracking-tight mb-4">Les niveaux de conformité</h2>
-        <p className="text-[#cbd5e1] leading-relaxed mb-4">
+        <p className="text-text-soft leading-relaxed mb-4">
           Le taux de conformité RGAA = critères respectés ÷ critères applicables. Trois états sont
           possibles pour la déclaration d'accessibilité :
         </p>
-        <ul className="space-y-2.5 text-[#cbd5e1] list-disc pl-5">
-          <li><strong className="text-[#bbf7d0]">Totalement conforme</strong> : 100 % des critères applicables respectés.</li>
-          <li><strong className="text-[#fde68a]">Partiellement conforme</strong> : au moins 50 %.</li>
-          <li><strong className="text-[#fecaca]">Non conforme</strong> : moins de 50 %, ou aucun audit réalisé.</li>
+        <ul className="space-y-2.5 text-text-soft list-disc pl-5">
+          <li><strong className="text-success-soft">Totalement conforme</strong> : 100 % des critères applicables respectés.</li>
+          <li><strong className="text-warning-soft">Partiellement conforme</strong> : au moins 50 %.</li>
+          <li><strong className="text-danger-soft">Non conforme</strong> : moins de 50 %, ou aucun audit réalisé.</li>
         </ul>
       </section>
 
@@ -107,7 +107,7 @@ export function Rgaa() {
         <h2 id="auto-title" className="text-2xl font-bold tracking-tight mb-4">
           Ce que Konforme automatise
         </h2>
-        <p className="text-[#cbd5e1] leading-relaxed">
+        <p className="text-text-soft leading-relaxed">
           Konforme teste automatiquement les critères vérifiables par machine : alternatives des
           images, étiquettes de formulaires, structure des titres, cadres, tableaux, liens vides,
           langue du document, zoom bloqué, lecture automatique… Ces contrôles couvrent la majorité
@@ -117,9 +117,9 @@ export function Rgaa() {
         </p>
       </section>
 
-      <div className="rounded-[14px] border border-[#2563eb]/40 bg-[#2563eb]/10 p-8 text-center">
+      <div className="rounded-[14px] border border-primary/40 bg-primary/10 p-8 text-center">
         <h2 className="text-xl font-bold mb-2">Testez votre site maintenant</h2>
-        <p className="text-sm text-[#a3b0c9] mb-5">Audit automatisé gratuit, résultat en une minute.</p>
+        <p className="text-sm text-text-muted mb-5">Audit automatisé gratuit, résultat en une minute.</p>
         <Link to="/login">
           <Button variant="primary" size="lg">Lancer un audit gratuit</Button>
         </Link>

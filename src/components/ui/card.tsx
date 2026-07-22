@@ -26,7 +26,7 @@ export const CardTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttribut
   ({ className, ...props }, ref) => (
     <h3
       ref={ref}
-      className={cn('text-lg font-bold tracking-tight text-[#f1f5fb]', className)}
+      className={cn('text-lg font-bold tracking-tight text-text', className)}
       {...props}
     />
   )
@@ -37,7 +37,7 @@ export const CardDescription = React.forwardRef<HTMLParagraphElement, React.HTML
   ({ className, ...props }, ref) => (
     <p
       ref={ref}
-      className={cn('text-sm text-[#a3b0c9]', className)}
+      className={cn('text-sm text-text-muted', className)}
       {...props}
     />
   )
@@ -46,14 +46,14 @@ CardDescription.displayName = 'CardDescription'
 
 export const CardContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('text-[#f1f5fb]', className)} {...props} />
+    <div ref={ref} className={cn('text-text', className)} {...props} />
   )
 )
 CardContent.displayName = 'CardContent'
 
 export const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('flex items-center mt-4 pt-4 border-t border-[#2a3654]', className)} {...props} />
+    <div ref={ref} className={cn('flex items-center mt-4 pt-4 border-t border-border', className)} {...props} />
   )
 )
 CardFooter.displayName = 'CardFooter'

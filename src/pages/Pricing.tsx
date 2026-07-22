@@ -18,7 +18,7 @@ export function Pricing() {
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
           Des tarifs simples, un objectif : la conformité
         </h1>
-        <p className="text-[#a3b0c9] mt-4">
+        <p className="text-text-muted mt-4">
           Commencez gratuitement, passez au plan Pro quand votre activité grandit. L'audit manuel
           opposable est disponible en offre accompagnée.
         </p>
@@ -31,12 +31,12 @@ export function Pricing() {
             aria-labelledby={`plan-${plan.id}`}
             className={`flex flex-col rounded-[16px] border p-7 ${
               plan.highlighted
-                ? 'border-[#2563eb] bg-gradient-to-b from-[#131a2c] to-[#16203a] shadow-[0_10px_40px_rgba(37,99,235,0.25)] relative'
-                : 'border-[#2a3654] bg-[#111827]/60'
+                ? 'border-primary bg-gradient-to-b from-surface to-surface-2 shadow-[0_10px_40px_rgba(37,99,235,0.25)] relative'
+                : 'border-border bg-surface/60'
             }`}
           >
             {plan.highlighted && (
-              <p className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#2563eb] px-3 py-1 text-xs font-bold text-white">
+              <p className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-xs font-bold text-white">
                 Recommandé
               </p>
             )}
@@ -45,9 +45,9 @@ export function Pricing() {
             </h2>
             <p className="mt-3">
               <span className="text-3xl font-extrabold">{plan.price}</span>{' '}
-              <span className="text-sm text-[#8b98b8]">{plan.period}</span>
+              <span className="text-sm text-text-dim">{plan.period}</span>
             </p>
-            <p className="text-sm text-[#a3b0c9] mt-3">{plan.tagline}</p>
+            <p className="text-sm text-text-muted mt-3">{plan.tagline}</p>
 
             <ul className="mt-6 space-y-2.5 text-sm flex-1">
               {plan.features.map((f) => (
@@ -57,7 +57,7 @@ export function Pricing() {
                     width="16"
                     height="16"
                     fill="none"
-                    stroke="#4ade80"
+                    stroke="var(--color-success)"
                     strokeWidth="2.5"
                     strokeLinecap="round"
                     aria-hidden="true"
@@ -77,7 +77,7 @@ export function Pricing() {
                 </Button>
               </Link>
               {plan.id === 'pro' && (
-                <p className="mt-2 text-center text-xs text-[#8b98b8]">
+                <p className="mt-2 text-center text-xs text-text-dim">
                   Paiement en ligne bientôt disponible — activation sous 24 h par notre équipe.
                 </p>
               )}
@@ -93,7 +93,7 @@ export function Pricing() {
         <dl className="space-y-5 text-sm">
           <div>
             <dt className="font-semibold">Que couvre l'audit automatisé ?</dt>
-            <dd className="text-[#a3b0c9] mt-1">
+            <dd className="text-text-muted mt-1">
               Plus de 40 règles RGAA 4.1 / WCAG 2.2 vérifiables par machine (images, formulaires,
               structure, ARIA, contrastes…), soit environ 30 % du référentiel. La conformité
               opposable nécessite un audit manuel complémentaire, inclus dans l'offre Accompagné.
@@ -101,16 +101,16 @@ export function Pricing() {
           </div>
           <div>
             <dt className="font-semibold">Suis-je concerné par l'obligation légale ?</dt>
-            <dd className="text-[#a3b0c9] mt-1">
+            <dd className="text-text-muted mt-1">
               Depuis juin 2025, l'European Accessibility Act étend l'obligation d'accessibilité à la
               plupart des services numériques privés (e-commerce, banques, transports…). En France,
               l'article 47 de la loi de 2005 s'applique déjà au secteur public et aux grandes
-              entreprises. <Link to="/rgaa" className="text-[#67e8f9] underline">En savoir plus sur le RGAA</Link>.
+              entreprises. <Link to="/rgaa" className="text-link underline">En savoir plus sur le RGAA</Link>.
             </dd>
           </div>
           <div>
             <dt className="font-semibold">Puis-je changer de plan à tout moment ?</dt>
-            <dd className="text-[#a3b0c9] mt-1">
+            <dd className="text-text-muted mt-1">
               Oui. Le quota d'audits se réinitialise le 1<sup>er</sup> de chaque mois, et le passage
               d'un plan à l'autre est immédiat.
             </dd>

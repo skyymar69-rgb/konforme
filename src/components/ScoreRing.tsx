@@ -22,7 +22,7 @@ export function ScoreRing({
       role="img"
       aria-label={score === null ? `${label} : non disponible` : `${label} : ${pct} %`}
     >
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#2a3654" strokeWidth={stroke} />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--color-border)" strokeWidth={stroke} />
       <circle
         cx={size / 2}
         cy={size / 2}
@@ -39,7 +39,7 @@ export function ScoreRing({
         y="50%"
         dominantBaseline="central"
         textAnchor="middle"
-        fill="#f1f5fb"
+        fill="var(--color-text)"
         fontSize={size / 4}
         fontWeight="800"
       >

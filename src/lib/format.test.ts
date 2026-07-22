@@ -36,10 +36,10 @@ describe('formatDate', () => {
 
 describe('scoreColor', () => {
   it('suit les seuils vert/orange/rouge', () => {
-    expect(scoreColor(90)).toBe('#4ade80')
-    expect(scoreColor(85)).toBe('#4ade80')
-    expect(scoreColor(60)).toBe('#fbbf24')
-    expect(scoreColor(20)).toBe('#f87171')
-    expect(scoreColor(null)).toBe('#8b98b8')
+    expect(scoreColor(90)).toBe('var(--color-success)')
+    expect(scoreColor(85)).toBe('var(--color-success)')
+    expect(scoreColor(60)).toBe('var(--color-warning)')
+    expect(scoreColor(20)).toBe('var(--color-danger)')
+    expect(scoreColor(null)).toBe('var(--color-text-dim)')
   })
 })

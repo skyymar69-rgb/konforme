@@ -13,10 +13,10 @@ const H2 = ({ children }: { children: React.ReactNode }) => (
   <h2 className="text-xl font-bold tracking-tight mt-10 mb-3">{children}</h2>
 )
 const P = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-[#cbd5e1] leading-relaxed mb-4">{children}</p>
+  <p className="text-text-soft leading-relaxed mb-4">{children}</p>
 )
 const UL = ({ items }: { items: React.ReactNode[] }) => (
-  <ul className="space-y-2 text-[#cbd5e1] leading-relaxed list-disc pl-5 mb-4">
+  <ul className="space-y-2 text-text-soft leading-relaxed list-disc pl-5 mb-4">
     {items.map((it, i) => (
       <li key={i}>{it}</li>
     ))}
@@ -33,7 +33,7 @@ export const LEGAL_DOCS: LegalDoc[] = [
       <>
         <H2>Éditeur du site</H2>
         <P>
-          Le site konforme.kayzen-lyon.fr est édité par <strong className="text-[#f1f5fb]">KAYZEN SASU</strong>,
+          Le site konforme.kayzen-lyon.fr est édité par <strong className="text-text">KAYZEN SASU</strong>,
           société par actions simplifiée unipersonnelle immatriculée au RCS de Lyon sous le numéro
           SIREN 999 418 346 (TVA intracommunautaire : FR85 999 418 346), dont le siège social est
           situé 6 rue Pierre Termier, 69009 Lyon, France.
@@ -152,15 +152,15 @@ export const LEGAL_DOCS: LegalDoc[] = [
         <UL
           items={[
             <>
-              <strong className="text-[#f1f5fb]">Compte</strong> : nom, email et avatar transmis par
+              <strong className="text-text">Compte</strong> : nom, email et avatar transmis par
               Google lors de la connexion OAuth.
             </>,
             <>
-              <strong className="text-[#f1f5fb]">Utilisation</strong> : sites ajoutés, audits lancés
+              <strong className="text-text">Utilisation</strong> : sites ajoutés, audits lancés
               et résultats associés.
             </>,
             <>
-              <strong className="text-[#f1f5fb]">Aucun traceur publicitaire</strong> : le site
+              <strong className="text-text">Aucun traceur publicitaire</strong> : le site
               n'utilise ni cookie publicitaire ni outil de tracking tiers.
             </>,
           ]}
@@ -215,7 +215,7 @@ export const LEGAL_DOCS: LegalDoc[] = [
           CNIL sous 72 h et les personnes concernées dans les meilleurs délais.
         </P>
         <P>
-          Voir aussi notre <Link to="/legal/confidentialite" className="text-[#67e8f9] hover:underline">politique de confidentialité</Link>.
+          Voir aussi notre <Link to="/legal/confidentialite" className="text-link hover:underline">politique de confidentialité</Link>.
         </P>
       </>
     ),
@@ -229,7 +229,7 @@ export const LEGAL_DOCS: LegalDoc[] = [
       <>
         <H2>Cookies utilisés</H2>
         <P>
-          Le site n'utilise <strong className="text-[#f1f5fb]">aucun cookie publicitaire ni de mesure
+          Le site n'utilise <strong className="text-text">aucun cookie publicitaire ni de mesure
           d'audience tierce</strong>. Seuls des cookies et stockages strictement techniques sont
           utilisés :
         </P>

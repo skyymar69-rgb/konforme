@@ -8,7 +8,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (loading) {
     return (
       <div className="min-h-screen grid place-items-center" role="status">
-        <div className="size-12 rounded-full border-4 border-[#2a3654] border-t-[#3b82f6] animate-spin" aria-hidden="true" />
+        <div className="size-12 rounded-full border-4 border-border border-t-primary-2 animate-spin" aria-hidden="true" />
         <span className="sr-only">Chargement…</span>
       </div>
     )

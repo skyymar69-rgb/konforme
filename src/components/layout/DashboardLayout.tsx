@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { NavLink, Outlet, Link } from 'react-router-dom'
 import { Logo } from '@/components/ui/logo'
 import { Button } from '@/components/ui/button'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
 
@@ -18,9 +19,9 @@ export function DashboardLayout() {
   const initial = (user?.name?.[0] || user?.email?.[0] || 'K').toUpperCase()
 
   return (
-    <div className="min-h-screen flex bg-[#0a0e1a]">
-      <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-[#2a3654] bg-[#0a0e1a]/80 backdrop-blur-md">
-        <div className="px-6 py-5 border-b border-[#2a3654]">
+    <div className="min-h-screen flex bg-bg">
+      <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-border bg-bg/80 backdrop-blur-md">
+        <div className="px-6 py-5 border-b border-border">
           <Link to="/" className="flex items-center gap-2">
             <Logo />
           </Link>
@@ -35,8 +36,8 @@ export function DashboardLayout() {
                 end={n.to === '/dashboard'}
                 className={({ isActive }) =>
                   cn(
-                    'flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-medium text-[#a3b0c9] hover:text-[#f1f5fb] hover:bg-white/5 transition-colors',
-                    isActive && 'bg-gradient-to-r from-[#2563eb]/20 to-[#06b6d4]/10 text-white border border-[#2563eb]/30'
+                    'flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-medium text-text-muted hover:text-text hover:bg-raise transition-colors',
+                    isActive && 'bg-gradient-to-r from-primary/20 to-accent/10 text-white border border-primary/30'
                   )
                 }
               >
@@ -46,38 +47,44 @@ export function DashboardLayout() {
             )
           })}
         </nav>
-        <div className="p-3 border-t border-[#2a3654]">
-          <div className="flex items-center gap-3 rounded-[10px] p-2.5 bg-white/5">
-            <div className="size-9 rounded-full bg-gradient-to-br from-[#2563eb] to-[#0e7490] flex items-center justify-center text-white text-sm font-bold shrink-0">
+        <div className="p-3 border-t border-border">
+          <div className="flex items-center gap-3 rounded-[10px] p-2.5 bg-raise">
+            <div className="size-9 rounded-full bg-gradient-to-br from-primary to-accent-deep flex items-center justify-center text-white text-sm font-bold shrink-0">
               {initial}
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-sm font-medium truncate">
                 {user?.name || user?.email?.split('@')[0] || 'Invité'}
               </div>
-              <div className="text-xs text-[#8b98b8] truncate">{user?.email}</div>
+              <div className="text-xs text-text-dim truncate">{user?.email}</div>
             </div>
           </div>
-          <Button size="sm" variant="ghost" className="w-full mt-2" onClick={() => signOut()}>
-            Se déconnecter
-          </Button>
+          <div className="mt-2 flex items-center gap-2">
+            <ThemeToggle />
+            <Button size="sm" variant="ghost" className="flex-1" onClick={() => signOut()}>
+              Se déconnecter
+            </Button>
+          </div>
         </div>
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="md:hidden sticky top-0 z-30 flex items-center justify-between border-b border-[#2a3654] bg-[#0a0e1a]/85 backdrop-blur-md px-4 py-3">
+        <header className="md:hidden sticky top-0 z-30 flex items-center justify-between border-b border-border bg-bg/85 backdrop-blur-md px-4 py-3">
           <Link to="/dashboard" className="flex items-center gap-2">
             <Logo />
           </Link>
-          <Button size="sm" variant="ghost" onClick={() => signOut()}>
-            Sortir
-          </Button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button size="sm" variant="ghost" onClick={() => signOut()}>
+              Sortir
+            </Button>
+          </div>
         </header>
         <main className="flex-1 px-4 py-6 md:px-8 md:py-10 max-w-7xl w-full mx-auto">
           <Suspense
             fallback={
               <div className="min-h-[40vh] grid place-items-center" role="status">
-                <div className="size-10 rounded-full border-4 border-[#2a3654] border-t-[#3b82f6] animate-spin" aria-hidden="true" />
+                <div className="size-10 rounded-full border-4 border-border border-t-primary-2 animate-spin" aria-hidden="true" />
                 <span className="sr-only">Chargement…</span>
               </div>
             }

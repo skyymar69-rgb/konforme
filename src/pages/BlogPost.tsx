@@ -40,12 +40,12 @@ export function BlogPost() {
         ]}
       />
 
-      <nav aria-label="Fil d'Ariane" className="text-sm text-[#8b98b8] mb-6">
+      <nav aria-label="Fil d'Ariane" className="text-sm text-text-dim mb-6">
         <Link to="/blog" className="hover:text-white hover:underline">← Tous les articles</Link>
       </nav>
 
       <header className="mb-10">
-        <p className="text-xs text-[#8b98b8] mb-3">
+        <p className="text-xs text-text-dim mb-3">
           <time dateTime={post.date}>{formatDate(post.date)}</time> · {post.readingMinutes} min de lecture
         </p>
         <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight leading-tight">
@@ -60,10 +60,10 @@ export function BlogPost() {
               <h2 className="text-2xl font-bold tracking-tight mb-3">{section.heading}</h2>
             )}
             {section.paragraphs.map((p, j) => (
-              <p key={j} className="text-[#cbd5e1] leading-relaxed mb-4">{p}</p>
+              <p key={j} className="text-text-soft leading-relaxed mb-4">{p}</p>
             ))}
             {section.list && (
-              <ul className="space-y-2 text-[#cbd5e1] leading-relaxed list-disc pl-5">
+              <ul className="space-y-2 text-text-soft leading-relaxed list-disc pl-5">
                 {section.list.map((item, j) => (
                   <li key={j}>{item}</li>
                 ))}
@@ -73,9 +73,9 @@ export function BlogPost() {
         ))}
       </div>
 
-      <div className="mt-14 rounded-[14px] border border-[#2563eb]/40 bg-[#2563eb]/10 p-8 text-center">
+      <div className="mt-14 rounded-[14px] border border-primary/40 bg-primary/10 p-8 text-center">
         <h2 className="text-xl font-bold mb-2">Où en est votre site ?</h2>
-        <p className="text-sm text-[#a3b0c9] mb-5">
+        <p className="text-sm text-text-muted mb-5">
           Audit d'accessibilité automatisé RGAA / WCAG, résultat en une minute.
         </p>
         <Link to="/login">

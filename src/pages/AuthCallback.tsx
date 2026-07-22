@@ -27,8 +27,8 @@ export function AuthCallback() {
   return (
     <div className="min-h-screen grid place-items-center px-6 py-10">
       <div className="text-center">
-        <div className="size-12 mx-auto rounded-full border-4 border-[#2a3654] border-t-[#3b82f6] animate-spin" aria-hidden="true" />
-        <p className="mt-4 text-[#a3b0c9]" role="status">Connexion en cours…</p>
+        <div className="size-12 mx-auto rounded-full border-4 border-border border-t-primary-2 animate-spin" aria-hidden="true" />
+        <p className="mt-4 text-text-muted" role="status">Connexion en cours…</p>
       </div>
     </div>
   )

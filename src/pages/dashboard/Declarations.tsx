@@ -71,7 +71,7 @@ export function Declarations() {
       <Seo title="Déclarations" description="Déclarations d'accessibilité RGAA." path="/dashboard/declarations" noindex />
       <header>
         <h1 className="text-2xl font-bold tracking-tight">Déclarations d'accessibilité</h1>
-        <p className="text-[#a3b0c9] mt-1">
+        <p className="text-text-muted mt-1">
           Document légal requis par l'article 47 de la loi n° 2005-102, généré depuis votre dernier audit.
         </p>
       </header>
@@ -79,9 +79,9 @@ export function Declarations() {
       <Card>
         <h2 className="text-lg font-bold mb-4">Générer une déclaration</h2>
         {scannedSites.length === 0 ? (
-          <p className="text-sm text-[#a3b0c9]">
+          <p className="text-sm text-text-muted">
             Aucun site avec audit terminé.{' '}
-            <Link to="/dashboard/sites" className="text-[#67e8f9] hover:underline">
+            <Link to="/dashboard/sites" className="text-link hover:underline">
               Lancez d'abord un audit
             </Link>
             .
@@ -95,7 +95,7 @@ export function Declarations() {
                 value={siteId}
                 onChange={(e) => setSiteId(e.target.value)}
                 required
-                className="w-full rounded-[10px] border border-[#3b4970] bg-[#0a0e1a] px-3 py-2.5 text-sm text-[#f1f5fb]"
+                className="w-full rounded-[10px] border border-border-strong bg-bg px-3 py-2.5 text-sm text-text"
               >
                 <option value="">Choisir un site…</option>
                 {scannedSites.map((s) => (
@@ -109,11 +109,11 @@ export function Declarations() {
           </form>
         )}
         {error && (
-          <p role="alert" className="mt-4 rounded-[10px] border border-[#f87171]/40 bg-[#7f1d1d]/30 px-4 py-2.5 text-sm text-[#fecaca]">
+          <p role="alert" className="mt-4 rounded-[10px] border border-danger/40 bg-danger-bg/30 px-4 py-2.5 text-sm text-danger-soft">
             {error}
           </p>
         )}
-        <p className="mt-4 text-xs text-[#8b98b8]">
+        <p className="mt-4 text-xs text-text-dim">
           Le document généré suit le modèle officiel : état de conformité, résultats des tests,
           retour d'information et voies de recours (Défenseur des droits). Publiez-le sur une page
           « /accessibilite » de votre site.
@@ -122,11 +122,11 @@ export function Declarations() {
 
       <Card>
         <h2 className="text-lg font-bold mb-4">Historique</h2>
-        {isLoading && <p role="status" className="text-sm text-[#a3b0c9]">Chargement…</p>}
+        {isLoading && <p role="status" className="text-sm text-text-muted">Chargement…</p>}
         {!isLoading && (declarations?.length ?? 0) === 0 && (
-          <p className="text-sm text-[#a3b0c9]">Aucune déclaration générée pour l'instant.</p>
+          <p className="text-sm text-text-muted">Aucune déclaration générée pour l'instant.</p>
         )}
-        <ul className="divide-y divide-[#2a3654]/60">
+        <ul className="divide-y divide-border/60">
           {declarations?.map((d) => (
             <DeclarationRow key={d.id} decl={d} orgName={orgName} contactEmail={user?.email ?? ''} />
           ))}
@@ -162,7 +162,7 @@ function DeclarationRow({
     <li className="flex flex-wrap items-center justify-between gap-3 py-3.5">
       <div>
         <div className="font-semibold text-sm">{decl.sites?.name ?? '—'}</div>
-        <div className="text-xs text-[#8b98b8]">
+        <div className="text-xs text-text-dim">
           {formatDate(decl.published_at)} · {decl.reference_standard}
           {decl.conformity_rate !== null ? ` · ${decl.conformity_rate}%` : ''}
         </div>
@@ -171,10 +171,10 @@ function DeclarationRow({
         <Badge
           className={
             decl.conformity_level === 'total'
-              ? 'bg-[#14532d]/60 text-[#bbf7d0] border-[#4ade80]/40'
+              ? 'bg-success-bg/60 text-success-soft border-success/40'
               : decl.conformity_level === 'partial'
-                ? 'bg-[#713f12]/60 text-[#fde68a] border-[#fbbf24]/40'
-                : 'bg-[#7f1d1d]/60 text-[#fecaca] border-[#f87171]/40'
+                ? 'bg-warning-bg/60 text-warning-soft border-warning/40'
+                : 'bg-danger-bg/60 text-danger-soft border-danger/40'
           }
         >
           {CONFORMITY_META[decl.conformity_level]}

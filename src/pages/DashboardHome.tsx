@@ -69,7 +69,7 @@ export function DashboardHome() {
           <h1 className="text-3xl font-bold tracking-tight">
             Bonjour, <span className="gradient-text">{name}</span>
           </h1>
-          <p className="text-[#a3b0c9] mt-1">Voici l'état de l'accessibilité de vos sites.</p>
+          <p className="text-text-muted mt-1">Voici l'état de l'accessibilité de vos sites.</p>
         </div>
         <Link to="/dashboard/sites">
           <Button variant="primary">+ Ajouter un site</Button>
@@ -81,35 +81,35 @@ export function DashboardHome() {
           label="Sites surveillés"
           value={String(stats.sitesCount)}
           hint={hasSites ? 'Sites suivis par Konforme' : 'Ajoutez votre premier site'}
-          accent="#2563eb"
+          accent="var(--color-primary)"
         />
         <KpiCard
           label="Score moyen"
           value={stats.avgScore !== null ? `${stats.avgScore}%` : '—'}
           hint={stats.avgScore !== null ? 'Dernier audit par site' : 'Lancez votre premier scan'}
-          accent={stats.avgScore !== null ? scoreColor(stats.avgScore) : '#06b6d4'}
+          accent={stats.avgScore !== null ? scoreColor(stats.avgScore) : 'var(--color-accent)'}
         />
         <KpiCard
           label="Issues critiques"
           value={String(criticalCount ?? 0)}
           hint="À corriger en priorité"
-          accent="#ef4444"
+          accent="var(--color-danger)"
         />
         <KpiCard
           label="Conformité EAA"
           value={stats.eaa ?? '—'}
           hint="Statut global (WCAG 2.2)"
-          accent="#22c55e"
+          accent="var(--color-success)"
         />
       </div>
 
       {chartData.length >= 2 && (
         <Card>
           <h2 className="text-lg font-bold mb-1">Évolution du score</h2>
-          <p className="text-sm text-[#a3b0c9] mb-4">
+          <p className="text-sm text-text-muted mb-4">
             Taux de conformité des {chartData.length} derniers audits.
           </p>
-          <Suspense fallback={<div className="h-[260px] rounded-[10px] bg-white/5 animate-pulse" aria-hidden="true" />}>
+          <Suspense fallback={<div className="h-[260px] rounded-[10px] bg-raise animate-pulse" aria-hidden="true" />}>
             <ScoreChart data={chartData} />
           </Suspense>
         </Card>
@@ -118,7 +118,7 @@ export function DashboardHome() {
       {!hasSites && (
         <Card>
           <h2 className="text-lg font-bold mb-1">Démarrez votre audit</h2>
-          <p className="text-sm text-[#a3b0c9] mb-6">
+          <p className="text-sm text-text-muted mb-6">
             Quatre étapes pour mettre vos sites en conformité RGAA &amp; WCAG.
           </p>
           <ol className="space-y-3">
@@ -130,14 +130,14 @@ export function DashboardHome() {
             ].map((step, i) => (
               <li key={step.title} className="flex gap-4 items-start">
                 <span
-                  className="size-8 shrink-0 rounded-[10px] bg-gradient-to-br from-[#2563eb] to-[#0e7490] flex items-center justify-center text-white text-sm font-bold"
+                  className="size-8 shrink-0 rounded-[10px] bg-gradient-to-br from-primary to-accent-deep flex items-center justify-center text-white text-sm font-bold"
                   aria-hidden="true"
                 >
                   {i + 1}
                 </span>
                 <div>
-                  <h3 className="font-semibold text-[#f1f5fb]">{step.title}</h3>
-                  <p className="text-sm text-[#a3b0c9]">{step.desc}</p>
+                  <h3 className="font-semibold text-text">{step.title}</h3>
+                  <p className="text-sm text-text-muted">{step.desc}</p>
                 </div>
               </li>
             ))}
@@ -181,9 +181,9 @@ function KpiCard({
         className="absolute -top-12 -right-12 size-28 rounded-full opacity-20 blur-2xl"
         style={{ background: accent }}
       />
-      <div className="text-xs font-semibold uppercase tracking-wider text-[#a3b0c9]">{label}</div>
+      <div className="text-xs font-semibold uppercase tracking-wider text-text-muted">{label}</div>
       <div className="mt-2 text-3xl font-extrabold tracking-tight">{value}</div>
-      <div className="mt-1 text-xs text-[#8b98b8]">{hint}</div>
+      <div className="mt-1 text-xs text-text-dim">{hint}</div>
     </Card>
   )
 }

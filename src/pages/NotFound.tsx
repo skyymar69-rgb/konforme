@@ -8,7 +8,7 @@ export function NotFound() {
       <Seo title="Page introuvable (404)" description="Cette page n'existe pas ou a été déplacée." path="/404" noindex />
       <p className="text-6xl font-extrabold gradient-text mb-4" aria-hidden="true">404</p>
       <h1 className="text-2xl font-bold tracking-tight mb-3">Page introuvable</h1>
-      <p className="text-[#a3b0c9] mb-8">
+      <p className="text-text-muted mb-8">
         Cette page n'existe pas ou a été déplacée. Vérifiez l'adresse, ou repartez de l'accueil.
       </p>
       <div className="flex flex-wrap justify-center gap-3">

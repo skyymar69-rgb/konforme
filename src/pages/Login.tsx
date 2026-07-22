@@ -67,7 +67,7 @@ export function Login() {
           <h1 className="gradient-text text-2xl font-bold tracking-tight text-center mb-2">
             {mode === 'signin' ? 'Bienvenue' : 'Créer un compte'}
           </h1>
-          <p className="text-center text-sm text-[#a3b0c9] mb-6">
+          <p className="text-center text-sm text-text-muted mb-6">
             {mode === 'signin'
               ? "Connectez-vous pour accéder à votre tableau de bord d'accessibilité"
               : '14 jours d’essai Pro inclus — sans carte bancaire'}
@@ -84,7 +84,7 @@ export function Login() {
                   name="name"
                   type="text"
                   autoComplete="name"
-                  className="w-full rounded-[10px] border border-[#3b4970] bg-[#0a0e1a] px-3.5 py-2.5 text-sm text-[#f1f5fb] placeholder:text-[#8b98b8]"
+                  className="w-full rounded-[10px] border border-border-strong bg-bg px-3.5 py-2.5 text-sm text-text placeholder:text-text-dim"
                   placeholder="Prénom Nom"
                 />
               </div>
@@ -100,7 +100,7 @@ export function Login() {
                 required
                 autoComplete="email"
                 inputMode="email"
-                className="w-full rounded-[10px] border border-[#3b4970] bg-[#0a0e1a] px-3.5 py-2.5 text-sm text-[#f1f5fb] placeholder:text-[#8b98b8]"
+                className="w-full rounded-[10px] border border-border-strong bg-bg px-3.5 py-2.5 text-sm text-text placeholder:text-text-dim"
                 placeholder="vous@exemple.fr"
               />
             </div>
@@ -116,10 +116,10 @@ export function Login() {
                 minLength={8}
                 autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
                 aria-describedby={mode === 'signup' ? 'auth-password-help' : undefined}
-                className="w-full rounded-[10px] border border-[#3b4970] bg-[#0a0e1a] px-3.5 py-2.5 text-sm text-[#f1f5fb]"
+                className="w-full rounded-[10px] border border-border-strong bg-bg px-3.5 py-2.5 text-sm text-text"
               />
               {mode === 'signup' && (
-                <p id="auth-password-help" className="mt-1 text-xs text-[#8b98b8]">
+                <p id="auth-password-help" className="mt-1 text-xs text-text-dim">
                   8 caractères minimum.
                 </p>
               )}
@@ -128,7 +128,7 @@ export function Login() {
             {error && (
               <p
                 role="alert"
-                className="rounded-[10px] border border-[#ef4444]/40 bg-[#ef4444]/10 px-4 py-2.5 text-sm text-[#fecaca]"
+                className="rounded-[10px] border border-danger/40 bg-danger/10 px-4 py-2.5 text-sm text-danger-soft"
               >
                 {error}
               </p>
@@ -148,14 +148,14 @@ export function Login() {
             </Button>
           </form>
 
-          <p className="mt-4 text-center text-sm text-[#a3b0c9]">
+          <p className="mt-4 text-center text-sm text-text-muted">
             {mode === 'signin' ? (
               <>
                 Pas encore de compte ?{' '}
                 <button
                   type="button"
                   onClick={() => { setMode('signup'); setError(null) }}
-                  className="text-[#67e8f9] font-semibold hover:underline"
+                  className="text-link font-semibold hover:underline"
                 >
                   Créer un compte
                 </button>
@@ -166,7 +166,7 @@ export function Login() {
                 <button
                   type="button"
                   onClick={() => { setMode('signin'); setError(null) }}
-                  className="text-[#67e8f9] font-semibold hover:underline"
+                  className="text-link font-semibold hover:underline"
                 >
                   Se connecter
                 </button>
@@ -175,9 +175,9 @@ export function Login() {
           </p>
 
           <div className="my-5 flex items-center gap-3" role="presentation">
-            <span className="h-px flex-1 bg-[#2a3654]" />
-            <span className="text-xs text-[#8b98b8]">ou</span>
-            <span className="h-px flex-1 bg-[#2a3654]" />
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-xs text-text-dim">ou</span>
+            <span className="h-px flex-1 bg-border" />
           </div>
 
           <Button
@@ -200,20 +200,20 @@ export function Login() {
             )}
           </Button>
 
-          <p className="mt-6 text-center text-xs text-[#8b98b8] leading-relaxed">
+          <p className="mt-6 text-center text-xs text-text-dim leading-relaxed">
             En continuant vous acceptez nos{' '}
-            <Link to="/legal/cgu" className="text-[#67e8f9] hover:underline">
+            <Link to="/legal/cgu" className="text-link hover:underline">
               CGU
             </Link>{' '}
             et notre{' '}
-            <Link to="/legal/confidentialite" className="text-[#67e8f9] hover:underline">
+            <Link to="/legal/confidentialite" className="text-link hover:underline">
               politique de confidentialité
             </Link>
             .
           </p>
         </Card>
 
-        <div className="mt-6 text-center text-sm text-[#a3b0c9]">
+        <div className="mt-6 text-center text-sm text-text-muted">
           <Link to="/" className="hover:text-white">
             ← Retour à l'accueil
           </Link>
