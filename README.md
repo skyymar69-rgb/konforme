@@ -2,7 +2,12 @@
 
 Plateforme SaaS éditée par **KAYZEN SASU** (Lyon).
 
-Stack : **Vite 8 + React 19 + TypeScript + Tailwind v4 + Appwrite (open source — Auth Google, TablesDB, Functions)** + TanStack Query + Zod + Recharts.
+Stack : **Vite 8 + React 19 + TypeScript + Tailwind v4 + Appwrite (open source — Auth email/Google, TablesDB, Functions)** + TanStack Query + Zod + Recharts + axe-core.
+
+**Fonctionnalités clés** : test d'accessibilité public sans compte (landing), audits
+multi-pages (~100 règles RGAA 4.1 / WCAG 2.2, scores pondérés par sévérité et par page),
+corrections guidées + assistant IA optionnel, surveillance planifiée (cron), exports
+HTML/CSV/JSON, déclaration légale (art. 47), essai Pro 14 jours, quotas par plan.
 
 > Historique : le backend était initialement sur Supabase (projet `ipxuiffmeceaywnpbtrj`, en
 > pause faute de slot gratuit). Migré vers **Appwrite Cloud** en juillet 2026 : open source,
@@ -44,7 +49,8 @@ npm run dev                          # http://localhost:5173
 | `npm run build` | Build de production (`dist/`) |
 | `npm run preview` | Sert le build de production en local |
 | `npm run lint` | ESLint |
-| `node scripts/provision-appwrite.cjs` | Provisionne le backend Appwrite + déploie `scan-site` |
+| `npm test` | Vitest (moteur d'audit + libs front) |
+| `node scripts/provision-appwrite.cjs` | Provisionne le backend Appwrite + déploie les fonctions |
 
 ## Variables d'environnement
 
@@ -79,7 +85,11 @@ src/
                                   # DashboardHome + dashboard/ (Sites, Scans,
                                   # ScanDetail, Declarations, Settings)
 functions/
-└── scan-site/                    # Fonction Appwrite (Node 22) : moteur d'audit
+├── scan-site/                    # Fonction Appwrite (Node 22) : moteur d'audit
+│                                 #  - mode { scan_id } : audit complet multi-pages
+│                                 #  - mode { url } : mini-audit public sans compte
+│                                 #  - mode { explain } : assistant IA (ANTHROPIC_API_KEY)
+└── scan-scheduler/               # Cron quotidien : relance les sites surveillés
 scripts/
 └── provision-appwrite.cjs        # Setup backend complet (idempotent)
 ```
@@ -95,11 +105,14 @@ scripts/
 
 Le client crée le scan (`status: pending`) puis déclenche la fonction avec `{ scan_id }`.
 La fonction (clé API dynamique, scopes rows/tables/teams) vérifie l'appartenance à la team,
-crawle la page d'accueil + jusqu'à 4 pages internes, exécute ~27 règles statiques RGAA 4.1 /
-WCAG 2.2 (images, formulaires, liens, ARIA, structure, contrastes inline…), calcule
-`score` / `rgaa_score` / `wcag_score` (règles respectées ÷ applicables) et enregistre chaque
-non-conformité avec sélecteur CSS, extrait HTML et correction suggérée. Le front suit
-l'avancement par polling (TanStack Query).
+crawle la page d'accueil + pages internes (`max_pages` selon le plan, 25 en Pro), exécute
+~40 règles statiques RGAA 4.1 maison **+ axe-core dans jsdom** (locale FR, dédoublonné,
+garde-fous CPU : skip > 250 Ko, timeout 15 s/page), calcule des scores **pondérés par
+sévérité** (`score` / `rgaa_score` / `wcag_score` + `page_scores` par page) et enregistre
+chaque non-conformité avec sélecteur CSS, extrait HTML et correction suggérée. Le front
+suit l'avancement par polling (TanStack Query). Un garde anti-SSRF refuse les cibles
+locales/privées. Le mode public `{ url }` (exécution synchrone, `Role.any()`) alimente le
+test gratuit de la landing sans écrire en base.
 
 ---
 

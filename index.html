@@ -21,7 +21,28 @@
     <meta name="twitter:image" content="https://konforme.kayzen-lyon.fr/og-image.png" />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Contenu sémantique de repli : visible par les robots, les audits
+           du HTML brut et les navigateurs sans JavaScript. Remplacé par
+           l'application React au montage. -->
+      <a href="#main">Aller au contenu principal</a>
+      <main id="main">
+        <h1>Konforme — L'accessibilité web enfin automatisée</h1>
+        <p>
+          Audit d'accessibilité RGAA 4.1 / WCAG 2.2 automatisé : une centaine de règles
+          vérifiées, corrections guidées, déclaration légale générée et surveillance
+          hebdomadaire de vos sites.
+        </p>
+        <ul>
+          <li><a href="/tarifs">Tarifs</a></li>
+          <li><a href="/rgaa">Comprendre le RGAA</a></li>
+          <li><a href="/login">Connexion</a></li>
+        </ul>
+        <noscript>
+          <p>Cette application nécessite JavaScript pour fonctionner.</p>
+        </noscript>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

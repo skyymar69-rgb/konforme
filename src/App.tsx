@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { PublicLayout } from '@/components/layout/PublicLayout'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { Landing } from '@/pages/Landing'
@@ -38,6 +39,7 @@ function PageLoader() {
 
 function App() {
   return (
+    <ErrorBoundary>
     <AuthProvider>
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
@@ -80,6 +82,7 @@ function App() {
         </Suspense>
       </BrowserRouter>
     </AuthProvider>
+    </ErrorBoundary>
   )
 }
 

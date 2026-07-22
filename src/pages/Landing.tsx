@@ -290,6 +290,24 @@ export function Landing() {
         </div>
       </section>
 
+      <section className="mx-auto max-w-4xl px-6 pb-16" aria-labelledby="trust-title">
+        <h2 id="trust-title" className="sr-only">Qui sommes-nous</h2>
+        <div className="rounded-[16px] border border-[#2a3654] bg-[#0d1322]/60 px-6 py-6 md:px-10 flex flex-col md:flex-row items-center gap-5 text-center md:text-left">
+          <span aria-hidden="true" className="text-3xl">🇫🇷</span>
+          <div className="flex-1">
+            <p className="font-bold">Conçu et opéré à Lyon par l'agence Kayzen</p>
+            <p className="text-sm text-[#a3b0c9] mt-1">
+              Konforme est développé en France, les données sont hébergées dans l'Union
+              européenne (Francfort), et l'audit manuel de l'offre Accompagné est réalisé par
+              nos experts. Pas d'overlay, pas de boîte noire : de vraies corrections dans votre code.
+            </p>
+          </div>
+          <Link to="/a-propos" className="shrink-0">
+            <Button variant="ghost">En savoir plus</Button>
+          </Link>
+        </div>
+      </section>
+
       <section className="mx-auto max-w-4xl px-6 pb-20 text-center">
         <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-balance mb-4">
           Prêt pour l'European Accessibility Act ?
