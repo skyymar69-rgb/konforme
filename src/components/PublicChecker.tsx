@@ -51,7 +51,12 @@ export function PublicChecker() {
       setResult(payload as PublicResult)
       setState('done')
     } catch (err) {
-      setError(err instanceof Error ? err.message : "L'analyse a échoué. Réessayez dans un instant.")
+      const msg = err instanceof Error ? err.message : ''
+      setError(
+        /timed out|timeout/i.test(msg)
+          ? 'Ce site est volumineux et la première analyse a dépassé le temps imparti. Réessayez : la seconde tentative aboutit généralement.'
+          : msg || "L'analyse a échoué. Réessayez dans un instant.",
+      )
       setState('error')
     }
   }

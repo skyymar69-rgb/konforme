@@ -1125,7 +1125,9 @@ Pas de préambule, pas de conclusion générique.`
     if (!html) {
       return res.json({ error: `La page ${target.hostname} est injoignable (délai dépassé, erreur HTTP ou contenu non HTML).` }, 502)
     }
-    const page = await analyzePage(target.toString(), html)
+    // Budget serré : l'exécution synchrone Appwrite est plafonnée à 30 s,
+    // démarrage à froid du conteneur compris.
+    const page = await analyzePage(target.toString(), html, { axeTimeoutMs: 8_000 })
     const scores = computeScores([page])
     const bySeverity = { critical: 0, serious: 0, moderate: 0, minor: 0 }
     const byRule = new Map()
