@@ -1,0 +1,9 @@
+{
+  "name": "konforme-scan-scheduler",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/main.js",
+  "dependencies": {
+    "node-appwrite": "^26.2.0"
+  }
+}

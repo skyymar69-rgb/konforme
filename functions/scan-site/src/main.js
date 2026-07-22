@@ -1,17 +1,27 @@
 // Konforme — moteur d'audit d'accessibilité (RGAA 4.1 / WCAG 2.2)
-// Fonction Appwrite (Node) : reçoit { scan_id }, crawle jusqu'à 5 pages du
-// site, exécute le moteur de règles statiques et complète le scan + issues.
+// Fonction Appwrite (Node). Deux modes :
+//  - { scan_id } : crawle le site (max_pages du scan), exécute ~40 règles
+//    RGAA maison + axe-core (~60 règles WCAG suppl.) et complète scan+issues ;
+//  - { url } (mode public, sans compte) : analyse la page d'accueil seule et
+//    renvoie un mini-rapport directement, sans écrire en base.
 const { Client, TablesDB, Teams, Query, Permission, Role } = require('node-appwrite')
 const { parse } = require('node-html-parser')
+const { JSDOM, VirtualConsole } = require('jsdom')
+const axe = require('axe-core')
+const axeLocaleFr = require('axe-core/locales/fr.json')
 
 const DB_ID = 'konforme'
 const T = { sites: 'sites', scans: 'scans', scan_issues: 'scan_issues' }
 
-const MAX_PAGES = 5
+const DEFAULT_MAX_PAGES = 5
+const MAX_PAGES_HARD_CAP = 30
 const FETCH_TIMEOUT_MS = 10_000
 const MAX_HTML_BYTES = 1_500_000
 const MAX_PER_RULE_PER_PAGE = 10
-const MAX_TOTAL_ISSUES = 300
+const MAX_TOTAL_ISSUES = 400
+
+/** Poids des sévérités dans le score (un critique pèse 6× un mineur). */
+const SEVERITY_WEIGHT = { critical: 3, serious: 2, moderate: 1, minor: 0.5 }
 
 /* ------------------------------------------------------------------ */
 /* Helpers DOM (node-html-parser)                                      */
@@ -794,6 +804,90 @@ function contrastRatio(a, b) {
 }
 
 /* ------------------------------------------------------------------ */
+/* axe-core (jsdom) — profondeur WCAG complémentaire                   */
+/* ------------------------------------------------------------------ */
+
+// Règles axe déjà couvertes par nos règles RGAA (évite les doublons dans le
+// rapport) ou non fiables sans rendu CSS/layout (jsdom).
+const AXE_SKIP = new Set([
+  // Doublons de nos règles maison
+  'image-alt', 'input-image-alt', 'area-alt', 'svg-img-alt', 'role-img-alt',
+  'html-has-lang', 'html-lang-valid', 'document-title', 'label', 'link-name',
+  'button-name', 'frame-title', 'duplicate-id', 'duplicate-id-active',
+  'duplicate-id-aria', 'meta-refresh', 'meta-viewport', 'tabindex',
+  'video-caption', 'audio-caption', 'region', 'skip-link', 'bypass',
+  'nested-interactive', 'empty-heading', 'heading-order', 'list', 'listitem',
+  'aria-roles', 'aria-hidden-focus', 'marquee', 'blink', 'landmark-one-main',
+  'page-has-heading-one', 'autocomplete-valid',
+  // Dépendants du rendu visuel : peu fiables dans jsdom
+  'color-contrast', 'color-contrast-enhanced', 'link-in-text-block',
+  'scrollable-region-focusable', 'target-size',
+])
+
+function axeWcagRef(tags) {
+  const t = tags.find((x) => /^wcag\d{3,4}$/.test(x))
+  if (!t) return null
+  const d = t.slice(4)
+  return `WCAG ${d[0]}.${d[1]}.${d.slice(2)}`
+}
+
+/**
+ * Exécute axe-core sur le HTML via jsdom. Renvoie { issues, applicable,
+ * failed } dans le même format que le moteur maison (ids "axe:<rule>").
+ * En cas d'échec (HTML pathologique), renvoie un résultat vide : les règles
+ * maison restent la base du rapport.
+ */
+async function runAxe(url, html) {
+  const applicable = new Map()
+  const failed = new Set()
+  const issues = []
+  let dom
+  try {
+    const virtualConsole = new VirtualConsole() // silencieux (erreurs CSS…)
+    dom = new JSDOM(html, { url, runScripts: 'outside-only', pretendToBeVisual: true, virtualConsole })
+    dom.window.eval(axe.source)
+    dom.window.axe.configure({ locale: axeLocaleFr })
+    const results = await dom.window.axe.run(dom.window.document, {
+      resultTypes: ['violations', 'passes'],
+      elementRef: false,
+      pingWaitTime: 10,
+    })
+    for (const p of results.passes) {
+      if (AXE_SKIP.has(p.id)) continue
+      applicable.set(`axe:${p.id}`, { severity: p.impact || 'moderate', rgaa: false, wcag: true })
+    }
+    for (const v of results.violations) {
+      if (AXE_SKIP.has(v.id)) continue
+      const id = `axe:${v.id}`
+      const severity = ['critical', 'serious', 'moderate', 'minor'].includes(v.impact) ? v.impact : 'moderate'
+      applicable.set(id, { severity, rgaa: false, wcag: true })
+      failed.add(id)
+      const wcagRef = axeWcagRef(v.tags)
+      for (const node of v.nodes.slice(0, MAX_PER_RULE_PER_PAGE)) {
+        issues.push({
+          rule: {
+            id,
+            severity,
+            category: 'WCAG approfondi',
+            title: v.help,
+            description: wcagRef ? `${v.description} (${wcagRef})` : v.description,
+            fix: (node.failureSummary || '').replace(/^Corrigez[^:]*:\s*/i, '') || `Documentation : ${v.helpUrl}`,
+          },
+          selector: Array.isArray(node.target) ? node.target.join(' ') : String(node.target || ''),
+          snippet: (node.html || '').slice(0, 500),
+          detail: undefined,
+        })
+      }
+    }
+  } catch {
+    /* axe indisponible sur cette page : on garde les règles maison */
+  } finally {
+    try { if (dom) dom.window.close() } catch { /* rien */ }
+  }
+  return { issues, applicable, failed }
+}
+
+/* ------------------------------------------------------------------ */
 /* Crawl + analyse                                                     */
 /* ------------------------------------------------------------------ */
 
@@ -821,7 +915,7 @@ async function fetchPage(url) {
   }
 }
 
-function discoverLinks(doc, base) {
+function discoverLinks(doc, base, maxPages = DEFAULT_MAX_PAGES) {
   const found = new Set()
   for (const a of doc.querySelectorAll('a')) {
     const href = a.getAttribute('href') || ''
@@ -838,14 +932,48 @@ function discoverLinks(doc, base) {
       /* URL invalide */
     }
   }
-  return [...found].slice(0, MAX_PAGES - 1)
+  return [...found].slice(0, maxPages - 1)
 }
 
-function analyzePage(url, html) {
+/**
+ * Garde anti-SSRF : refuse les cibles locales/privées (le moteur fetch des
+ * URL fournies par l'utilisateur, y compris en mode public sans compte).
+ */
+function isForbiddenTarget(u) {
+  const host = u.hostname.toLowerCase()
+  if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local') || host.endsWith('.internal')) return true
+  if (host === '0.0.0.0' || host === '[::1]' || host === '::1') return true
+  const ip4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/)
+  if (ip4) {
+    const [a, b] = [Number(ip4[1]), Number(ip4[2])]
+    if (a === 10 || a === 127 || a === 0) return true
+    if (a === 172 && b >= 16 && b <= 31) return true
+    if (a === 192 && b === 168) return true
+    if (a === 169 && b === 254) return true // link-local / métadonnées cloud
+  }
+  return host.startsWith('[') // IPv6 littéral : refusé par précaution
+}
+
+/** Taux pondéré par sévérité : règles respectées ÷ applicables (poids). */
+function weightedRate(applicable, failed, filter) {
+  let denom = 0
+  let num = 0
+  for (const [id, meta] of applicable) {
+    if (!filter(meta)) continue
+    const w = SEVERITY_WEIGHT[meta.severity] ?? 1
+    denom += w
+    if (failed.has(id)) num += w
+  }
+  if (denom === 0) return null
+  return Math.round((1 - num / denom) * 1000) / 10
+}
+
+async function analyzePage(url, html, { withAxe = true } = {}) {
   const doc = parse(html)
   const ids = new Set(doc.querySelectorAll('[id]').map((el) => el.getAttribute('id')).filter(Boolean))
   const issues = []
-  const applicable = new Set()
+  // id → { severity, rgaa, wcag } (règles maison + axe confondues)
+  const applicable = new Map()
   const failed = new Set()
   for (const rule of RULES) {
     let violations
@@ -855,7 +983,7 @@ function analyzePage(url, html) {
       continue
     }
     if (violations === null) continue
-    applicable.add(rule.id)
+    applicable.set(rule.id, { severity: rule.severity, rgaa: rule.rgaa, wcag: rule.wcag })
     if (violations.length > 0) {
       failed.add(rule.id)
       for (const viol of violations.slice(0, MAX_PER_RULE_PER_PAGE)) {
@@ -863,26 +991,33 @@ function analyzePage(url, html) {
       }
     }
   }
-  return { url, issues, applicable, failed }
+  if (withAxe) {
+    const axeRes = await runAxe(url, html)
+    for (const [id, meta] of axeRes.applicable) applicable.set(id, meta)
+    for (const id of axeRes.failed) failed.add(id)
+    issues.push(...axeRes.issues)
+  }
+  const score = weightedRate(applicable, failed, () => true)
+  return { url, issues, applicable, failed, score }
 }
 
 function computeScores(pages) {
-  const applicable = new Set()
+  const applicable = new Map()
   const failed = new Set()
   for (const p of pages) {
-    for (const id of p.applicable) applicable.add(id)
+    for (const [id, meta] of p.applicable) {
+      const prev = applicable.get(id)
+      // garde la sévérité la plus lourde vue sur le site
+      if (!prev || (SEVERITY_WEIGHT[meta.severity] ?? 1) > (SEVERITY_WEIGHT[prev.severity] ?? 1)) {
+        applicable.set(id, meta)
+      }
+    }
     for (const id of p.failed) failed.add(id)
   }
-  const rate = (filter) => {
-    const app = RULES.filter((r) => applicable.has(r.id) && filter(r))
-    if (app.length === 0) return null
-    const ok = app.filter((r) => !failed.has(r.id))
-    return Math.round((ok.length / app.length) * 1000) / 10
-  }
   return {
-    score: rate(() => true),
-    rgaa_score: rate((r) => r.rgaa),
-    wcag_score: rate((r) => r.wcag),
+    score: weightedRate(applicable, failed, () => true),
+    rgaa_score: weightedRate(applicable, failed, (m) => m.rgaa),
+    wcag_score: weightedRate(applicable, failed, (m) => m.wcag),
   }
 }
 
@@ -906,14 +1041,59 @@ module.exports = async ({ req, res, log, error }) => {
   } catch {
     return res.json({ error: 'Corps JSON invalide' }, 400)
   }
+
+  /* ---- Mode public : { url } sans compte — mini-rapport immédiat ---- */
+  if (!body.scan_id && body.url) {
+    let target
+    try {
+      target = new URL(String(body.url))
+      if (!['http:', 'https:'].includes(target.protocol)) throw new Error('protocole')
+    } catch {
+      return res.json({ error: 'URL invalide. Incluez le protocole, ex. https://exemple.fr' }, 422)
+    }
+    if (isForbiddenTarget(target)) return res.json({ error: 'Cette cible n’est pas autorisée.' }, 422)
+    const html = await fetchPage(target.toString())
+    if (!html) {
+      return res.json({ error: `La page ${target.hostname} est injoignable (délai dépassé, erreur HTTP ou contenu non HTML).` }, 502)
+    }
+    const page = await analyzePage(target.toString(), html)
+    const scores = computeScores([page])
+    const bySeverity = { critical: 0, serious: 0, moderate: 0, minor: 0 }
+    const byRule = new Map()
+    for (const i of page.issues) {
+      bySeverity[i.rule.severity] = (bySeverity[i.rule.severity] || 0) + 1
+      const cur = byRule.get(i.rule.id) || { rule_id: i.rule.id, severity: i.rule.severity, title: i.rule.title, count: 0 }
+      cur.count++
+      byRule.set(i.rule.id, cur)
+    }
+    const order = { critical: 0, serious: 1, moderate: 2, minor: 3 }
+    const top_issues = [...byRule.values()].sort((a, b) => order[a.severity] - order[b.severity] || b.count - a.count).slice(0, 8)
+    log(`Scan public : ${target.hostname} → ${scores.score}`)
+    return res.json({
+      url: target.toString(),
+      score: scores.score,
+      rgaa_score: scores.rgaa_score,
+      wcag_score: scores.wcag_score,
+      issues_count: page.issues.length,
+      rules_checked: page.applicable.size,
+      by_severity: bySeverity,
+      top_issues,
+    })
+  }
+
   const scanId = body.scan_id
-  if (!scanId) return res.json({ error: 'scan_id requis' }, 400)
+  if (!scanId) return res.json({ error: 'scan_id ou url requis' }, 400)
 
   let scan
   try {
     scan = await tables.getRow({ databaseId: DB_ID, tableId: T.scans, rowId: scanId })
   } catch {
     return res.json({ error: 'Scan introuvable' }, 404)
+  }
+  // Un scan complet est déclenché soit par un utilisateur authentifié (vérifié
+  // plus bas), soit par le planificateur serveur (trigger 'scheduled').
+  if (!userId && scan.trigger !== 'scheduled') {
+    return res.json({ error: 'Authentification requise pour un audit complet.' }, 401)
   }
   if (scan.status !== 'pending') {
     return res.json({ error: `Scan déjà traité (statut ${scan.status})` }, 409)
@@ -949,6 +1129,9 @@ module.exports = async ({ req, res, log, error }) => {
   } catch {
     return fail('URL du site invalide.', 422)
   }
+  if (isForbiddenTarget(baseUrl)) return fail('Cette cible n’est pas autorisée.', 422)
+
+  const maxPages = Math.min(Math.max(Number(scan.max_pages) || DEFAULT_MAX_PAGES, 1), MAX_PAGES_HARD_CAP)
 
   const startedAt = Date.now()
   await tables.updateRow({
@@ -965,12 +1148,13 @@ module.exports = async ({ req, res, log, error }) => {
     }
 
     const homeDoc = parse(homeHtml)
-    const extraUrls = discoverLinks(homeDoc, baseUrl)
-    const pages = [analyzePage(baseUrl.toString(), homeHtml)]
+    const extraUrls = discoverLinks(homeDoc, baseUrl, maxPages)
+    const pages = [await analyzePage(baseUrl.toString(), homeHtml)]
     const extraHtml = await Promise.all(extraUrls.map((u) => fetchPage(u)))
-    extraHtml.forEach((html, i) => {
-      if (html) pages.push(analyzePage(extraUrls[i], html))
-    })
+    // Analyse séquentielle : jsdom+axe est gourmand en mémoire
+    for (let i = 0; i < extraHtml.length; i++) {
+      if (extraHtml[i]) pages.push(await analyzePage(extraUrls[i], extraHtml[i]))
+    }
     log(`Pages analysées : ${pages.length}`)
 
     const allIssues = pages
@@ -1015,19 +1199,30 @@ module.exports = async ({ req, res, log, error }) => {
 
     const scores = computeScores(pages)
     const finishedAt = new Date().toISOString()
-    await tables.updateRow({
-      databaseId: DB_ID,
-      tableId: T.scans,
-      rowId: scanId,
-      data: {
-        status: 'done',
-        finished_at: finishedAt,
-        duration_ms: Date.now() - startedAt,
-        pages_count: pages.length,
-        issues_count: allIssues.length,
-        ...scores,
-      },
-    })
+    const pageScores = JSON.stringify(
+      pages.slice(0, MAX_PAGES_HARD_CAP).map((p) => ({
+        url: p.url.length > 300 ? p.url.slice(0, 300) : p.url,
+        score: p.score,
+        issues: p.issues.length,
+      })),
+    ).slice(0, 15000)
+    const doneData = {
+      status: 'done',
+      finished_at: finishedAt,
+      duration_ms: Date.now() - startedAt,
+      pages_count: pages.length,
+      issues_count: allIssues.length,
+      page_scores: pageScores,
+      ...scores,
+    }
+    try {
+      await tables.updateRow({ databaseId: DB_ID, tableId: T.scans, rowId: scanId, data: doneData })
+    } catch (err) {
+      // Base pas encore migrée (colonne page_scores absente) : on n'échoue pas le scan
+      delete doneData.page_scores
+      await tables.updateRow({ databaseId: DB_ID, tableId: T.scans, rowId: scanId, data: doneData })
+      log(`page_scores non enregistré : ${err.message || err}`)
+    }
     await tables.updateRow({
       databaseId: DB_ID,
       tableId: T.sites,
@@ -1053,3 +1248,6 @@ module.exports.analyzePage = analyzePage
 module.exports.computeScores = computeScores
 module.exports.discoverLinks = discoverLinks
 module.exports.accessibleName = accessibleName
+module.exports.runAxe = runAxe
+module.exports.isForbiddenTarget = isForbiddenTarget
+module.exports.SEVERITY_WEIGHT = SEVERITY_WEIGHT

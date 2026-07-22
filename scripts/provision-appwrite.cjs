@@ -66,6 +66,7 @@ const TABLES = [
       S('trigger', 16, false, 'manual'), S('site_name', 256), S('site_url', 1024),
       D('started_at'), D('finished_at'), I('duration_ms'), I('pages_count', 0), I('issues_count', 0),
       F('score'), F('rgaa_score'), F('wcag_score'), S('error', 2000),
+      I('max_pages', 5), S('page_scores', 16000),
     ],
     indexes: [
       { key: 'idx_team', columns: ['team_id'] },
@@ -160,35 +161,73 @@ async function main() {
     }
   }
 
-  // 3. Fonction scan-site
-  await ensure(`function "${FUNCTION_ID}"`, () =>
-    functions.create({
-      functionId: FUNCTION_ID,
+  // 3. Fonctions serverless (création + synchronisation de la config + code)
+  const FUNCTIONS = [
+    {
+      id: FUNCTION_ID,
       name: 'scan-site',
-      runtime: 'node-22',
-      execute: [Role.users()],
+      dir: 'scan-site',
+      // Role.any() : le mode public { url } est ouvert aux visiteurs (mini-audit
+      // de la landing). Les scans complets restent contrôlés dans la fonction.
+      execute: [Role.any()],
+      scopes: ['rows.read', 'rows.write', 'tables.read', 'teams.read'],
       timeout: 300,
+    },
+    {
+      id: 'scan-scheduler',
+      name: 'scan-scheduler',
+      dir: 'scan-scheduler',
+      execute: [],
+      schedule: '0 6 * * *', // tous les jours à 06:00 UTC
+      scopes: ['rows.read', 'rows.write', 'tables.read', 'executions.write'],
+      timeout: 120,
+    },
+  ]
+
+  for (const fn of FUNCTIONS) {
+    const config = {
+      name: fn.name,
+      runtime: 'node-22',
+      execute: fn.execute,
+      timeout: fn.timeout,
       entrypoint: 'src/main.js',
       commands: 'npm install',
       logging: true,
-      scopes: ['rows.read', 'rows.write', 'tables.read', 'teams.read'],
-    }),
-  )
+      scopes: fn.scopes,
+      ...(fn.schedule ? { schedule: fn.schedule } : {}),
+    }
+    let created = true
+    try {
+      await functions.create({ functionId: fn.id, ...config })
+      console.log(`✓ function "${fn.id}"`)
+    } catch (e) {
+      if (e && (e.code === 409 || /already exists/i.test(String(e.message)))) {
+        created = false
+        console.log(`· function "${fn.id}" (déjà présente)`)
+      } else {
+        throw new Error(`function ${fn.id} : ${e.message || e}`)
+      }
+    }
+    if (!created) {
+      // Synchronise la config (rôles d'exécution, scopes, cron) d'une fonction existante
+      await functions.update({ functionId: fn.id, ...config })
+      console.log(`✓ function "${fn.id}" mise à jour (execute/scopes/cron)`)
+    }
 
-  // 4. Déploiement du code (tar.gz du dossier functions/scan-site)
-  const fnDir = path.join(__dirname, '..', 'functions', 'scan-site')
-  const tarPath = path.join(os.tmpdir(), `konforme-scan-site-${Date.now()}.tar.gz`)
-  execFileSync('tar', ['--exclude=node_modules', '-czf', tarPath, '-C', fnDir, '.'])
-  console.log(`→ déploiement du code (${(fs.statSync(tarPath).size / 1024).toFixed(0)} ko)…`)
-  const deployment = await functions.createDeployment({
-    functionId: FUNCTION_ID,
-    code: InputFile.fromPath(tarPath, 'code.tar.gz'),
-    activate: true,
-    entrypoint: 'src/main.js',
-    commands: 'npm install',
-  })
-  fs.unlinkSync(tarPath)
-  console.log(`✓ déploiement ${deployment.$id} créé (build en cours côté Appwrite)`)
+    const fnDir = path.join(__dirname, '..', 'functions', fn.dir)
+    const tarPath = path.join(os.tmpdir(), `konforme-${fn.id}-${Date.now()}.tar.gz`)
+    execFileSync('tar', ['--exclude=node_modules', '-czf', tarPath, '-C', fnDir, '.'])
+    console.log(`→ déploiement du code de ${fn.id} (${(fs.statSync(tarPath).size / 1024).toFixed(0)} ko)…`)
+    const deployment = await functions.createDeployment({
+      functionId: fn.id,
+      code: InputFile.fromPath(tarPath, 'code.tar.gz'),
+      activate: true,
+      entrypoint: 'src/main.js',
+      commands: 'npm install',
+    })
+    fs.unlinkSync(tarPath)
+    console.log(`✓ déploiement ${deployment.$id} créé (build en cours côté Appwrite)`)
+  }
 
   console.log(`\nTerminé. Dernière étape manuelle (console Appwrite) :
   Overview > Integrations > Platforms > Add platform > Web :

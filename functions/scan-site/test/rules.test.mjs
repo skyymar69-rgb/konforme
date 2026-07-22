@@ -7,7 +7,7 @@ const require = createRequire(import.meta.url)
 const engine = require('../src/main.js')
 const { parse } = require('node-html-parser')
 
-const { RULES, analyzePage, computeScores, accessibleName } = engine
+const { RULES, analyzePage, computeScores, accessibleName, runAxe, isForbiddenTarget, SEVERITY_WEIGHT } = engine
 
 function runRule(id, html) {
   const rule = RULES.find((r) => r.id === id)
@@ -252,8 +252,8 @@ describe('analyzePage / computeScores', () => {
     <input type="text">
   </body></html>`
 
-  it('collecte les violations et les ensembles applicable/échoué', () => {
-    const page = analyzePage('https://exemple.fr', badPage)
+  it('collecte les violations et les ensembles applicable/échoué', async () => {
+    const page = await analyzePage('https://exemple.fr', badPage, { withAxe: false })
     const ruleIds = page.issues.map((i) => i.rule.id)
     expect(ruleIds).toContain('RGAA 1.1 / WCAG 1.1.1')
     expect(ruleIds).toContain('RGAA 6.2 / WCAG 2.4.4')
@@ -262,23 +262,89 @@ describe('analyzePage / computeScores', () => {
     expect(page.applicable.size).toBeGreaterThan(page.failed.size)
   })
 
-  it('calcule un score de 100 quand aucune règle applicable n’échoue', () => {
+  it('calcule un score de 100 quand aucune règle applicable n’échoue', async () => {
     const cleanPage = `<!doctype html><html lang="fr"><head><title>Page propre</title>
       <meta name="viewport" content="width=device-width, initial-scale=1"></head>
       <body><a href="#main">Aller au contenu</a><main id="main"><h1>Bienvenue</h1>
       <p>Contenu.</p></main></body></html>`
-    const page = analyzePage('https://exemple.fr', cleanPage)
+    const page = await analyzePage('https://exemple.fr', cleanPage, { withAxe: false })
     expect(page.issues).toHaveLength(0)
+    expect(page.score).toBe(100)
     const scores = computeScores([page])
     expect(scores.score).toBe(100)
     expect(scores.rgaa_score).toBe(100)
     expect(scores.wcag_score).toBe(100)
   })
 
-  it('agrège les scores sur plusieurs pages', () => {
-    const p1 = analyzePage('https://exemple.fr/a', badPage)
+  it('agrège les scores sur plusieurs pages', async () => {
+    const p1 = await analyzePage('https://exemple.fr/a', badPage, { withAxe: false })
     const scores = computeScores([p1])
     expect(scores.score).toBeLessThan(100)
     expect(scores.score).toBeGreaterThanOrEqual(0)
+  })
+
+  it('pondère par sévérité : un échec critique pèse plus qu’un mineur', () => {
+    const mk = (sev, fails) => {
+      const applicable = new Map([
+        ['r1', { severity: sev, rgaa: true, wcag: true }],
+        ['r2', { severity: 'serious', rgaa: true, wcag: true }],
+        ['r3', { severity: 'serious', rgaa: true, wcag: true }],
+      ])
+      return { applicable, failed: new Set(fails ? ['r1'] : []) }
+    }
+    const critical = computeScores([mk('critical', true)])
+    const minor = computeScores([mk('minor', true)])
+    expect(critical.score).toBeLessThan(minor.score)
+    expect(SEVERITY_WEIGHT.critical).toBeGreaterThan(SEVERITY_WEIGHT.minor)
+  })
+})
+
+describe('axe-core (jsdom)', () => {
+  it('détecte des violations WCAG supplémentaires en français', async () => {
+    const html = `<!doctype html><html lang="fr"><head><title>t</title></head><body>
+      <main><h1>Titre</h1>
+        <div role="checkbox">case</div>
+        <table><tr><th></th></tr><tr><td>x</td></tr></table>
+      </main></body></html>`
+    const res = await runAxe('https://exemple.fr/', html)
+    expect(res.issues.length).toBeGreaterThan(0)
+    expect([...res.applicable.keys()].every((id) => id.startsWith('axe:'))).toBe(true)
+    // aria-required-attr : un role=checkbox sans aria-checked
+    expect(res.failed.has('axe:aria-required-attr')).toBe(true)
+    const issue = res.issues.find((i) => i.rule.id === 'axe:aria-required-attr')
+    expect(issue.rule.title.length).toBeGreaterThan(5)
+    expect(issue.rule.wcag ?? true).toBeTruthy()
+  })
+
+  it("ne re-signale pas ce que les règles maison couvrent (dédoublonnage)", async () => {
+    const res = await runAxe('https://exemple.fr/', '<!doctype html><html><body><img src="a.png"></body></html>')
+    expect(res.failed.has('axe:image-alt')).toBe(false)
+    expect(res.failed.has('axe:html-has-lang')).toBe(false)
+  })
+
+  it('analyzePage fusionne règles maison et axe', async () => {
+    const html = `<!doctype html><html><head></head><body><img src="a.png">
+      <div role="checkbox">case</div></body></html>`
+    const page = await analyzePage('https://exemple.fr/', html)
+    const ids = page.issues.map((i) => i.rule.id)
+    expect(ids).toContain('RGAA 1.1 / WCAG 1.1.1')
+    expect(ids.some((id) => id.startsWith('axe:'))).toBe(true)
+  })
+})
+
+describe('isForbiddenTarget (anti-SSRF)', () => {
+  it('refuse les cibles locales et privées', () => {
+    for (const u of [
+      'http://localhost/', 'http://127.0.0.1/', 'http://10.0.0.5/', 'http://192.168.1.1/',
+      'http://172.16.0.1/', 'http://169.254.169.254/latest/meta-data', 'http://0.0.0.0/',
+      'http://foo.local/', 'http://[::1]/',
+    ]) {
+      expect(isForbiddenTarget(new URL(u)), u).toBe(true)
+    }
+  })
+  it('accepte les cibles publiques', () => {
+    for (const u of ['https://example.com/', 'https://konforme-neon.vercel.app/', 'http://8.8.8.8/']) {
+      expect(isForbiddenTarget(new URL(u)), u).toBe(false)
+    }
   })
 })
