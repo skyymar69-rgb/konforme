@@ -50,11 +50,45 @@ function text(el) {
   return (el.text || '').replace(/\s+/g, ' ').trim()
 }
 
+const idMapCache = new WeakMap()
+
+function rootOf(el) {
+  let r = el
+  while (r.parentNode) r = r.parentNode
+  return r
+}
+
+function idMap(root) {
+  let map = idMapCache.get(root)
+  if (!map) {
+    map = new Map()
+    for (const el of root.querySelectorAll('[id]')) {
+      const id = el.getAttribute('id')
+      if (id && !map.has(id)) map.set(id, el)
+    }
+    idMapCache.set(root, map)
+  }
+  return map
+}
+
 function accessibleName(el) {
   const aria = (el.getAttribute('aria-label') || '').trim()
   if (aria) return aria
   const labelledby = (el.getAttribute('aria-labelledby') || '').trim()
-  if (labelledby) return labelledby
+  if (labelledby) {
+    const map = idMap(rootOf(el))
+    const resolved = labelledby
+      .split(/\s+/)
+      .map((id) => {
+        const target = map.get(id)
+        return target ? text(target) : ''
+      })
+      .filter(Boolean)
+      .join(' ')
+    // Ids introuvables : on considère quand même qu'un nom est déclaré
+    // (la règle « Référence ARIA vers un id inexistant » signale le cas).
+    return resolved || labelledby
+  }
   const title = (el.getAttribute('title') || '').trim()
   if (title) return title
   const t = text(el)
@@ -381,8 +415,9 @@ const RULES = [
     description: 'La page ne contient pas de repère <main> (ou role="main").',
     fix: 'Encadrez le contenu principal dans une balise <main> unique.',
     check(doc) {
-      const mains = [...doc.querySelectorAll('main'), ...doc.querySelectorAll('[role="main"]')]
+      const mains = [...new Set([...doc.querySelectorAll('main'), ...doc.querySelectorAll('[role="main"]')])]
       if (mains.length === 0) return [{ selector: 'body', snippet: null, detail: 'Aucun <main> détecté' }]
+      if (mains.length > 1) return mains.slice(1).map((m) => v(m, '<main> multiple'))
       return []
     },
   },
@@ -504,7 +539,226 @@ const RULES = [
       return out
     },
   },
+  {
+    id: 'RGAA 1.1 / WCAG 1.1.1 (area)', rgaa: true, wcag: true, severity: 'critical', category: 'Images',
+    title: "Zone cliquable d'image réactive sans alternative",
+    description: "Chaque zone <area> d'une image map doit avoir un attribut alt décrivant sa destination.",
+    fix: 'Ajoutez alt="destination de la zone" sur chaque <area href="…">.',
+    check(doc) {
+      const areas = doc.querySelectorAll('area[href]')
+      if (areas.length === 0) return null
+      return areas
+        .filter((a) => !(a.getAttribute('alt') || '').trim() && !(a.getAttribute('aria-label') || '').trim())
+        .map((a) => v(a))
+    },
+  },
+  {
+    id: 'RGAA 1.1 / WCAG 1.1.1 (input image)', rgaa: true, wcag: true, severity: 'critical', category: 'Images',
+    title: 'Bouton image sans alternative',
+    description: 'Un <input type="image"> sans alt est annoncé « bouton » sans indication de sa fonction.',
+    fix: 'Ajoutez alt="fonction du bouton" sur l\'input type="image".',
+    check(doc) {
+      const inputs = doc.querySelectorAll('input[type="image"]')
+      if (inputs.length === 0) return null
+      return inputs
+        .filter((i) => !(i.getAttribute('alt') || '').trim() && !(i.getAttribute('aria-label') || '').trim())
+        .map((i) => v(i))
+    },
+  },
+  {
+    id: 'RGAA 1.1 / WCAG 1.1.1 (svg)', rgaa: true, wcag: true, severity: 'serious', category: 'Images',
+    title: 'SVG porteur d\'information sans nom accessible',
+    description: 'Un <svg role="img"> doit avoir un nom accessible (aria-label, aria-labelledby ou <title> interne).',
+    fix: 'Ajoutez aria-label="description" ou un élément <title> en premier enfant du SVG.',
+    check(doc) {
+      const svgs = doc.querySelectorAll('svg[role="img"]')
+      if (svgs.length === 0) return null
+      return svgs
+        .filter(
+          (s) =>
+            !(s.getAttribute('aria-label') || '').trim() &&
+            !(s.getAttribute('aria-labelledby') || '').trim() &&
+            !s.querySelectorAll('title').some((t) => text(t)),
+        )
+        .map((s) => v(s))
+    },
+  },
+  {
+    id: 'RGAA 9.1 / WCAG 1.3.1 (titre vide)', rgaa: true, wcag: true, severity: 'serious', category: 'Structuration',
+    title: 'Titre (h1-h6) vide',
+    description: "Un titre sans contenu perturbe la navigation par titres des lecteurs d'écran.",
+    fix: 'Renseignez le texte du titre ou supprimez la balise vide.',
+    check(doc) {
+      const hs = doc.querySelectorAll('h1,h2,h3,h4,h5,h6')
+      if (hs.length === 0) return null
+      return hs
+        .filter(
+          (h) =>
+            !isHidden(h) &&
+            text(h) === '' &&
+            !(h.getAttribute('aria-label') || '').trim() &&
+            !h.querySelectorAll('img').some((i) => (i.getAttribute('alt') || '').trim()),
+        )
+        .map((h) => v(h))
+    },
+  },
+  {
+    id: 'RGAA 11.1 / WCAG 3.3.2 (label orphelin)', rgaa: true, wcag: true, severity: 'serious', category: 'Formulaires',
+    title: 'Étiquette (label) sans champ associé',
+    description: "L'attribut for du <label> pointe vers un id qui n'existe pas : l'association étiquette/champ est cassée.",
+    fix: "Faites correspondre le for du label à l'id du champ.",
+    check(doc, ids) {
+      const labels = doc.querySelectorAll('label[for]')
+      if (labels.length === 0) return null
+      return labels
+        .filter((l) => {
+          const f = (l.getAttribute('for') || '').trim()
+          return f && !ids.has(f)
+        })
+        .map((l) => v(l, `for="${l.getAttribute('for')}" sans champ correspondant`))
+    },
+  },
+  {
+    id: 'ARIA role / WCAG 4.1.2', rgaa: false, wcag: true, severity: 'serious', category: 'ARIA',
+    title: 'Rôle ARIA invalide',
+    description: "L'attribut role contient une valeur inconnue de la spécification ARIA : il est ignoré par les technologies d'assistance.",
+    fix: 'Utilisez un rôle ARIA valide (button, navigation, dialog…) ou retirez l\'attribut.',
+    check(doc) {
+      const els = doc.querySelectorAll('[role]')
+      if (els.length === 0) return null
+      return els
+        .filter((el) => {
+          const tokens = (el.getAttribute('role') || '').trim().toLowerCase().split(/\s+/).filter(Boolean)
+          return tokens.length > 0 && !tokens.some((t) => VALID_ROLES.has(t))
+        })
+        .map((el) => v(el, `role="${el.getAttribute('role')}"`))
+    },
+  },
+  {
+    id: 'Imbrication / WCAG 4.1.2', rgaa: false, wcag: true, severity: 'serious', category: 'Liens',
+    title: 'Éléments interactifs imbriqués',
+    description: 'Un lien ou bouton contient un autre élément interactif : comportement imprévisible au clavier et au lecteur d\'écran.',
+    fix: "Sortez l'élément imbriqué du lien/bouton parent.",
+    check(doc) {
+      const hosts = [...doc.querySelectorAll('a[href]'), ...doc.querySelectorAll('button')]
+      if (hosts.length === 0) return null
+      return hosts
+        .filter((h) =>
+          h.querySelectorAll('a[href], button, input, select, textarea, [role="button"], [role="link"]').length > 0,
+        )
+        .map((h) => v(h))
+    },
+  },
+  {
+    id: 'RGAA 7.3 / WCAG 2.1.1', rgaa: true, wcag: true, severity: 'serious', category: 'Scripts',
+    title: 'Élément cliquable non accessible au clavier',
+    description: 'Un élément non interactif (div, span…) porte un gestionnaire onclick sans rôle ni tabindex : inutilisable au clavier.',
+    fix: 'Utilisez un <button>, ou ajoutez role="button" + tabindex="0" + gestion des touches Entrée/Espace.',
+    check(doc) {
+      const els = doc.querySelectorAll('[onclick]')
+      if (els.length === 0) return null
+      const interactive = new Set(['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'OPTION', 'SUMMARY', 'LABEL', 'AREA', 'DETAILS'])
+      return els
+        .filter(
+          (el) =>
+            !interactive.has(el.tagName) &&
+            !(el.getAttribute('role') || '').trim() &&
+            el.getAttribute('tabindex') === undefined,
+        )
+        .map((el) => v(el))
+    },
+  },
+  {
+    id: 'WCAG 3.2.2 / Formulaire', rgaa: true, wcag: true, severity: 'moderate', category: 'Formulaires',
+    title: "Formulaire sans bouton d'envoi",
+    description: "Un formulaire sans bouton de soumission force l'envoi implicite (touche Entrée), non découvrable pour tous.",
+    fix: 'Ajoutez un <button type="submit"> (ou input type="submit") visible dans le formulaire.',
+    check(doc) {
+      const forms = doc.querySelectorAll('form')
+      if (forms.length === 0) return null
+      return forms
+        .filter((f) => {
+          const fields = f
+            .querySelectorAll('input, select, textarea')
+            .filter((i) => (i.getAttribute('type') || '').toLowerCase() !== 'hidden')
+          if (fields.length === 0) return false
+          return !f.querySelectorAll('button, input').some((b) => {
+            const type = (b.getAttribute('type') || (b.tagName === 'BUTTON' ? 'submit' : '')).toLowerCase()
+            return type === 'submit' || type === 'image'
+          })
+        })
+        .map((f) => v(f))
+    },
+  },
+  {
+    id: 'RGAA 8.2 / Listes', rgaa: true, wcag: true, severity: 'moderate', category: 'Structuration',
+    title: 'Élément de liste hors liste',
+    description: 'Un <li> doit être enfant direct de <ul>, <ol> ou <menu> : hors liste, la structure annoncée est incohérente.',
+    fix: 'Placez les <li> dans une balise <ul> ou <ol>.',
+    check(doc) {
+      const lis = doc.querySelectorAll('li')
+      if (lis.length === 0) return null
+      return lis
+        .filter((li) => {
+          const p = li.parentNode
+          if (!p || !p.tagName) return true
+          if (['UL', 'OL', 'MENU'].includes(p.tagName)) return false
+          return (p.getAttribute('role') || '').toLowerCase() !== 'list'
+        })
+        .map((li) => v(li))
+    },
+  },
+  {
+    id: 'WCAG 1.4.10 / Viewport', rgaa: false, wcag: true, severity: 'minor', category: 'Présentation',
+    title: 'Meta viewport absent',
+    description: "Sans meta viewport, la page n'est pas adaptée aux mobiles et le contenu peut nécessiter un défilement horizontal.",
+    fix: 'Ajoutez <meta name="viewport" content="width=device-width, initial-scale=1"> dans le <head>.',
+    check(doc) {
+      const vp = doc.querySelector('meta[name="viewport"]')
+      if (!vp) return [{ selector: 'head', snippet: null, detail: 'meta viewport absent' }]
+      return []
+    },
+  },
+  {
+    id: 'RGAA 1.3 / Alt trop long', rgaa: true, wcag: false, severity: 'minor', category: 'Images',
+    title: 'Alternative textuelle trop longue',
+    description: "Un alt de plus de 250 caractères est pénible à écouter ; une description longue relève d'une légende ou d'aria-describedby.",
+    fix: "Raccourcissez l'alt et déplacez la description détaillée dans le contenu adjacent.",
+    check(doc) {
+      const imgs = doc.querySelectorAll('img')
+      if (imgs.length === 0) return null
+      return imgs
+        .filter((i) => ((i.getAttribute('alt') || '').trim().length > 250))
+        .map((i) => v(i, `alt de ${(i.getAttribute('alt') || '').trim().length} caractères`))
+    },
+  },
+  {
+    id: 'WCAG 1.3.5 / Autocomplete', rgaa: false, wcag: true, severity: 'minor', category: 'Formulaires',
+    title: 'Champ personnel sans autocomplete',
+    description: 'Les champs e-mail/téléphone sans attribut autocomplete privent les utilisateurs du remplissage automatique (WCAG 1.3.5).',
+    fix: 'Ajoutez autocomplete="email" (ou "tel") sur le champ.',
+    check(doc) {
+      const fields = doc
+        .querySelectorAll('input')
+        .filter((i) => ['email', 'tel'].includes((i.getAttribute('type') || '').toLowerCase()) && !isHidden(i))
+      if (fields.length === 0) return null
+      return fields.filter((f) => !(f.getAttribute('autocomplete') || '').trim()).map((f) => v(f))
+    },
+  },
 ]
+
+// Rôles ARIA 1.2 valides (rôles abstraits exclus : ils ne doivent pas être utilisés).
+const VALID_ROLES = new Set([
+  'alert', 'alertdialog', 'application', 'article', 'banner', 'blockquote', 'button', 'caption', 'cell',
+  'checkbox', 'code', 'columnheader', 'combobox', 'complementary', 'contentinfo', 'definition', 'deletion',
+  'dialog', 'directory', 'document', 'emphasis', 'feed', 'figure', 'form', 'generic', 'grid', 'gridcell',
+  'group', 'heading', 'img', 'insertion', 'link', 'list', 'listbox', 'listitem', 'log', 'main', 'marquee',
+  'math', 'menu', 'menubar', 'menuitem', 'menuitemcheckbox', 'menuitemradio', 'meter', 'navigation', 'none',
+  'note', 'option', 'paragraph', 'presentation', 'progressbar', 'radio', 'radiogroup', 'region', 'row',
+  'rowgroup', 'rowheader', 'scrollbar', 'search', 'searchbox', 'separator', 'slider', 'spinbutton', 'status',
+  'strong', 'subscript', 'superscript', 'switch', 'tab', 'table', 'tablist', 'tabpanel', 'term', 'textbox',
+  'time', 'timer', 'toolbar', 'tooltip', 'tree', 'treegrid', 'treeitem',
+])
 
 function matchProp(style, prop) {
   const re = new RegExp(`(?:^|;)\\s*${prop}\\s*:\\s*([^;]+)`, 'i')
@@ -792,3 +1046,10 @@ module.exports = async ({ req, res, log, error }) => {
     return fail(e instanceof Error ? e.message : 'Erreur inconnue pendant le scan')
   }
 }
+
+/* Exposés pour les tests unitaires (le handler reste l'export par défaut). */
+module.exports.RULES = RULES
+module.exports.analyzePage = analyzePage
+module.exports.computeScores = computeScores
+module.exports.discoverLinks = discoverLinks
+module.exports.accessibleName = accessibleName
