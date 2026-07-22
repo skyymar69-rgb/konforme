@@ -292,6 +292,31 @@ export function useDeleteSite() {
 /* Scans                                                               */
 /* ------------------------------------------------------------------ */
 
+/** Au-delà de ce délai, un scan pending/running est considéré interrompu
+ * (la fonction est plafonnée à 300 s) et marqué failed. */
+const SCAN_STALE_MS = 6 * 60_000
+const SCAN_STALE_ERROR =
+  "Audit interrompu (délai d'exécution dépassé). Relancez l'audit — un seul à la fois par site."
+
+function reapStaleScan(scan: Scan): Scan {
+  if (
+    (scan.status === 'pending' || scan.status === 'running') &&
+    Date.now() - Date.parse(scan.created_at) > SCAN_STALE_MS
+  ) {
+    // Marque en base (fire-and-forget) et reflète immédiatement dans l'UI
+    tables
+      .updateRow({
+        databaseId: DB_ID,
+        tableId: TABLES.scans,
+        rowId: scan.id,
+        data: { status: 'failed', finished_at: new Date().toISOString(), error: SCAN_STALE_ERROR },
+      })
+      .catch(() => {})
+    return { ...scan, status: 'failed', error: SCAN_STALE_ERROR }
+  }
+  return scan
+}
+
 export function useScans(orgId: string | undefined, siteId?: string) {
   return useQuery({
     queryKey: ['scans', orgId, siteId ?? 'all'],
@@ -308,7 +333,7 @@ export function useScans(orgId: string | undefined, siteId?: string) {
         tableId: TABLES.scans,
         queries,
       })
-      return res.rows.map(rowToScan)
+      return res.rows.map(rowToScan).map(reapStaleScan)
     },
     // Rafraîchit tant qu'un scan tourne
     refetchInterval: (query) =>
@@ -329,7 +354,7 @@ export function useScan(scanId: string | undefined) {
           tableId: TABLES.scans,
           rowId: scanId!,
         })
-        return rowToScan(row)
+        return reapStaleScan(rowToScan(row))
       } catch {
         return null
       }
@@ -410,6 +435,21 @@ export function useLaunchScan(plan: PlanId = 'free') {
   return useMutation({
     mutationFn: async (site: Site): Promise<{ scan_id: string }> => {
       const limits = PLANS[plan]
+      // Un seul audit à la fois par site : les exécutions simultanées se
+      // partagent le CPU de la fonction et finissent en timeout.
+      const active = await tables.listRows({
+        databaseId: DB_ID,
+        tableId: TABLES.scans,
+        queries: [
+          Query.equal('site_id', site.id),
+          Query.equal('status', ['pending', 'running']),
+          Query.limit(1),
+        ],
+        total: true,
+      })
+      if ((active.total ?? 0) > 0) {
+        throw new Error('Un audit est déjà en cours pour ce site — suivez-le depuis l’onglet Scans.')
+      }
       const used = await tables.listRows({
         databaseId: DB_ID,
         tableId: TABLES.scans,

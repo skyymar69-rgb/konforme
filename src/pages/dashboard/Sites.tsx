@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -38,6 +39,26 @@ export function Sites() {
   const limits = PLANS[plan]
   const usedScans = scansUsedThisMonth(scans)
   const siteLimitReached = (sites?.length ?? 0) >= limits.maxSites
+
+  // Scan actif (pending/running) par site : bloque le double lancement
+  const activeBySite = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const s of scans ?? []) {
+      if (s.status === 'pending' || s.status === 'running') map.set(s.site_id, s.id)
+    }
+    return map
+  }, [scans])
+
+  // Quand un audit se termine (le nombre d'actifs baisse), rafraîchit les
+  // cartes des sites (dernier score / dernière date)
+  const qc = useQueryClient()
+  const prevActive = useRef(0)
+  useEffect(() => {
+    if (activeBySite.size < prevActive.current) {
+      qc.invalidateQueries({ queryKey: ['sites'] })
+    }
+    prevActive.current = activeBySite.size
+  }, [activeBySite.size, qc])
 
   return (
     <div className="space-y-6">
@@ -91,7 +112,7 @@ export function Sites() {
       <ul className="grid gap-4 md:grid-cols-2" aria-label="Liste des sites">
         {sites?.map((site) => (
           <li key={site.id}>
-            <SiteCard site={site} plan={plan} />
+            <SiteCard site={site} plan={plan} activeScanId={activeBySite.get(site.id)} />
           </li>
         ))}
       </ul>
@@ -102,6 +123,7 @@ export function Sites() {
 function AddSiteForm({ orgId, plan, onDone }: { orgId: string; plan: PlanId; onDone: () => void }) {
   const addSite = useAddSite(orgId, plan)
   const launchScan = useLaunchScan(plan)
+  const navigate = useNavigate()
   const [errors, setErrors] = useState<{ name?: string; url?: string; global?: string }>({})
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -114,13 +136,22 @@ function AddSiteForm({ orgId, plan, onDone }: { orgId: string; plan: PlanId; onD
       return
     }
     setErrors({})
+    let site: Site
     try {
-      const site = await addSite.mutateAsync(parsed.data)
-      // Lance immédiatement le premier audit (non bloquant pour l'UI)
-      launchScan.mutate(site)
-      onDone()
+      site = await addSite.mutateAsync(parsed.data)
     } catch (err) {
       setErrors({ global: err instanceof Error ? err.message : "Impossible d'ajouter le site." })
+      return
+    }
+    try {
+      // Lance le premier audit et emmène l'utilisateur sur le suivi en direct
+      const { scan_id } = await launchScan.mutateAsync(site)
+      onDone()
+      navigate(`/dashboard/scans/${scan_id}`)
+    } catch (err) {
+      setErrors({
+        global: `Site ajouté, mais l'audit n'a pas pu démarrer : ${err instanceof Error ? err.message : 'erreur inconnue'}`,
+      })
     }
   }
 
@@ -186,17 +217,20 @@ function AddSiteForm({ orgId, plan, onDone }: { orgId: string; plan: PlanId; onD
   )
 }
 
-function SiteCard({ site, plan }: { site: Site; plan: PlanId }) {
+function SiteCard({ site, plan, activeScanId }: { site: Site; plan: PlanId; activeScanId?: string }) {
   const launchScan = useLaunchScan(plan)
   const deleteSite = useDeleteSite()
   const updateSite = useUpdateSite()
+  const navigate = useNavigate()
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   async function onScan() {
     setError(null)
     try {
-      await launchScan.mutateAsync(site)
+      const { scan_id } = await launchScan.mutateAsync(site)
+      // Feedback immédiat : on suit l'audit en direct
+      navigate(`/dashboard/scans/${scan_id}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erreur au lancement du scan')
     }
@@ -249,9 +283,16 @@ function SiteCard({ site, plan }: { site: Site; plan: PlanId }) {
       )}
 
       <div className="mt-4 pt-4 border-t border-border flex flex-wrap gap-2">
-        <Button size="sm" variant="primary" onClick={onScan} disabled={launchScan.isPending}>
-          {launchScan.isPending ? 'Audit en cours…' : 'Lancer un audit'}
-        </Button>
+        {activeScanId ? (
+          <Button size="sm" variant="primary" onClick={() => navigate(`/dashboard/scans/${activeScanId}`)}>
+            <span aria-hidden="true" className="size-3 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+            Audit en cours — suivre
+          </Button>
+        ) : (
+          <Button size="sm" variant="primary" onClick={onScan} disabled={launchScan.isPending}>
+            {launchScan.isPending ? 'Lancement…' : 'Lancer un audit'}
+          </Button>
+        )}
         <Link to={`/dashboard/scans?site=${site.id}`}>
           <Button size="sm" variant="ghost">Historique</Button>
         </Link>

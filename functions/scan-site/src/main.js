@@ -1224,9 +1224,16 @@ Pas de préambule, pas de conclusion générique.`
     const AXE_GLOBAL_BUDGET_MS = 200_000
     const pages = [await analyzePage(baseUrl.toString(), homeHtml, { axeTimeoutMs: 12_000 })]
     const extraHtml = await Promise.all(extraUrls.map((u) => fetchPage(u)))
-    // Analyse séquentielle : jsdom+axe est gourmand en mémoire et en CPU
+    // Analyse séquentielle : jsdom+axe est gourmand en mémoire et en CPU.
+    // Budget DUR : mieux vaut finaliser avec moins de pages que d'être tué
+    // par le timeout de la fonction (ce qui laisserait un scan « running »).
+    const HARD_BUDGET_MS = 240_000
     for (let i = 0; i < extraHtml.length; i++) {
       if (!extraHtml[i]) continue
+      if (Date.now() - startedAt > HARD_BUDGET_MS) {
+        log(`Budget temps global atteint : crawl arrêté à ${pages.length} page(s)`)
+        break
+      }
       const withAxe = Date.now() - startedAt < AXE_GLOBAL_BUDGET_MS
       pages.push(await analyzePage(extraUrls[i], extraHtml[i], { withAxe, axeTimeoutMs: 12_000 }))
     }

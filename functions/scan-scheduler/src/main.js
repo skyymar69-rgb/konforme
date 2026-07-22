@@ -28,6 +28,33 @@ module.exports = async ({ req, res, log, error }) => {
   let skipped = 0
   let cursor
 
+  // 1. Nettoyage : les scans pending/running de plus de 10 minutes sont des
+  // zombies (la fonction scan-site est plafonnée à 300 s) → marqués failed.
+  try {
+    const stale = await tables.listRows({
+      databaseId: DB_ID,
+      tableId: T.scans,
+      queries: [Query.equal('status', ['pending', 'running']), Query.limit(100)],
+    })
+    for (const s of stale.rows) {
+      if (now - Date.parse(s.$createdAt) > 10 * 60_000) {
+        await tables.updateRow({
+          databaseId: DB_ID,
+          tableId: T.scans,
+          rowId: s.$id,
+          data: {
+            status: 'failed',
+            finished_at: new Date().toISOString(),
+            error: "Audit interrompu (délai d'exécution dépassé). Relancez l'audit.",
+          },
+        }).catch(() => {})
+        log(`Scan zombie nettoyé : ${s.$id} (${s.site_name || s.site_id})`)
+      }
+    }
+  } catch (e) {
+    error(`Nettoyage des zombies impossible : ${e.message || e}`)
+  }
+
   for (;;) {
     const queries = [Query.equal('monitoring_enabled', true), Query.limit(50)]
     if (cursor) queries.push(Query.cursorAfter(cursor))

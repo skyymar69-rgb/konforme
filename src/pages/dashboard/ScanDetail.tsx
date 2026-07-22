@@ -31,6 +31,9 @@ export function ScanDetail() {
     prevStatus.current = scan?.status
     if (scan?.status === 'done' && (was === 'pending' || was === 'running')) {
       qc.invalidateQueries({ queryKey: ['scan-issues', scanId] })
+      // Le site (dernier score / date) et la liste des scans changent aussi
+      qc.invalidateQueries({ queryKey: ['sites'] })
+      qc.invalidateQueries({ queryKey: ['scans'] })
     }
   }, [scan?.status, scanId, qc])
 
