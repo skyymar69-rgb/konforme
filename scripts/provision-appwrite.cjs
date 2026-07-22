@@ -21,7 +21,8 @@ function loadEnv() {
   const envPath = path.join(__dirname, '..', '.env.local')
   if (!fs.existsSync(envPath)) throw new Error('.env.local introuvable')
   const env = {}
-  for (const line of fs.readFileSync(envPath, 'utf8').split('\n')) {
+  // BOM + fins de ligne CRLF/CR tolérés (fichiers édités sous Windows)
+  for (const line of fs.readFileSync(envPath, 'utf8').replace(/^﻿/, '').split(/\r\n|\r|\n/)) {
     const m = line.match(/^([A-Z_]+)\s*=\s*(.*)$/)
     if (m) env[m[1]] = m[2].trim()
   }
