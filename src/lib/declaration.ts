@@ -79,18 +79,22 @@ ${conformityDetail}
 }
 
 export function downloadDeclaration(html: string, siteName: string) {
+  downloadHtmlFile(html, `declaration-accessibilite-${slugify(siteName)}.html`)
+}
+
+export function downloadHtmlFile(html: string, filename: string) {
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `declaration-accessibilite-${slugify(siteName)}.html`
+  a.download = filename
   document.body.appendChild(a)
   a.click()
   a.remove()
   URL.revokeObjectURL(url)
 }
 
-function slugify(s: string): string {
+export function slugify(s: string): string {
   return s
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
@@ -99,7 +103,7 @@ function slugify(s: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
-function escapeHtml(s: string): string {
+export function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')

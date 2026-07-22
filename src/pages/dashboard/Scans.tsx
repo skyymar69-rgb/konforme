@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Seo } from '@/components/Seo'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useMembership, useScans, useSites } from '@/lib/queries'
 import { formatDate, formatDuration, scoreColor, STATUS_META } from '@/lib/format'
 
@@ -41,7 +42,14 @@ export function Scans() {
         </div>
       </header>
 
-      {isLoading && <p role="status" className="text-[#a3b0c9]">Chargement des scans…</p>}
+      {isLoading && (
+        <div className="space-y-3" role="status" aria-label="Chargement des scans">
+          <Skeleton className="h-12" />
+          <Skeleton className="h-12" />
+          <Skeleton className="h-12" />
+          <Skeleton className="h-12" />
+        </div>
+      )}
 
       {!isLoading && (scans?.length ?? 0) === 0 && (
         <Card className="text-center py-14">
@@ -97,7 +105,14 @@ export function Scans() {
                         <span className="text-xs text-[#fecaca]" title={scan.error ?? undefined}>
                           {scan.error ? scan.error.slice(0, 60) : 'Erreur'}
                         </span>
-                      ) : null}
+                      ) : (
+                        <Link
+                          to={`/dashboard/scans/${scan.id}`}
+                          className="text-[#93c5fd] font-semibold hover:underline"
+                        >
+                          Suivre<span className="sr-only"> le scan en cours de {scan.sites?.name}</span>
+                        </Link>
+                      )}
                     </td>
                   </tr>
                 )

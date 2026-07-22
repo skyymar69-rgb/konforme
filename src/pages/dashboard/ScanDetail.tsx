@@ -1,11 +1,14 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ScoreRing } from '@/components/ScoreRing'
 import { Seo } from '@/components/Seo'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useScan, useScanIssues, useUpdateIssueStatus } from '@/lib/queries'
+import { downloadAuditReport } from '@/lib/report'
 import { formatDate, SEVERITY_META, STATUS_META } from '@/lib/format'
 import type { ScanIssue, Severity } from '@/lib/database.types'
 
@@ -17,6 +20,17 @@ export function ScanDetail() {
   const { data: issues } = useScanIssues(scanId)
   const [severityFilter, setSeverityFilter] = useState<Severity | 'all'>('all')
   const [hideFixed, setHideFixed] = useState(true)
+
+  // À la fin d'un scan suivi en direct, recharge les issues (mises en cache vides pendant l'analyse)
+  const qc = useQueryClient()
+  const prevStatus = useRef(scan?.status)
+  useEffect(() => {
+    const was = prevStatus.current
+    prevStatus.current = scan?.status
+    if (scan?.status === 'done' && (was === 'pending' || was === 'running')) {
+      qc.invalidateQueries({ queryKey: ['scan-issues', scanId] })
+    }
+  }, [scan?.status, scanId, qc])
 
   const filtered = useMemo(() => {
     let list = issues ?? []
@@ -31,7 +45,19 @@ export function ScanDetail() {
     return c
   }, [issues])
 
-  if (isLoading) return <p role="status" className="text-[#a3b0c9]">Chargement du rapport…</p>
+  if (isLoading) {
+    return (
+      <div className="space-y-6" role="status" aria-label="Chargement du rapport">
+        <Skeleton className="h-16 w-2/3" />
+        <div className="grid gap-4 md:grid-cols-3">
+          <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
+        </div>
+        <Skeleton className="h-64" />
+      </div>
+    )
+  }
   if (!scan) {
     return (
       <Card className="text-center py-14">
@@ -62,7 +88,38 @@ export function ScanDetail() {
             Audit du {formatDate(scan.created_at, true)} · {scan.pages_count} page{scan.pages_count > 1 ? 's' : ''} analysée{scan.pages_count > 1 ? 's' : ''}
           </p>
         </div>
+        {scan.status === 'done' && (
+          <Button
+            variant="primary"
+            disabled={!issues}
+            onClick={() => issues && downloadAuditReport(scan, issues)}
+          >
+            Télécharger le rapport
+          </Button>
+        )}
       </header>
+
+      {(scan.status === 'pending' || scan.status === 'running') && (
+        <Card role="status" className="flex items-center gap-4 border-[#38bdf8]/40">
+          <span
+            aria-hidden="true"
+            className="size-5 shrink-0 animate-spin rounded-full border-2 border-[#38bdf8] border-t-transparent"
+          />
+          <div>
+            <p className="font-semibold text-sm">Analyse en cours…</p>
+            <p className="text-xs text-[#8b98b8]">
+              Le moteur crawle et audite les pages du site. Cette page se met à jour automatiquement.
+            </p>
+          </div>
+        </Card>
+      )}
+
+      {scan.status === 'failed' && (
+        <Card role="alert" className="border-[#f87171]/40">
+          <p className="font-semibold text-sm text-[#fecaca]">L'audit a échoué</p>
+          <p className="text-xs text-[#a3b0c9] mt-1">{scan.error ?? 'Erreur inconnue.'}</p>
+        </Card>
+      )}
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="flex items-center gap-5">
@@ -90,6 +147,7 @@ export function ScanDetail() {
         </Card>
       </div>
 
+      {scan.status === 'done' && (
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
           <h2 className="text-lg font-bold">
@@ -130,6 +188,7 @@ export function ScanDetail() {
           </ul>
         )}
       </Card>
+      )}
 
       <p className="text-xs text-[#8b98b8]">
         Un audit automatique couvre les critères détectables par machine (~30 % du RGAA). Pour une
