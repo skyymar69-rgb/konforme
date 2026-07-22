@@ -928,6 +928,28 @@ async function fetchPage(url) {
   }
 }
 
+// Suffixes publics composés les plus courants (évite de considérer
+// « co.uk » ou « gouv.fr » comme un domaine enregistrable).
+const TWO_PART_SUFFIXES = new Set([
+  'co.uk', 'org.uk', 'ac.uk', 'gov.uk', 'com.au', 'net.au', 'org.au',
+  'co.jp', 'co.nz', 'co.za', 'com.br', 'com.mx', 'com.tr', 'com.cn',
+  'asso.fr', 'gouv.fr', 'com.fr',
+])
+
+/** Domaine enregistrable approché : exemple.fr, sous.exemple.fr → exemple.fr */
+function registrableDomain(hostname) {
+  const labels = hostname.toLowerCase().split('.').filter(Boolean)
+  if (labels.length <= 2) return labels.join('.')
+  const lastTwo = labels.slice(-2).join('.')
+  const size = TWO_PART_SUFFIXES.has(lastTwo) ? 3 : 2
+  return labels.slice(-size).join('.')
+}
+
+/** Même site = même domaine enregistrable (les sous-domaines sont crawlés). */
+function isSameSite(urlObj, base) {
+  return registrableDomain(urlObj.hostname) === registrableDomain(base.hostname)
+}
+
 function discoverLinks(doc, base, maxPages = DEFAULT_MAX_PAGES) {
   const found = new Set()
   for (const a of doc.querySelectorAll('a')) {
@@ -935,7 +957,11 @@ function discoverLinks(doc, base, maxPages = DEFAULT_MAX_PAGES) {
     if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:')) continue
     try {
       const u = new URL(href, base)
-      if (u.origin !== base.origin) continue
+      if (!['http:', 'https:'].includes(u.protocol)) continue
+      // Même site : sous-domaines du même domaine enregistrable inclus
+      // (internet.exemple.fr peut renvoyer vers exemple.fr et inversement)
+      if (!isSameSite(u, base)) continue
+      if (isForbiddenTarget(u)) continue
       u.hash = ''
       u.search = ''
       if (/\.(pdf|jpg|jpeg|png|gif|svg|zip|mp4|webp|css|js|xml|ico)$/i.test(u.pathname)) continue
@@ -1333,3 +1359,5 @@ module.exports.accessibleName = accessibleName
 module.exports.runAxe = runAxe
 module.exports.isForbiddenTarget = isForbiddenTarget
 module.exports.SEVERITY_WEIGHT = SEVERITY_WEIGHT
+module.exports.registrableDomain = registrableDomain
+module.exports.isSameSite = isSameSite

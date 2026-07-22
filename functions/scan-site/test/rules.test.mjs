@@ -7,7 +7,8 @@ const require = createRequire(import.meta.url)
 const engine = require('../src/main.js')
 const { parse } = require('node-html-parser')
 
-const { RULES, analyzePage, computeScores, accessibleName, runAxe, isForbiddenTarget, SEVERITY_WEIGHT } = engine
+const { RULES, analyzePage, computeScores, accessibleName, runAxe, isForbiddenTarget, SEVERITY_WEIGHT, registrableDomain, isSameSite, discoverLinks } = engine
+const { parse: parseHtml } = require('node-html-parser')
 
 function runRule(id, html) {
   const rule = RULES.find((r) => r.id === id)
@@ -329,6 +330,36 @@ describe('axe-core (jsdom)', () => {
     const ids = page.issues.map((i) => i.rule.id)
     expect(ids).toContain('RGAA 1.1 / WCAG 1.1.1')
     expect(ids.some((id) => id.startsWith('axe:'))).toBe(true)
+  })
+})
+
+describe('crawl multi-sous-domaines', () => {
+  it('calcule le domaine enregistrable (suffixes composés inclus)', () => {
+    expect(registrableDomain('internet.kayzen-lyon.fr')).toBe('kayzen-lyon.fr')
+    expect(registrableDomain('kayzen-lyon.fr')).toBe('kayzen-lyon.fr')
+    expect(registrableDomain('www.exemple.com')).toBe('exemple.com')
+    expect(registrableDomain('shop.exemple.co.uk')).toBe('exemple.co.uk')
+    expect(registrableDomain('ville.gouv.fr')).toBe('ville.gouv.fr')
+  })
+  it('considère les sous-domaines comme le même site', () => {
+    const base = new URL('https://internet.kayzen-lyon.fr/')
+    expect(isSameSite(new URL('https://kayzen-lyon.fr/contact'), base)).toBe(true)
+    expect(isSameSite(new URL('https://www.kayzen-lyon.fr/'), base)).toBe(true)
+    expect(isSameSite(new URL('https://autre-site.fr/'), base)).toBe(false)
+    expect(isSameSite(new URL('https://kayzen-lyon.fr.evil.com/'), base)).toBe(false)
+  })
+  it('discoverLinks suit les liens vers les sous-domaines mais pas ailleurs', () => {
+    const html = `<a href="https://kayzen-lyon.fr/services">a</a>
+      <a href="https://www.kayzen-lyon.fr/equipe">b</a>
+      <a href="/contact">c</a>
+      <a href="https://facebook.com/kayzen">externe</a>
+      <a href="https://127.0.0.1/admin">interdit</a>`
+    const links = discoverLinks(parseHtml(html), new URL('https://internet.kayzen-lyon.fr/'), 10)
+    expect(links).toContain('https://kayzen-lyon.fr/services')
+    expect(links).toContain('https://www.kayzen-lyon.fr/equipe')
+    expect(links).toContain('https://internet.kayzen-lyon.fr/contact')
+    expect(links.some((l) => l.includes('facebook'))).toBe(false)
+    expect(links.some((l) => l.includes('127.0.0.1'))).toBe(false)
   })
 })
 
