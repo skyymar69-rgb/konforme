@@ -831,27 +831,39 @@ function axeWcagRef(tags) {
   return `WCAG ${d[0]}.${d[1]}.${d.slice(2)}`
 }
 
+// Au-delà de cette taille, axe est ignoré : sur le CPU contraint des
+// fonctions, il exploserait le délai (les règles maison suffisent alors).
+const AXE_MAX_HTML_BYTES = 250_000
+const AXE_TIMEOUT_MS = 15_000
+
 /**
  * Exécute axe-core sur le HTML via jsdom. Renvoie { issues, applicable,
  * failed } dans le même format que le moteur maison (ids "axe:<rule>").
- * En cas d'échec (HTML pathologique), renvoie un résultat vide : les règles
- * maison restent la base du rapport.
+ * En cas d'échec, de page trop lourde ou de dépassement du budget temps,
+ * renvoie un résultat vide : les règles maison restent la base du rapport.
  */
-async function runAxe(url, html) {
+async function runAxe(url, html, { timeoutMs = AXE_TIMEOUT_MS } = {}) {
   const applicable = new Map()
   const failed = new Set()
   const issues = []
+  if (html.length > AXE_MAX_HTML_BYTES) return { issues, applicable, failed }
   let dom
+  let timer
   try {
     const virtualConsole = new VirtualConsole() // silencieux (erreurs CSS…)
     dom = new JSDOM(html, { url, runScripts: 'outside-only', pretendToBeVisual: true, virtualConsole })
     dom.window.eval(axe.source)
     dom.window.axe.configure({ locale: axeLocaleFr })
-    const results = await dom.window.axe.run(dom.window.document, {
-      resultTypes: ['violations', 'passes'],
-      elementRef: false,
-      pingWaitTime: 10,
-    })
+    const results = await Promise.race([
+      dom.window.axe.run(dom.window.document, {
+        resultTypes: ['violations', 'passes'],
+        elementRef: false,
+        pingWaitTime: 10,
+      }),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error('axe: budget temps dépassé')), timeoutMs)
+      }),
+    ])
     for (const p of results.passes) {
       if (AXE_SKIP.has(p.id)) continue
       applicable.set(`axe:${p.id}`, { severity: p.impact || 'moderate', rgaa: false, wcag: true })
@@ -880,8 +892,9 @@ async function runAxe(url, html) {
       }
     }
   } catch {
-    /* axe indisponible sur cette page : on garde les règles maison */
+    /* axe indisponible ou trop lent sur cette page : on garde les règles maison */
   } finally {
+    clearTimeout(timer)
     try { if (dom) dom.window.close() } catch { /* rien */ }
   }
   return { issues, applicable, failed }
@@ -968,7 +981,7 @@ function weightedRate(applicable, failed, filter) {
   return Math.round((1 - num / denom) * 1000) / 10
 }
 
-async function analyzePage(url, html, { withAxe = true } = {}) {
+async function analyzePage(url, html, { withAxe = true, axeTimeoutMs = AXE_TIMEOUT_MS } = {}) {
   const doc = parse(html)
   const ids = new Set(doc.querySelectorAll('[id]').map((el) => el.getAttribute('id')).filter(Boolean))
   const issues = []
@@ -992,7 +1005,7 @@ async function analyzePage(url, html, { withAxe = true } = {}) {
     }
   }
   if (withAxe) {
-    const axeRes = await runAxe(url, html)
+    const axeRes = await runAxe(url, html, { timeoutMs: axeTimeoutMs })
     for (const [id, meta] of axeRes.applicable) applicable.set(id, meta)
     for (const id of axeRes.failed) failed.add(id)
     issues.push(...axeRes.issues)
@@ -1205,11 +1218,15 @@ Pas de préambule, pas de conclusion générique.`
 
     const homeDoc = parse(homeHtml)
     const extraUrls = discoverLinks(homeDoc, baseUrl, maxPages)
-    const pages = [await analyzePage(baseUrl.toString(), homeHtml)]
+    // Budget global : axe est coupé quand on approche du timeout de la fonction
+    const AXE_GLOBAL_BUDGET_MS = 200_000
+    const pages = [await analyzePage(baseUrl.toString(), homeHtml, { axeTimeoutMs: 12_000 })]
     const extraHtml = await Promise.all(extraUrls.map((u) => fetchPage(u)))
-    // Analyse séquentielle : jsdom+axe est gourmand en mémoire
+    // Analyse séquentielle : jsdom+axe est gourmand en mémoire et en CPU
     for (let i = 0; i < extraHtml.length; i++) {
-      if (extraHtml[i]) pages.push(await analyzePage(extraUrls[i], extraHtml[i]))
+      if (!extraHtml[i]) continue
+      const withAxe = Date.now() - startedAt < AXE_GLOBAL_BUDGET_MS
+      pages.push(await analyzePage(extraUrls[i], extraHtml[i], { withAxe, axeTimeoutMs: 12_000 }))
     }
     log(`Pages analysées : ${pages.length}`)
 
