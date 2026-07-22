@@ -12,6 +12,7 @@ import {
   useMembership,
   useScans,
   useSites,
+  useUpdateSite,
 } from '@/lib/queries'
 import { formatDate, scoreColor } from '@/lib/format'
 import { PLANS, scansUsedThisMonth, type PlanId } from '@/lib/plans'
@@ -47,7 +48,11 @@ export function Sites() {
           <p className="text-[#a3b0c9] mt-1">Ajoutez un site puis lancez un audit d'accessibilité.</p>
           {sites && (
             <p className="text-xs text-[#8b98b8] mt-1.5">
-              Plan {limits.name} · {sites.length}/{Number.isFinite(limits.maxSites) ? limits.maxSites : '∞'} site{limits.maxSites > 1 ? 's' : ''} ·{' '}
+              Plan {limits.name}
+              {(membership?.trial_days_left ?? 0) > 0 && (
+                <span className="text-[#67e8f9]"> (essai — {membership!.trial_days_left} j restants)</span>
+              )}{' '}
+              · {sites.length}/{Number.isFinite(limits.maxSites) ? limits.maxSites : '∞'} site{limits.maxSites > 1 ? 's' : ''} ·{' '}
               {usedScans}/{Number.isFinite(limits.scansPerMonth) ? limits.scansPerMonth : '∞'} audits ce mois-ci
             </p>
           )}
@@ -184,6 +189,7 @@ function AddSiteForm({ orgId, plan, onDone }: { orgId: string; plan: PlanId; onD
 function SiteCard({ site, plan }: { site: Site; plan: PlanId }) {
   const launchScan = useLaunchScan(plan)
   const deleteSite = useDeleteSite()
+  const updateSite = useUpdateSite()
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -222,6 +228,19 @@ function SiteCard({ site, plan }: { site: Site; plan: PlanId }) {
       <p className="mt-3 text-xs text-[#8b98b8]">
         Dernier audit : {formatDate(site.last_scan_at, true)}
       </p>
+
+      <label className="mt-3 inline-flex items-center gap-2 text-xs font-medium text-[#a3b0c9]">
+        <input
+          type="checkbox"
+          role="switch"
+          checked={site.monitoring_enabled}
+          disabled={updateSite.isPending}
+          onChange={(e) => updateSite.mutate({ id: site.id, monitoring_enabled: e.target.checked })}
+          className="size-4 accent-[#2563eb]"
+        />
+        Surveillance hebdomadaire automatique
+        {site.monitoring_enabled && <span aria-hidden="true" className="text-[#4ade80]">●</span>}
+      </label>
 
       {error && (
         <p role="alert" className="mt-3 rounded-[10px] border border-[#f87171]/40 bg-[#7f1d1d]/30 px-3 py-2 text-xs text-[#fecaca]">

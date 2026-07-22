@@ -1,7 +1,97 @@
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card'
 import { ORGANIZATION_JSONLD, Seo, SOFTWARE_JSONLD } from '@/components/Seo'
+import { PublicChecker } from '@/components/PublicChecker'
+
+const HERO_WORDS = ['site vitrine', 'e-commerce', 'application web', 'intranet']
+
+function AnimatedWord() {
+  const [i, setI] = useState(0)
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const t = setInterval(() => setI((v) => (v + 1) % HERO_WORDS.length), 2400)
+    return () => clearInterval(t)
+  }, [])
+  return (
+    <>
+      <span className="sr-only">site web</span>
+      <span aria-hidden="true" className="text-[#67e8f9] inline-block min-w-[7ch]">
+        {HERO_WORDS[i]}
+      </span>
+    </>
+  )
+}
+
+/** Aperçu stylisé (décoratif) d'un rapport Konforme, en pur CSS/SVG. */
+function ProductMockup() {
+  const ring = (pct: number, color: string, size = 84) => {
+    const stroke = size / 11
+    const r = (size - stroke) / 2
+    const c = 2 * Math.PI * r
+    return (
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#2a3654" strokeWidth={stroke} />
+        <circle
+          cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke}
+          strokeLinecap="round" strokeDasharray={`${(pct / 100) * c} ${c}`}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        />
+        <text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" fill="#f1f5fb" fontSize={size / 4} fontWeight="800">
+          {pct}%
+        </text>
+      </svg>
+    )
+  }
+  return (
+    <div aria-hidden="true" className="relative select-none">
+      <div className="rounded-[16px] border border-[#2a3654] bg-[#0d1322] shadow-[0_30px_80px_rgba(0,0,0,0.5)] overflow-hidden">
+        <div className="flex items-center gap-1.5 border-b border-[#2a3654] bg-[#131a2c] px-4 py-2.5">
+          <span className="size-2.5 rounded-full bg-[#f87171]/70" />
+          <span className="size-2.5 rounded-full bg-[#fbbf24]/70" />
+          <span className="size-2.5 rounded-full bg-[#4ade80]/70" />
+          <span className="ml-3 flex-1 truncate rounded-[6px] bg-[#0a0e1a] px-3 py-1 text-[0.65rem] text-[#8b98b8]">
+            konforme — rapport d'audit · votre-site.fr
+          </span>
+        </div>
+        <div className="p-5">
+          <div className="flex items-center gap-4">
+            {ring(87, '#4ade80')}
+            <div className="flex-1 space-y-2">
+              <div className="h-2.5 w-2/3 rounded bg-[#2a3654]" />
+              <div className="h-2 w-1/2 rounded bg-[#1f2a44]" />
+              <div className="flex gap-2 pt-1">
+                <span className="rounded-full bg-[#14532d]/70 px-2 py-0.5 text-[0.6rem] font-bold text-[#bbf7d0]">RGAA 85%</span>
+                <span className="rounded-full bg-[#14532d]/70 px-2 py-0.5 text-[0.6rem] font-bold text-[#bbf7d0]">WCAG 92%</span>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 space-y-2">
+            {[
+              { c: 'bg-[#7f1d1d]/70 text-[#fecaca]', label: 'Critique', w: 'w-3/4' },
+              { c: 'bg-[#713f12]/70 text-[#fde68a]', label: 'Modéré', w: 'w-2/3' },
+              { c: 'bg-[#1e3a5f]/70 text-[#bae6fd]', label: 'Mineur', w: 'w-1/2' },
+            ].map((row) => (
+              <div key={row.label} className="flex items-center gap-2.5 rounded-[10px] border border-[#2a3654] px-3 py-2">
+                <span className={`rounded-full px-2 py-0.5 text-[0.6rem] font-bold ${row.c}`}>{row.label}</span>
+                <span className={`h-2 rounded bg-[#2a3654] ${row.w}`} />
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 flex items-center justify-between rounded-[10px] border border-[#4ade80]/30 bg-[#14532d]/25 px-3 py-2">
+            <span className="text-[0.65rem] font-semibold text-[#d1fae5]">Déclaration d'accessibilité générée</span>
+            <span className="text-[0.65rem] font-bold text-[#4ade80]">✓ prête à publier</span>
+          </div>
+        </div>
+      </div>
+      <div className="absolute -bottom-4 -left-4 rounded-[12px] border border-[#2a3654] bg-[#131a2c] px-3.5 py-2 shadow-xl">
+        <span className="text-[0.65rem] text-[#8b98b8]">Surveillance</span>
+        <span className="ml-2 text-[0.65rem] font-bold text-[#4ade80]">● hebdo active</span>
+      </div>
+    </div>
+  )
+}
 
 const FEATURES = [
   {
@@ -20,8 +110,8 @@ const FEATURES = [
     icon: <IconSparkles />,
   },
   {
-    title: 'Suivi continu',
-    desc: 'Relancez vos audits à chaque mise en production et suivez votre score dans le temps.',
+    title: 'Surveillance planifiée',
+    desc: 'Vos sites sont re-scannés automatiquement chaque semaine : le score est suivi dans le temps, sans y penser.',
     icon: <IconRadar />,
   },
   {
@@ -31,7 +121,7 @@ const FEATURES = [
   },
   {
     title: 'Rapport multi-pages',
-    desc: "Jusqu'à 5 pages analysées par audit, avec le détail par page et par sévérité.",
+    desc: "Jusqu'à 25 pages analysées par audit (plan Pro), avec le score de chaque page et le détail par sévérité.",
     icon: <IconLayers />,
   },
 ]
@@ -51,11 +141,22 @@ const FAQ = [
   },
   {
     q: 'Combien de temps prend un audit Konforme ?',
-    a: "Moins d'une minute pour un site classique : la plateforme analyse jusqu'à 5 pages et vous rend un rapport détaillé avec un score de conformité RGAA et WCAG.",
+    a: "Environ une minute pour un site classique : la plateforme analyse jusqu'à 25 pages (selon votre plan) avec une centaine de règles, et vous rend un rapport détaillé avec un score de conformité RGAA et WCAG pondéré par sévérité.",
+  },
+  {
+    q: 'Konforme est-il un « overlay » d’accessibilité ?',
+    a: "Non. Les overlays (widgets qui prétendent rendre un site accessible en un clic) sont critiqués par la communauté et ne rendent pas conforme. Konforme identifie les problèmes à la source et vous guide pour les corriger réellement dans votre code.",
   },
 ]
 
 export function Landing() {
+  const location = useLocation()
+  useEffect(() => {
+    if (location.hash === '#checker') {
+      document.getElementById('checker')?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [location.hash])
+
   return (
     <>
       <Seo
@@ -78,28 +179,61 @@ export function Landing() {
       />
 
       <section className="relative overflow-hidden">
-        <div className="mx-auto max-w-7xl px-6 pt-20 pb-24 md:pt-28 md:pb-32 text-center">
-          <p className="inline-block rounded-full border border-[#2563eb]/40 bg-[#2563eb]/10 px-4 py-1.5 text-xs font-semibold tracking-wide text-[#67e8f9] uppercase mb-6">
-            EAA 2025 · RGAA 4.1 · WCAG 2.2
-          </p>
-          <h1 className="gradient-text text-balance text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.05] mb-6">
-            L'accessibilité web
-            <br />
-            enfin automatisée
-          </h1>
-          <p className="text-lg md:text-xl text-[#a3b0c9] max-w-2xl mx-auto mb-10 leading-relaxed text-balance">
-            Scannez, corrigez et maintenez la conformité de vos sites en quelques minutes.
-            Rapport détaillé, corrections guidées, déclaration légale générée automatiquement.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link to="/login">
-              <Button size="lg" variant="primary">Lancer un audit gratuit</Button>
-            </Link>
-            <Link to="/rgaa">
-              <Button size="lg" variant="ghost">Découvrir le RGAA</Button>
-            </Link>
+        <div className="mx-auto max-w-7xl px-6 pt-16 pb-16 md:pt-24 md:pb-24 grid items-center gap-12 lg:grid-cols-2">
+          <div className="text-center lg:text-left">
+            <p className="inline-block rounded-full border border-[#2563eb]/40 bg-[#2563eb]/10 px-4 py-1.5 text-xs font-semibold tracking-wide text-[#67e8f9] uppercase mb-6">
+              EAA 2025 · RGAA 4.1 · WCAG 2.2
+            </p>
+            <h1 className="gradient-text text-balance text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.08] mb-6">
+              L'accessibilité de votre <AnimatedWord />
+              <br />
+              enfin automatisée
+            </h1>
+            <p className="text-lg md:text-xl text-[#a3b0c9] max-w-2xl mx-auto lg:mx-0 mb-8 leading-relaxed text-balance">
+              Une centaine de règles RGAA 4.1 / WCAG 2.2 vérifiées automatiquement, chaque
+              correction expliquée, la déclaration légale générée, et vos sites surveillés
+              semaine après semaine.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 mb-8">
+              <a href="#checker">
+                <Button size="lg" variant="primary">Tester mon site gratuitement</Button>
+              </a>
+              <Link to="/login">
+                <Button size="lg" variant="ghost">Créer un compte</Button>
+              </Link>
+            </div>
+            <ul className="flex flex-wrap justify-center lg:justify-start gap-x-5 gap-y-2 text-xs font-semibold text-[#a3b0c9]">
+              <li className="inline-flex items-center gap-1.5"><CheckDot /> Conçu pour le RGAA 🇫🇷</li>
+              <li className="inline-flex items-center gap-1.5"><CheckDot /> Données hébergées en UE</li>
+              <li className="inline-flex items-center gap-1.5"><CheckDot /> Sans script à installer</li>
+              <li className="inline-flex items-center gap-1.5"><CheckDot /> Pas d'overlay : de vraies corrections</li>
+            </ul>
+          </div>
+          <div className="max-w-md w-full mx-auto lg:max-w-none">
+            <ProductMockup />
           </div>
         </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-6 pb-16" aria-labelledby="checker-title">
+        <h2 id="checker-title" className="sr-only">Test d'accessibilité gratuit</h2>
+        <PublicChecker />
+      </section>
+
+      <section className="border-y border-[#2a3654]/60 bg-[#0d1322]/60 mb-16" aria-label="Chiffres clés">
+        <dl className="mx-auto max-w-6xl px-6 py-8 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          {[
+            { v: '≈100', l: 'règles vérifiées automatiquement' },
+            { v: '~1 min', l: 'par audit multi-pages' },
+            { v: '2 référentiels', l: 'RGAA 4.1 + WCAG 2.2 AA' },
+            { v: 'Hebdo', l: 'surveillance planifiée des sites' },
+          ].map((s) => (
+            <div key={s.l}>
+              <dt className="order-2 text-xs text-[#8b98b8] mt-1">{s.l}</dt>
+              <dd className="order-1 text-2xl md:text-3xl font-extrabold gradient-text">{s.v}</dd>
+            </div>
+          ))}
+        </dl>
       </section>
 
       <section className="mx-auto max-w-7xl px-6 pb-20" aria-labelledby="features-title">
@@ -173,6 +307,13 @@ export function Landing() {
 }
 
 /* Icônes SVG inline (stroke currentColor, décoratives) */
+function CheckDot() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
+      <path d="M5 13l4 4L19 7" />
+    </svg>
+  )
+}
 function IconFlag() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

@@ -182,6 +182,14 @@ async function main() {
       scopes: ['rows.read', 'rows.write', 'tables.read', 'executions.write'],
       timeout: 120,
     },
+    {
+      id: 'explain-issue',
+      name: 'explain-issue',
+      dir: 'explain-issue',
+      execute: [Role.users()],
+      scopes: [],
+      timeout: 60,
+    },
   ]
 
   for (const fn of FUNCTIONS) {
@@ -227,6 +235,22 @@ async function main() {
     })
     fs.unlinkSync(tarPath)
     console.log(`✓ déploiement ${deployment.$id} créé (build en cours côté Appwrite)`)
+  }
+
+  // Assistant IA : pousse la clé Anthropic si présente dans .env.local
+  if (env.ANTHROPIC_API_KEY) {
+    try {
+      await functions.createVariable({ functionId: 'explain-issue', key: 'ANTHROPIC_API_KEY', value: env.ANTHROPIC_API_KEY, secret: true })
+      console.log('✓ variable ANTHROPIC_API_KEY posée sur explain-issue')
+    } catch (e) {
+      if (e && e.code === 409) {
+        console.log('· variable ANTHROPIC_API_KEY déjà présente sur explain-issue')
+      } else {
+        console.log(`! variable ANTHROPIC_API_KEY non posée : ${e.message || e}`)
+      }
+    }
+  } else {
+    console.log("· ANTHROPIC_API_KEY absent de .env.local : l'assistant IA restera désactivé (le front le masque)")
   }
 
   console.log(`\nTerminé. Dernière étape manuelle (console Appwrite) :

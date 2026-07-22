@@ -119,3 +119,73 @@ export function downloadAuditReport(scan: Scan, issues: ScanIssue[]) {
   const day = scan.created_at.slice(0, 10)
   downloadHtmlFile(buildAuditReportHtml(scan, issues), `rapport-audit-${slugify(siteName)}-${day}.html`)
 }
+
+const CSV_COLUMNS = [
+  'severite', 'regle', 'categorie', 'titre', 'page', 'selecteur', 'statut', 'correction',
+] as const
+
+function csvCell(v: string | null | undefined): string {
+  const s = (v ?? '').replace(/\r?\n/g, ' ')
+  return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+}
+
+/** Export CSV (séparateur « ; », BOM UTF-8 pour Excel FR). */
+export function buildIssuesCsv(issues: ScanIssue[]): string {
+  const rows = issues.map((i) =>
+    [
+      SEVERITY_META[i.severity].label,
+      i.rule_id,
+      i.category ?? '',
+      i.title,
+      i.page_url ?? '',
+      i.selector ?? '',
+      i.status,
+      i.suggested_fix ?? '',
+    ].map(csvCell).join(';'),
+  )
+  return '﻿' + [CSV_COLUMNS.join(';'), ...rows].join('\r\n')
+}
+
+function downloadBlob(content: string, filename: string, mime: string) {
+  const blob = new Blob([content], { type: mime })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
+
+export function downloadAuditCsv(scan: Scan, issues: ScanIssue[]) {
+  const day = scan.created_at.slice(0, 10)
+  downloadBlob(
+    buildIssuesCsv(issues),
+    `audit-${slugify(scan.sites?.name ?? 'site')}-${day}.csv`,
+    'text/csv;charset=utf-8',
+  )
+}
+
+export function downloadAuditJson(scan: Scan, issues: ScanIssue[]) {
+  const day = scan.created_at.slice(0, 10)
+  const payload = {
+    site: scan.sites ?? null,
+    scan: {
+      id: scan.id,
+      created_at: scan.created_at,
+      score: scan.score,
+      rgaa_score: scan.rgaa_score,
+      wcag_score: scan.wcag_score,
+      pages_count: scan.pages_count,
+      issues_count: scan.issues_count,
+      page_scores: scan.page_scores,
+    },
+    issues,
+  }
+  downloadBlob(
+    JSON.stringify(payload, null, 2),
+    `audit-${slugify(scan.sites?.name ?? 'site')}-${day}.json`,
+    'application/json;charset=utf-8',
+  )
+}

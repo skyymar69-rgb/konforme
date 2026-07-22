@@ -131,8 +131,9 @@ export function Settings() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold">Abonnement</h2>
           <Badge className="border-[#3b4970] text-[#a3b0c9]">
-            {plan.name} — {plan.price}
-            {plan.id !== 'enterprise' ? `/${plan.period.replace('par ', '')}` : ''}
+            {(membership?.trial_days_left ?? 0) > 0
+              ? `Essai Pro — ${membership!.trial_days_left} j restants`
+              : `${plan.name} — ${plan.price}${plan.id !== 'enterprise' ? `/${plan.period.replace('par ', '')}` : ''}`}
           </Badge>
         </div>
         <dl className="grid gap-3 sm:grid-cols-2 text-sm">

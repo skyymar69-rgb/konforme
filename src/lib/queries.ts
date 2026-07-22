@@ -40,12 +40,22 @@ function rowToSite(r: Row): Site {
 }
 
 function rowToScan(r: Row): Scan {
+  let pageScores: Scan['page_scores'] = null
+  if (typeof r.page_scores === 'string' && r.page_scores) {
+    try {
+      const parsed = JSON.parse(r.page_scores)
+      if (Array.isArray(parsed)) pageScores = parsed
+    } catch {
+      /* JSON tronqué : on ignore */
+    }
+  }
   return {
     id: r.$id,
     site_id: r.site_id as string,
     organization_id: r.team_id as string,
     status: r.status as Scan['status'],
     trigger: (r.trigger as Scan['trigger']) ?? 'manual',
+    page_scores: pageScores,
     started_at: (r.started_at as string | null) ?? null,
     finished_at: (r.finished_at as string | null) ?? null,
     duration_ms: (r.duration_ms as number | null) ?? null,
@@ -131,6 +141,11 @@ export function useMembership() {
       } catch {
         /* prefs inaccessibles : plan gratuit par défaut */
       }
+      // Essai Pro : toute nouvelle organisation profite des quotas Pro 14 jours
+      const TRIAL_DAYS = 14
+      const ageDays = Math.floor((Date.now() - Date.parse(team.$createdAt)) / 86_400_000)
+      const trialDaysLeft = plan === 'free' ? Math.max(0, TRIAL_DAYS - ageDays) : 0
+      if (trialDaysLeft > 0) plan = 'pro'
       let role: Membership['role'] = 'member'
       try {
         const memberships = await teams.listMemberships({
@@ -147,6 +162,7 @@ export function useMembership() {
         user_id: me.$id,
         role,
         organizations: { id: team.$id, name: team.name, plan },
+        trial_days_left: trialDaysLeft,
       }
     },
     staleTime: 5 * 60_000,
@@ -237,6 +253,23 @@ export function useAddSite(orgId: string | undefined, plan: PlanId = 'free') {
         permissions: teamPermissions(orgId),
       })
       return rowToSite(row)
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['sites'] }),
+  })
+}
+
+export function useUpdateSite() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: {
+      id: string
+      monitoring_enabled?: boolean
+      monitoring_frequency?: Site['monitoring_frequency']
+      name?: string
+      description?: string | null
+    }) => {
+      const { id, ...data } = input
+      await tables.updateRow({ databaseId: DB_ID, tableId: TABLES.sites, rowId: id, data })
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['sites'] }),
   })
@@ -404,6 +437,7 @@ export function useLaunchScan(plan: PlanId = 'free') {
           site_name: site.name,
           site_url: site.url,
           started_at: new Date().toISOString(),
+          max_pages: Number.isFinite(limits.pagesPerScan) ? limits.pagesPerScan : 25,
         },
         permissions: teamPermissions(site.organization_id),
       })

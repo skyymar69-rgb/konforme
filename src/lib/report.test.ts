@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildAuditReportHtml } from '@/lib/report'
+import { buildAuditReportHtml, buildIssuesCsv } from '@/lib/report'
 import type { Scan, ScanIssue } from '@/lib/database.types'
 
 const scan: Scan = {
@@ -16,6 +16,7 @@ const scan: Scan = {
   score: 78.5,
   rgaa_score: 80,
   wcag_score: 76,
+  page_scores: [{ url: 'https://exemple.fr', score: 78.5, issues: 2 }],
   error: null,
   created_at: '2026-07-14T10:00:00Z',
   sites: { name: 'Mon Site', url: 'https://exemple.fr' },
@@ -60,5 +61,19 @@ describe('buildAuditReportHtml', () => {
   it('affiche un message positif sans issue', () => {
     const html = buildAuditReportHtml(scan, [])
     expect(html).toContain('Aucune non-conformité')
+  })
+})
+
+describe('buildIssuesCsv', () => {
+  it('produit un CSV avec en-têtes, BOM et échappement', () => {
+    const csv = buildIssuesCsv([
+      issue({ title: 'Contient ; un point-virgule', suggested_fix: 'Ligne 1\nLigne 2' }),
+    ])
+    expect(csv.charCodeAt(0)).toBe(0xfeff)
+    const lines = csv.slice(1).split('\r\n')
+    expect(lines[0]).toBe('severite;regle;categorie;titre;page;selecteur;statut;correction')
+    expect(lines[1]).toContain('"Contient ; un point-virgule"')
+    expect(lines[1]).toContain('Ligne 1 Ligne 2')
+    expect(lines[1].startsWith('Critique;')).toBe(true)
   })
 })

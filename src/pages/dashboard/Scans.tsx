@@ -1,5 +1,8 @@
+import { lazy, Suspense, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Card } from '@/components/ui/card'
+
+const ScoreChart = lazy(() => import('@/components/ScoreChart'))
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Seo } from '@/components/Seo'
@@ -14,6 +17,21 @@ export function Scans() {
   const siteFilter = params.get('site') ?? undefined
   const { data: scans, isLoading } = useScans(orgId, siteFilter)
   const { data: sites } = useSites(orgId)
+
+  // Historique du score pour le site filtré (du plus ancien au plus récent)
+  const chartData = useMemo(
+    () =>
+      (scans ?? [])
+        .filter((s) => s.status === 'done' && s.score !== null)
+        .slice()
+        .reverse()
+        .map((s) => ({
+          date: new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short' }).format(new Date(s.created_at)),
+          score: Math.round(s.score!),
+          site: s.sites?.name ?? '',
+        })),
+    [scans],
+  )
 
   return (
     <div className="space-y-6">
@@ -60,6 +78,18 @@ export function Scans() {
           <Link to="/dashboard/sites">
             <Button variant="primary">Aller aux sites</Button>
           </Link>
+        </Card>
+      )}
+
+      {siteFilter && chartData.length >= 2 && (
+        <Card>
+          <h2 className="text-lg font-bold mb-2">Évolution du score</h2>
+          <p className="text-xs text-[#8b98b8] mb-3">
+            Taux de conformité des {chartData.length} derniers audits terminés de ce site.
+          </p>
+          <Suspense fallback={<Skeleton className="h-64" />}>
+            <ScoreChart data={chartData} />
+          </Suspense>
         </Card>
       )}
 

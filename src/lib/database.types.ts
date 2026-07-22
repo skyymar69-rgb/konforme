@@ -16,6 +16,8 @@ export type Membership = {
   user_id: string
   role: 'owner' | 'admin' | 'member' | 'viewer'
   organizations: Organization
+  /** Jours restants de l'essai Pro offert aux nouvelles organisations (0 = terminé). */
+  trial_days_left: number
 }
 
 export type Site = {
@@ -31,12 +33,14 @@ export type Site = {
   created_at: string
 }
 
+export type PageScore = { url: string; score: number | null; issues: number }
+
 export type Scan = {
   id: string
   site_id: string
   organization_id: string
   status: ScanStatus
-  trigger: 'manual' | 'schedule' | 'api' | 'ci'
+  trigger: 'manual' | 'scheduled' | 'api' | 'ci'
   started_at: string | null
   finished_at: string | null
   duration_ms: number | null
@@ -45,6 +49,7 @@ export type Scan = {
   score: number | null
   rgaa_score: number | null
   wcag_score: number | null
+  page_scores: PageScore[] | null
   error: string | null
   created_at: string
   sites?: { name: string; url: string }

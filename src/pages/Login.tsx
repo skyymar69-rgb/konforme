@@ -70,7 +70,7 @@ export function Login() {
           <p className="text-center text-sm text-[#a3b0c9] mb-6">
             {mode === 'signin'
               ? "Connectez-vous pour accéder à votre tableau de bord d'accessibilité"
-              : 'Gratuit — auditez votre premier site en quelques minutes'}
+              : '14 jours d’essai Pro inclus — sans carte bancaire'}
           </p>
 
           <form onSubmit={onSubmit} className="space-y-4" noValidate>

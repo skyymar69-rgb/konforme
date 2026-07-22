@@ -8,7 +8,9 @@ import { ScoreRing } from '@/components/ScoreRing'
 import { Seo } from '@/components/Seo'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useScan, useScanIssues, useUpdateIssueStatus } from '@/lib/queries'
-import { downloadAuditReport } from '@/lib/report'
+import { EXPLAIN_FUNCTION_ID, functions } from '@/lib/appwrite'
+import { downloadAuditCsv, downloadAuditJson, downloadAuditReport } from '@/lib/report'
+import { scoreColor } from '@/lib/format'
 import { formatDate, SEVERITY_META, STATUS_META } from '@/lib/format'
 import type { ScanIssue, Severity } from '@/lib/database.types'
 
@@ -89,13 +91,21 @@ export function ScanDetail() {
           </p>
         </div>
         {scan.status === 'done' && (
-          <Button
-            variant="primary"
-            disabled={!issues}
-            onClick={() => issues && downloadAuditReport(scan, issues)}
-          >
-            Télécharger le rapport
-          </Button>
+          <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Exporter le rapport">
+            <Button
+              variant="primary"
+              disabled={!issues}
+              onClick={() => issues && downloadAuditReport(scan, issues)}
+            >
+              Télécharger le rapport
+            </Button>
+            <Button variant="ghost" size="sm" disabled={!issues} onClick={() => issues && downloadAuditCsv(scan, issues)}>
+              CSV
+            </Button>
+            <Button variant="ghost" size="sm" disabled={!issues} onClick={() => issues && downloadAuditJson(scan, issues)}>
+              JSON
+            </Button>
+          </div>
         )}
       </header>
 
@@ -146,6 +156,30 @@ export function ScanDetail() {
           </div>
         </Card>
       </div>
+
+      {scan.status === 'done' && (scan.page_scores?.length ?? 0) > 1 && (
+        <Card>
+          <h2 className="text-lg font-bold mb-4">
+            Score par page <span className="text-[#8b98b8] font-normal">({scan.page_scores!.length})</span>
+          </h2>
+          <ul className="space-y-2">
+            {scan.page_scores!.map((p) => (
+              <li key={p.url} className="flex items-center gap-3 rounded-[10px] border border-[#2a3654] px-4 py-2.5 text-sm">
+                <span
+                  className="shrink-0 font-bold tabular-nums w-12 text-right"
+                  style={{ color: scoreColor(p.score) }}
+                >
+                  {p.score !== null ? `${Math.round(p.score)}%` : '—'}
+                </span>
+                <span className="flex-1 min-w-0 truncate text-[#cbd5e1]">{p.url}</span>
+                <span className="shrink-0 text-xs text-[#8b98b8]">
+                  {p.issues} issue{p.issues > 1 ? 's' : ''}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       {scan.status === 'done' && (
       <Card>
@@ -230,6 +264,39 @@ function IssueRow({ issue }: { issue: ScanIssue }) {
   const sev = SEVERITY_META[issue.severity]
   const isDone = issue.status === 'fixed' || issue.status === 'false_positive'
 
+  const [aiState, setAiState] = useState<'idle' | 'loading' | 'done' | 'error' | 'unavailable'>('idle')
+  const [aiText, setAiText] = useState('')
+
+  async function onExplain() {
+    setAiState('loading')
+    try {
+      const exec = await functions.createExecution({
+        functionId: EXPLAIN_FUNCTION_ID,
+        body: JSON.stringify({
+          title: issue.title,
+          rule_id: issue.rule_id,
+          description: issue.description,
+          html_snippet: issue.html_snippet,
+          selector: issue.selector,
+          suggested_fix: issue.suggested_fix,
+        }),
+        async: false,
+      })
+      const payload = JSON.parse(exec.responseBody || '{}')
+      if (exec.responseStatusCode === 503) {
+        setAiState('unavailable')
+        return
+      }
+      if (exec.responseStatusCode >= 400 || !payload.explanation) {
+        throw new Error(payload.error || 'Réponse invalide')
+      }
+      setAiText(payload.explanation)
+      setAiState('done')
+    } catch {
+      setAiState('error')
+    }
+  }
+
   return (
     <li className={`rounded-[12px] border border-[#2a3654] ${isDone ? 'opacity-60' : ''}`}>
       <button
@@ -290,6 +357,38 @@ function IssueRow({ issue }: { issue: ScanIssue }) {
               <p className="rounded-[8px] border border-[#4ade80]/30 bg-[#14532d]/25 px-3 py-2 text-[#d1fae5]">
                 {issue.suggested_fix}
               </p>
+            </div>
+          )}
+
+          {aiState !== 'unavailable' && (
+            <div>
+              {aiState === 'idle' && (
+                <Button size="sm" variant="ghost" onClick={onExplain}>
+                  ✦ Expliquer et corriger avec l'IA
+                </Button>
+              )}
+              {aiState === 'loading' && (
+                <p role="status" className="inline-flex items-center gap-2 text-xs text-[#a3b0c9]">
+                  <span aria-hidden="true" className="size-3.5 rounded-full border-2 border-[#38bdf8] border-t-transparent animate-spin" />
+                  L'assistant analyse votre code…
+                </p>
+              )}
+              {aiState === 'error' && (
+                <p className="text-xs text-[#fecaca]">
+                  L'assistant IA n'a pas répondu.{' '}
+                  <button type="button" onClick={onExplain} className="underline font-semibold">Réessayer</button>
+                </p>
+              )}
+              {aiState === 'done' && (
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#a3b0c9] mb-1">
+                    ✦ Explication et correctif (IA)
+                  </h3>
+                  <pre className="rounded-[8px] border border-[#38bdf8]/30 bg-[#0a1420] px-3.5 py-3 text-xs text-[#dbeafe] whitespace-pre-wrap font-sans leading-relaxed overflow-x-auto">
+                    {aiText}
+                  </pre>
+                </div>
+              )}
             </div>
           )}
 
