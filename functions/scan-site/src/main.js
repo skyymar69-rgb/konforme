@@ -950,6 +950,73 @@ function isSameSite(urlObj, base) {
   return registrableDomain(urlObj.hostname) === registrableDomain(base.hostname)
 }
 
+/** Fetch texte générique (sitemap…) avec timeout, sans exigence de type. */
+async function fetchText(url, maxBytes = 500_000) {
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS)
+  try {
+    const res = await fetch(url, {
+      signal: ctrl.signal,
+      redirect: 'follow',
+      headers: { 'User-Agent': 'KonformeBot/1.0 (+https://konforme.kayzen-lyon.fr) audit accessibilite' },
+    })
+    if (!res.ok) return null
+    const body = await res.text()
+    return body.length > maxBytes ? body.slice(0, maxBytes) : body
+  } catch {
+    return null
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+function parseSitemapLocs(xml) {
+  const out = []
+  const re = /<loc>\s*([^<\s][^<]*?)\s*<\/loc>/g
+  let m
+  while ((m = re.exec(xml)) !== null && out.length < 500) out.push(m[1].trim())
+  return out
+}
+
+/**
+ * Plan B pour les SPA sans <a href> dans le HTML brut : découvre les pages
+ * via /sitemap.xml (les index de sitemaps sont suivis d'un niveau).
+ */
+async function discoverFromSitemap(base, maxPages) {
+  for (const p of ['/sitemap.xml', '/sitemap_index.xml']) {
+    const xml = await fetchText(new URL(p, base).toString())
+    if (!xml || !xml.includes('<loc>')) continue
+    let locs = parseSitemapLocs(xml)
+    if (locs.length && locs.every((l) => l.endsWith('.xml'))) {
+      // Index de sitemaps : on suit le premier sous-sitemap du même site
+      const sub = locs.find((l) => {
+        try { return isSameSite(new URL(l), base) } catch { return false }
+      })
+      const subXml = sub ? await fetchText(sub) : null
+      locs = subXml ? parseSitemapLocs(subXml) : []
+    }
+    const urls = []
+    const baseNorm = base.toString().replace(/\/$/, '')
+    for (const loc of locs) {
+      try {
+        const u = new URL(loc)
+        if (!['http:', 'https:'].includes(u.protocol)) continue
+        if (!isSameSite(u, base) || isForbiddenTarget(u)) continue
+        if (/\.(xml|pdf|jpg|jpeg|png|gif|svg|zip|mp4|webp)$/i.test(u.pathname)) continue
+        u.hash = ''
+        u.search = ''
+        const norm = u.toString().replace(/\/$/, '')
+        if (norm !== baseNorm && !urls.includes(norm)) urls.push(norm)
+        if (urls.length >= maxPages - 1) break
+      } catch {
+        /* loc invalide */
+      }
+    }
+    if (urls.length) return urls
+  }
+  return []
+}
+
 function discoverLinks(doc, base, maxPages = DEFAULT_MAX_PAGES) {
   const found = new Set()
   for (const a of doc.querySelectorAll('a')) {
@@ -1245,7 +1312,12 @@ Pas de préambule, pas de conclusion générique.`
     }
 
     const homeDoc = parse(homeHtml)
-    const extraUrls = discoverLinks(homeDoc, baseUrl, maxPages)
+    let extraUrls = discoverLinks(homeDoc, baseUrl, maxPages)
+    if (extraUrls.length === 0 && maxPages > 1) {
+      // SPA sans liens dans le HTML brut : on tente le sitemap
+      extraUrls = await discoverFromSitemap(baseUrl, maxPages)
+      if (extraUrls.length > 0) log(`Aucun lien dans le HTML brut : ${extraUrls.length} page(s) découvertes via sitemap.xml`)
+    }
     // Budget global : axe est coupé quand on approche du timeout de la fonction
     const AXE_GLOBAL_BUDGET_MS = 200_000
     const pages = [await analyzePage(baseUrl.toString(), homeHtml, { axeTimeoutMs: 12_000 })]
@@ -1361,3 +1433,5 @@ module.exports.isForbiddenTarget = isForbiddenTarget
 module.exports.SEVERITY_WEIGHT = SEVERITY_WEIGHT
 module.exports.registrableDomain = registrableDomain
 module.exports.isSameSite = isSameSite
+module.exports.parseSitemapLocs = parseSitemapLocs
+module.exports.discoverFromSitemap = discoverFromSitemap

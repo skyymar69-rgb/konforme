@@ -363,6 +363,24 @@ describe('crawl multi-sous-domaines', () => {
   })
 })
 
+describe('parseSitemapLocs (plan B pour les SPA)', () => {
+  it('extrait les URLs des balises <loc>', () => {
+    const xml = `<?xml version="1.0"?><urlset>
+      <url><loc>https://exemple.fr/</loc></url>
+      <url><loc> https://exemple.fr/services </loc></url>
+      <url><loc>https://exemple.fr/contact</loc></url>
+    </urlset>`
+    expect(engine.parseSitemapLocs(xml)).toEqual([
+      'https://exemple.fr/',
+      'https://exemple.fr/services',
+      'https://exemple.fr/contact',
+    ])
+  })
+  it('renvoie une liste vide sans <loc>', () => {
+    expect(engine.parseSitemapLocs('<html>pas un sitemap</html>')).toEqual([])
+  })
+})
+
 describe('isForbiddenTarget (anti-SSRF)', () => {
   it('refuse les cibles locales et privées', () => {
     for (const u of [
