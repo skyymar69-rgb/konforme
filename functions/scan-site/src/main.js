@@ -1042,6 +1042,62 @@ module.exports = async ({ req, res, log, error }) => {
     return res.json({ error: 'Corps JSON invalide' }, 400)
   }
 
+  /* ---- Mode assistant IA : { explain: {...} } (utilisateurs connectés) ---- */
+  if (!body.scan_id && !body.url && body.explain) {
+    if (!userId) return res.json({ error: 'Authentification requise.' }, 401)
+    const anthropicKey = process.env.ANTHROPIC_API_KEY
+    if (!anthropicKey) {
+      return res.json({ error: "L'assistant IA n'est pas activé sur cette instance." }, 503)
+    }
+    const ex = body.explain
+    const title = String(ex.title || '').slice(0, 300)
+    if (!title) return res.json({ error: 'title requis' }, 400)
+    const prompt = `Tu es un expert en accessibilité web (RGAA 4.1 / WCAG 2.2) qui aide un développeur français.
+
+Non-conformité détectée par l'audit automatique :
+- Règle : ${String(ex.rule_id || '').slice(0, 100)} — ${title}
+- Description : ${String(ex.description || '').slice(0, 1500) || '(non fournie)'}
+- Sélecteur CSS : ${String(ex.selector || '').slice(0, 500) || '(non fourni)'}
+- Piste générique : ${String(ex.suggested_fix || '').slice(0, 1000) || '(non fournie)'}
+${ex.html_snippet ? `- Code HTML concerné :\n\`\`\`html\n${String(ex.html_snippet).slice(0, 4000)}\n\`\`\`` : ''}
+
+Réponds en français, de façon concise et directement actionnable :
+1. **Pourquoi c'est un problème** (1-2 phrases, impact utilisateur concret).
+2. **Le correctif** : le code HTML corrigé, adapté au code fourni (bloc \`\`\`html).
+3. **Comment vérifier** (1 phrase : test clavier, lecteur d'écran ou re-scan).
+
+Pas de préambule, pas de conclusion générique.`
+    try {
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-api-key': anthropicKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-5',
+          max_tokens: 900,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      })
+      const data = await r.json()
+      if (!r.ok) {
+        error(`API Anthropic ${r.status}: ${JSON.stringify(data).slice(0, 300)}`)
+        return res.json({ error: "L'assistant IA est momentanément indisponible." }, 502)
+      }
+      const text = (data.content || [])
+        .filter((b) => b.type === 'text')
+        .map((b) => b.text)
+        .join('\n')
+        .trim()
+      return res.json({ explanation: text })
+    } catch (e) {
+      error(String(e))
+      return res.json({ error: "L'assistant IA est momentanément indisponible." }, 502)
+    }
+  }
+
   /* ---- Mode public : { url } sans compte — mini-rapport immédiat ---- */
   if (!body.scan_id && body.url) {
     let target
@@ -1205,7 +1261,7 @@ module.exports = async ({ req, res, log, error }) => {
         score: p.score,
         issues: p.issues.length,
       })),
-    ).slice(0, 15000)
+    ).slice(0, 7900)
     const doneData = {
       status: 'done',
       finished_at: finishedAt,

@@ -36,7 +36,6 @@ export const TABLES = {
 } as const
 
 export const SCAN_FUNCTION_ID = 'scan-site'
-export const EXPLAIN_FUNCTION_ID = 'explain-issue'
 
 export type AppUser = {
   id: string

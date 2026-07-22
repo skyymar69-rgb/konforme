@@ -8,7 +8,7 @@ import { ScoreRing } from '@/components/ScoreRing'
 import { Seo } from '@/components/Seo'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useScan, useScanIssues, useUpdateIssueStatus } from '@/lib/queries'
-import { EXPLAIN_FUNCTION_ID, functions } from '@/lib/appwrite'
+import { functions, SCAN_FUNCTION_ID } from '@/lib/appwrite'
 import { downloadAuditCsv, downloadAuditJson, downloadAuditReport } from '@/lib/report'
 import { scoreColor } from '@/lib/format'
 import { formatDate, SEVERITY_META, STATUS_META } from '@/lib/format'
@@ -271,14 +271,16 @@ function IssueRow({ issue }: { issue: ScanIssue }) {
     setAiState('loading')
     try {
       const exec = await functions.createExecution({
-        functionId: EXPLAIN_FUNCTION_ID,
+        functionId: SCAN_FUNCTION_ID,
         body: JSON.stringify({
-          title: issue.title,
-          rule_id: issue.rule_id,
-          description: issue.description,
-          html_snippet: issue.html_snippet,
-          selector: issue.selector,
-          suggested_fix: issue.suggested_fix,
+          explain: {
+            title: issue.title,
+            rule_id: issue.rule_id,
+            description: issue.description,
+            html_snippet: issue.html_snippet,
+            selector: issue.selector,
+            suggested_fix: issue.suggested_fix,
+          },
         }),
         async: false,
       })

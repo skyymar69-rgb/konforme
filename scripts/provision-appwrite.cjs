@@ -66,7 +66,7 @@ const TABLES = [
       S('trigger', 16, false, 'manual'), S('site_name', 256), S('site_url', 1024),
       D('started_at'), D('finished_at'), I('duration_ms'), I('pages_count', 0), I('issues_count', 0),
       F('score'), F('rgaa_score'), F('wcag_score'), S('error', 2000),
-      I('max_pages', 5), S('page_scores', 16000),
+      I('max_pages', 5), S('page_scores', 8000),
     ],
     indexes: [
       { key: 'idx_team', columns: ['team_id'] },
@@ -136,8 +136,14 @@ async function main() {
 
   console.log(`Provisionnement du projet ${projectId} (${endpoint})\n`)
 
-  // 1. Base de données
-  await ensure(`database "${DB_ID}"`, () => tables.create({ databaseId: DB_ID, name: 'Konforme' }))
+  // 1. Base de données (vérifie l'existence d'abord : sur plan gratuit,
+  // l'erreur de quota masque l'erreur « existe déjà »)
+  try {
+    await tables.get({ databaseId: DB_ID })
+    console.log(`· database "${DB_ID}" (déjà présente)`)
+  } catch {
+    await ensure(`database "${DB_ID}"`, () => tables.create({ databaseId: DB_ID, name: 'Konforme' }))
+  }
 
   // 2. Tables + colonnes + index
   for (const t of TABLES) {
@@ -150,11 +156,27 @@ async function main() {
         rowSecurity: true,
       }),
     )
+    // Vérifie l'existant d'abord : sur plan gratuit, les erreurs de quota
+    // masquent les erreurs « existe déjà »
+    const existingCols = new Set(
+      (await tables.listColumns({ databaseId: DB_ID, tableId: t.id })).columns.map((c) => c.key),
+    )
     for (const col of t.columns) {
+      if (existingCols.has(col.key)) {
+        console.log(`·   colonne ${t.id}.${col.key} (déjà présente)`)
+        continue
+      }
       await ensure(`  colonne ${t.id}.${col.key}`, () => createColumn(tables, t.id, col))
     }
     await waitColumnsAvailable(tables, t.id, t.columns.map((c) => c.key))
+    const existingIdx = new Set(
+      (await tables.listIndexes({ databaseId: DB_ID, tableId: t.id })).indexes.map((i) => i.key),
+    )
     for (const idx of t.indexes) {
+      if (existingIdx.has(idx.key)) {
+        console.log(`·   index ${t.id}.${idx.key} (déjà présent)`)
+        continue
+      }
       await ensure(`  index ${t.id}.${idx.key}`, () =>
         tables.createIndex({ databaseId: DB_ID, tableId: t.id, key: idx.key, type: 'key', columns: idx.columns }),
       )
@@ -182,14 +204,6 @@ async function main() {
       scopes: ['rows.read', 'rows.write', 'tables.read', 'executions.write'],
       timeout: 120,
     },
-    {
-      id: 'explain-issue',
-      name: 'explain-issue',
-      dir: 'explain-issue',
-      execute: [Role.users()],
-      scopes: [],
-      timeout: 60,
-    },
   ]
 
   for (const fn of FUNCTIONS) {
@@ -204,15 +218,21 @@ async function main() {
       scopes: fn.scopes,
       ...(fn.schedule ? { schedule: fn.schedule } : {}),
     }
-    let created = true
+    let created = false
+    let exists = false
     try {
-      await functions.create({ functionId: fn.id, ...config })
-      console.log(`✓ function "${fn.id}"`)
-    } catch (e) {
-      if (e && (e.code === 409 || /already exists/i.test(String(e.message)))) {
-        created = false
-        console.log(`· function "${fn.id}" (déjà présente)`)
-      } else {
+      await functions.get({ functionId: fn.id })
+      exists = true
+      console.log(`· function "${fn.id}" (déjà présente)`)
+    } catch {
+      /* absente : on la crée */
+    }
+    if (!exists) {
+      try {
+        await functions.create({ functionId: fn.id, ...config })
+        created = true
+        console.log(`✓ function "${fn.id}"`)
+      } catch (e) {
         throw new Error(`function ${fn.id} : ${e.message || e}`)
       }
     }
@@ -237,14 +257,16 @@ async function main() {
     console.log(`✓ déploiement ${deployment.$id} créé (build en cours côté Appwrite)`)
   }
 
-  // Assistant IA : pousse la clé Anthropic si présente dans .env.local
+  // Assistant IA (mode explain de scan-site) : pousse la clé Anthropic si
+  // présente dans .env.local. Le plan gratuit limite à 2 fonctions, l'IA est
+  // donc intégrée à scan-site plutôt qu'en fonction dédiée.
   if (env.ANTHROPIC_API_KEY) {
     try {
-      await functions.createVariable({ functionId: 'explain-issue', key: 'ANTHROPIC_API_KEY', value: env.ANTHROPIC_API_KEY, secret: true })
-      console.log('✓ variable ANTHROPIC_API_KEY posée sur explain-issue')
+      await functions.createVariable({ functionId: FUNCTION_ID, key: 'ANTHROPIC_API_KEY', value: env.ANTHROPIC_API_KEY, secret: true })
+      console.log('✓ variable ANTHROPIC_API_KEY posée sur scan-site')
     } catch (e) {
       if (e && e.code === 409) {
-        console.log('· variable ANTHROPIC_API_KEY déjà présente sur explain-issue')
+        console.log('· variable ANTHROPIC_API_KEY déjà présente sur scan-site')
       } else {
         console.log(`! variable ANTHROPIC_API_KEY non posée : ${e.message || e}`)
       }
