@@ -6,26 +6,50 @@ import { Logo } from '@/components/ui/logo'
 import { useAuth } from '@/contexts/AuthContext'
 import { Seo } from '@/components/Seo'
 
+type Mode = 'signin' | 'signup'
+
 export function Login() {
-  const { signInWithGoogle, user } = useAuth()
+  const { signInWithGoogle, signInWithEmail, signUpWithEmail, user } = useAuth()
+  const [mode, setMode] = useState<Mode>('signin')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
     if (user) navigate('/dashboard', { replace: true })
   }, [user, navigate])
 
-  async function handleGoogle() {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
     setError(null)
     setLoading(true)
+    const fd = new FormData(e.currentTarget)
+    const email = String(fd.get('email') ?? '').trim()
+    const password = String(fd.get('password') ?? '')
+    const name = String(fd.get('name') ?? '').trim()
+    try {
+      if (mode === 'signup') {
+        await signUpWithEmail(name || email.split('@')[0], email, password)
+      } else {
+        await signInWithEmail(email, password)
+      }
+      // La redirection est gérée par l'effet sur `user`
+    } catch (e) {
+      setError(friendlyAuthError(e))
+      setLoading(false)
+    }
+  }
+
+  async function handleGoogle() {
+    setError(null)
+    setGoogleLoading(true)
     try {
       await signInWithGoogle()
-      // OAuth will redirect; nothing to do here
+      // OAuth : redirection complète, rien d'autre à faire ici
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Erreur inconnue'
-      setError(msg)
-      setLoading(false)
+      setError(friendlyAuthError(e))
+      setGoogleLoading(false)
     }
   }
 
@@ -41,20 +65,129 @@ export function Login() {
 
         <Card className="p-8">
           <h1 className="gradient-text text-2xl font-bold tracking-tight text-center mb-2">
-            Bienvenue
+            {mode === 'signin' ? 'Bienvenue' : 'Créer un compte'}
           </h1>
           <p className="text-center text-sm text-[#a3b0c9] mb-6">
-            Connectez-vous pour accéder à votre tableau de bord d'accessibilité
+            {mode === 'signin'
+              ? "Connectez-vous pour accéder à votre tableau de bord d'accessibilité"
+              : 'Gratuit — auditez votre premier site en quelques minutes'}
           </p>
+
+          <form onSubmit={onSubmit} className="space-y-4" noValidate>
+            {mode === 'signup' && (
+              <div>
+                <label htmlFor="auth-name" className="block text-sm font-semibold mb-1.5">
+                  Nom complet
+                </label>
+                <input
+                  id="auth-name"
+                  name="name"
+                  type="text"
+                  autoComplete="name"
+                  className="w-full rounded-[10px] border border-[#3b4970] bg-[#0a0e1a] px-3.5 py-2.5 text-sm text-[#f1f5fb] placeholder:text-[#8b98b8]"
+                  placeholder="Prénom Nom"
+                />
+              </div>
+            )}
+            <div>
+              <label htmlFor="auth-email" className="block text-sm font-semibold mb-1.5">
+                Email
+              </label>
+              <input
+                id="auth-email"
+                name="email"
+                type="email"
+                required
+                autoComplete="email"
+                inputMode="email"
+                className="w-full rounded-[10px] border border-[#3b4970] bg-[#0a0e1a] px-3.5 py-2.5 text-sm text-[#f1f5fb] placeholder:text-[#8b98b8]"
+                placeholder="vous@exemple.fr"
+              />
+            </div>
+            <div>
+              <label htmlFor="auth-password" className="block text-sm font-semibold mb-1.5">
+                Mot de passe
+              </label>
+              <input
+                id="auth-password"
+                name="password"
+                type="password"
+                required
+                minLength={8}
+                autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                aria-describedby={mode === 'signup' ? 'auth-password-help' : undefined}
+                className="w-full rounded-[10px] border border-[#3b4970] bg-[#0a0e1a] px-3.5 py-2.5 text-sm text-[#f1f5fb]"
+              />
+              {mode === 'signup' && (
+                <p id="auth-password-help" className="mt-1 text-xs text-[#8b98b8]">
+                  8 caractères minimum.
+                </p>
+              )}
+            </div>
+
+            {error && (
+              <p
+                role="alert"
+                className="rounded-[10px] border border-[#ef4444]/40 bg-[#ef4444]/10 px-4 py-2.5 text-sm text-[#fecaca]"
+              >
+                {error}
+              </p>
+            )}
+
+            <Button type="submit" disabled={loading} variant="primary" size="lg" className="w-full">
+              {loading ? (
+                <>
+                  <span className="size-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  {mode === 'signin' ? 'Connexion…' : 'Création…'}
+                </>
+              ) : mode === 'signin' ? (
+                'Se connecter'
+              ) : (
+                'Créer mon compte'
+              )}
+            </Button>
+          </form>
+
+          <p className="mt-4 text-center text-sm text-[#a3b0c9]">
+            {mode === 'signin' ? (
+              <>
+                Pas encore de compte ?{' '}
+                <button
+                  type="button"
+                  onClick={() => { setMode('signup'); setError(null) }}
+                  className="text-[#67e8f9] font-semibold hover:underline"
+                >
+                  Créer un compte
+                </button>
+              </>
+            ) : (
+              <>
+                Déjà inscrit ?{' '}
+                <button
+                  type="button"
+                  onClick={() => { setMode('signin'); setError(null) }}
+                  className="text-[#67e8f9] font-semibold hover:underline"
+                >
+                  Se connecter
+                </button>
+              </>
+            )}
+          </p>
+
+          <div className="my-5 flex items-center gap-3" role="presentation">
+            <span className="h-px flex-1 bg-[#2a3654]" />
+            <span className="text-xs text-[#8b98b8]">ou</span>
+            <span className="h-px flex-1 bg-[#2a3654]" />
+          </div>
 
           <Button
             onClick={handleGoogle}
-            disabled={loading}
-            variant="primary"
+            disabled={googleLoading}
+            variant="ghost"
             size="lg"
             className="w-full"
           >
-            {loading ? (
+            {googleLoading ? (
               <>
                 <span className="size-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                 Redirection...
@@ -66,15 +199,6 @@ export function Login() {
               </>
             )}
           </Button>
-
-          {error && (
-            <p
-              role="alert"
-              className="mt-4 rounded-[10px] border border-[#ef4444]/40 bg-[#ef4444]/10 px-4 py-2.5 text-sm text-[#fecaca]"
-            >
-              {error}
-            </p>
-          )}
 
           <p className="mt-6 text-center text-xs text-[#8b98b8] leading-relaxed">
             En continuant vous acceptez nos{' '}
@@ -97,6 +221,20 @@ export function Login() {
       </div>
     </div>
   )
+}
+
+/** Traduit les erreurs Appwrite les plus courantes en message actionnable. */
+function friendlyAuthError(e: unknown): string {
+  const msg = e instanceof Error ? e.message : String(e)
+  if (/invalid credentials|invalid email|password/i.test(msg) && !/at least/i.test(msg))
+    return 'Email ou mot de passe incorrect.'
+  if (/at least 8|password.*length/i.test(msg)) return 'Le mot de passe doit faire au moins 8 caractères.'
+  if (/already exists|user_already_exists/i.test(msg))
+    return 'Un compte existe déjà avec cet email — connectez-vous.'
+  if (/rate limit/i.test(msg)) return 'Trop de tentatives. Réessayez dans quelques minutes.'
+  if (/project.*not.*found|missing.*project/i.test(msg))
+    return "Le backend n'est pas encore configuré (projet Appwrite manquant)."
+  return msg || 'Erreur inconnue'
 }
 
 function GoogleIcon() {

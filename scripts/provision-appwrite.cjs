@@ -190,8 +190,11 @@ async function main() {
   console.log(`✓ déploiement ${deployment.$id} créé (build en cours côté Appwrite)`)
 
   console.log(`\nTerminé. Dernière étape manuelle (console Appwrite) :
-  Auth > Settings > activer le provider Google (Client ID/Secret de .env.local)
-  et ajouter votre domaine + http://localhost:5173 dans les plateformes Web du projet.`)
+  Overview > Integrations > Platforms > Add platform > Web :
+    ajouter "localhost" ET votre domaine de prod (ex. konforme-neon.vercel.app)
+    — sans cela le navigateur est bloqué par CORS.
+  Optionnel : Auth > Settings > provider Google (Client ID/Secret de .env.local)
+    — la connexion email/mot de passe fonctionne sans.`)
 }
 
 main().catch((e) => {

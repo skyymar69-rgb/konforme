@@ -3,7 +3,15 @@ import { Account, Client, Functions, TablesDB, Teams } from 'appwrite'
 const endpoint = import.meta.env.VITE_APPWRITE_ENDPOINT as string | undefined
 const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID as string | undefined
 
-if (!endpoint || !projectId) {
+/**
+ * Vrai uniquement quand le backend est réellement configuré.
+ * IMPORTANT : sans projectId, le SDK ciblerait le projet « console »
+ * d'Appwrite Cloud — toute action auth créerait un compte sur la console
+ * Appwrite elle-même. Les appels doivent donc être bloqués en amont.
+ */
+export const appwriteConfigured = Boolean(endpoint && projectId)
+
+if (!appwriteConfigured) {
   console.error(
     'Variables Appwrite manquantes. Renseignez VITE_APPWRITE_ENDPOINT et VITE_APPWRITE_PROJECT_ID dans .env.local'
   )
