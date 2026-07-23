@@ -1,5 +1,5 @@
-/* eslint-disable react-refresh/only-export-components -- fichier de contenu, pas de HMR nécessaire */
 import { Link } from 'react-router-dom'
+import { H2, P, UL } from '@/content/legal-ui'
 
 export type LegalDoc = {
   slug: string
@@ -8,20 +8,6 @@ export type LegalDoc = {
   updated: string
   body: React.ReactNode
 }
-
-const H2 = ({ children }: { children: React.ReactNode }) => (
-  <h2 className="text-xl font-bold tracking-tight mt-10 mb-3">{children}</h2>
-)
-const P = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-text-soft leading-relaxed mb-4">{children}</p>
-)
-const UL = ({ items }: { items: React.ReactNode[] }) => (
-  <ul className="space-y-2 text-text-soft leading-relaxed list-disc pl-5 mb-4">
-    {items.map((it, i) => (
-      <li key={i}>{it}</li>
-    ))}
-  </ul>
-)
 
 export const LEGAL_DOCS: LegalDoc[] = [
   {

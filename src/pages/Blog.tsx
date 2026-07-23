@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Seo } from '@/components/Seo'
-import { POSTS } from '@/content/posts'
+import { localizedPosts } from '@/i18n/content-i18n'
 import { formatDate } from '@/lib/format'
 import { defineMessages, localizePath, useLang, useMessages } from '@/i18n'
 
@@ -68,21 +68,15 @@ export function Blog() {
       <h1 className="text-4xl font-extrabold tracking-tight mb-4">{t.h1}</h1>
       <p className="text-lg text-text-muted mb-12">{t.intro}</p>
 
-      {lang !== 'fr' && (
-        <p className="text-sm text-text-dim mb-8 rounded-[10px] border border-border bg-surface/60 px-4 py-3">
-          {t.frenchOnly}
-        </p>
-      )}
-
       <ul className="space-y-6">
-        {POSTS.map((post) => (
+        {localizedPosts(lang).map((post) => (
           <li key={post.slug}>
             <article className="rounded-[14px] border border-border bg-surface/60 p-7 hover:border-border-strong transition-colors">
               <p className="text-xs text-text-dim mb-2">
                 <time dateTime={post.date}>{formatDate(post.date, false, lang)}</time> ·{' '}
                 {post.readingMinutes} {t.readingTime}
               </p>
-              <h2 className="text-xl font-bold tracking-tight mb-2" lang="fr">
+              <h2 className="text-xl font-bold tracking-tight mb-2">
                 <Link
                   to={localizePath(lang, `/blog/${post.slug}`)}
                   className="hover:text-primary-soft hover:underline underline-offset-4"
@@ -90,7 +84,7 @@ export function Blog() {
                   {post.title}
                 </Link>
               </h2>
-              <p className="text-sm text-text-muted leading-relaxed" lang="fr">
+              <p className="text-sm text-text-muted leading-relaxed">
                 {post.description}
               </p>
             </article>

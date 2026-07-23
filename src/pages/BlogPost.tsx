@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom'
 import { Seo, SITE_URL } from '@/components/Seo'
-import { POSTS } from '@/content/posts'
+import { localizedPost } from '@/i18n/content-i18n'
 import { formatDate } from '@/lib/format'
 import { NotFound } from '@/pages/NotFound'
 import { Button } from '@/components/ui/button'
@@ -58,7 +58,7 @@ export function BlogPost() {
   const { slug } = useParams<{ slug: string }>()
   const t = useMessages(L)
   const lang = useLang()
-  const post = POSTS.find((p) => p.slug === slug)
+  const post = slug ? localizedPost(lang, slug) : undefined
   if (!post) return <NotFound />
 
   return (
@@ -76,8 +76,7 @@ export function BlogPost() {
             headline: post.title,
             description: post.description,
             datePublished: post.date,
-            // Le corps de l'article n'existe qu'en français, quelle que soit l'URL.
-            inLanguage: 'fr-FR',
+            inLanguage: lang,
             url: `${SITE_URL}${localizePath(lang, `/blog/${post.slug}`)}`,
             author: { '@type': 'Organization', name: 'Konforme' },
             publisher: { '@type': 'Organization', name: 'KAYZEN SASU' },
@@ -109,17 +108,12 @@ export function BlogPost() {
           <time dateTime={post.date}>{formatDate(post.date, false, lang)}</time> ·{' '}
           {post.readingMinutes} {t.readingTime}
         </p>
-        <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight leading-tight" lang="fr">
+        <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight leading-tight">
           {post.title}
         </h1>
-        {lang !== 'fr' && (
-          <p className="mt-4 text-sm text-text-dim rounded-[10px] border border-border bg-surface/60 px-4 py-3">
-            {t.frenchOnly}
-          </p>
-        )}
       </header>
 
-      <div className="space-y-8" lang="fr">
+      <div className="space-y-8">
         {post.sections.map((section, i) => (
           <section key={i}>
             {section.heading && (

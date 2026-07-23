@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom'
 import { Seo } from '@/components/Seo'
-import { LEGAL_DOCS } from '@/content/legal'
+import { localizedLegalDoc } from '@/i18n/content-i18n'
 import { formatDate } from '@/lib/format'
 import { NotFound } from '@/pages/NotFound'
 import { defineMessages, useLang, useMessages } from '@/i18n'
@@ -132,7 +132,7 @@ export function LegalPage() {
   const { slug } = useParams<{ slug: string }>()
   const t = useMessages(L)
   const lang = useLang()
-  const doc = LEGAL_DOCS.find((d) => d.slug === slug)
+  const doc = slug ? localizedLegalDoc(lang, slug) : undefined
   if (!doc) return <NotFound />
 
   const title = t.titles[doc.slug] ?? doc.title
@@ -147,12 +147,7 @@ export function LegalPage() {
         {t.updated}
         <time dateTime={doc.updated}>{formatDate(doc.updated, false, lang)}</time>
       </p>
-      {lang !== 'fr' && (
-        <p className="text-sm text-text-dim mb-8 rounded-[10px] border border-border bg-surface/60 px-4 py-3">
-          {t.frenchOnly}
-        </p>
-      )}
-      <div lang="fr">{doc.body}</div>
+      <div>{doc.body}</div>
     </div>
   )
 }
