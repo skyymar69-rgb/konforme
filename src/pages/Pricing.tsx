@@ -94,7 +94,7 @@ export function Pricing() {
           <div>
             <dt className="font-semibold">Que couvre l'audit automatisé ?</dt>
             <dd className="text-text-muted mt-1">
-              Plus de 40 règles RGAA 4.1 / WCAG 2.2 vérifiables par machine (images, formulaires,
+              Plus de 40 règles RGAA 4.1.2 / WCAG 2.2 vérifiables par machine (images, formulaires,
               structure, ARIA, contrastes…), soit environ 30 % du référentiel. La conformité
               opposable nécessite un audit manuel complémentaire, inclus dans l'offre Accompagné.
             </dd>

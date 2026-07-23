@@ -84,11 +84,24 @@ const TABLES = [
     indexes: [{ key: 'idx_scan', columns: ['scan_id'] }],
   },
   {
+    // Évaluations manuelles des critères RGAA (audit complet « méthode officielle » :
+    // conforme / non conforme / non applicable, par site et par critère)
+    id: 'criteria_reviews',
+    columns: [
+      S('team_id', 64, true), S('site_id', 64, true), S('criterion_id', 8, true),
+      S('status', 16, true), S('note', 2048), D('reviewed_at'),
+    ],
+    indexes: [
+      { key: 'idx_site', columns: ['site_id'] },
+      { key: 'idx_team', columns: ['team_id'] },
+    ],
+  },
+  {
     id: 'declarations',
     columns: [
       S('team_id', 64, true), S('site_id', 64, true), S('site_name', 256), S('site_url', 1024),
       S('conformity_level', 16, true), F('conformity_rate'),
-      S('reference_standard', 32, false, 'RGAA-4.1'), S('audit_method', 16, false, 'auto'),
+      S('reference_standard', 32, false, 'RGAA-4.1.2'), S('audit_method', 16, false, 'auto'),
       S('contact_email', 256), D('published_at'),
     ],
     indexes: [{ key: 'idx_team', columns: ['team_id'] }],

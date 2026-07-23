@@ -7,14 +7,27 @@ import { Button } from '@/components/ui/button'
 import { ScoreRing } from '@/components/ScoreRing'
 import { Seo } from '@/components/Seo'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useScan, useScanIssues, useUpdateIssueStatus } from '@/lib/queries'
+import { BadgeGenerator } from '@/components/report/BadgeGenerator'
+import { RgaaCriteriaList, type ReviewInput } from '@/components/report/RgaaCriteriaList'
+import { useCriteriaReviews, useScan, useScanIssues, useSetCriterionReview, useUpdateIssueStatus } from '@/lib/queries'
 import { functions, SCAN_FUNCTION_ID } from '@/lib/appwrite'
-import { downloadAuditCsv, downloadAuditJson, downloadAuditReport } from '@/lib/report'
+import { computeConformity } from '@/lib/conformity'
+import {
+  downloadAttestation,
+  downloadAuditCsv,
+  downloadAuditJson,
+  downloadAuditMarkdown,
+  downloadAuditReport,
+  printAuditReport,
+  type ReportScope,
+} from '@/lib/report'
 import { scoreColor } from '@/lib/format'
 import { formatDate, SEVERITY_META, STATUS_META } from '@/lib/format'
-import type { ScanIssue, Severity } from '@/lib/database.types'
+import type { CriterionReview, Scan, ScanIssue, Severity } from '@/lib/database.types'
 
 const SEVERITIES: Severity[] = ['critical', 'serious', 'moderate', 'minor']
+
+type TabKey = 'issues' | 'criteria' | 'pages' | 'badge'
 
 export function ScanDetail() {
   const { scanId } = useParams<{ scanId: string }>()
@@ -22,6 +35,7 @@ export function ScanDetail() {
   const { data: issues } = useScanIssues(scanId)
   const [severityFilter, setSeverityFilter] = useState<Severity | 'all'>('all')
   const [hideFixed, setHideFixed] = useState(true)
+  const [tab, setTab] = useState<TabKey>('issues')
 
   // À la fin d'un scan suivi en direct, recharge les issues (mises en cache vides pendant l'analyse)
   const qc = useQueryClient()
@@ -50,6 +64,25 @@ export function ScanDetail() {
     return c
   }, [issues])
 
+  const { data: reviews } = useCriteriaReviews(scan?.site_id)
+  const setReview = useSetCriterionReview()
+  const conformity = useMemo(
+    () => computeConformity(issues ?? [], undefined, reviews),
+    [issues, reviews],
+  )
+
+  function handleReview(input: ReviewInput) {
+    if (!scan) return
+    setReview.mutate({
+      siteId: scan.site_id,
+      teamId: scan.organization_id,
+      criterionId: input.criterionId,
+      status: input.status,
+      note: input.note,
+      existingId: input.existingId,
+    })
+  }
+
   if (isLoading) {
     return (
       <div className="space-y-6" role="status" aria-label="Chargement du rapport">
@@ -73,6 +106,14 @@ export function ScanDetail() {
   }
 
   const st = STATUS_META[scan.status]
+  const badgeRate = conformity.rate ?? scan.score
+
+  const tabs: { key: TabKey; label: string }[] = [
+    { key: 'issues', label: `Non-conformités (${filtered.length})` },
+    { key: 'criteria', label: 'Les 106 critères RGAA' },
+    { key: 'pages', label: `Pages (${scan.page_scores?.length ?? 0})` },
+    { key: 'badge', label: 'Badge de conformité' },
+  ]
 
   return (
     <div className="space-y-6">
@@ -93,22 +134,8 @@ export function ScanDetail() {
             Audit du {formatDate(scan.created_at, true)} · {scan.pages_count} page{scan.pages_count > 1 ? 's' : ''} analysée{scan.pages_count > 1 ? 's' : ''}
           </p>
         </div>
-        {scan.status === 'done' && (
-          <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Exporter le rapport">
-            <Button
-              variant="primary"
-              disabled={!issues}
-              onClick={() => issues && downloadAuditReport(scan, issues)}
-            >
-              Télécharger le rapport
-            </Button>
-            <Button variant="ghost" size="sm" disabled={!issues} onClick={() => issues && downloadAuditCsv(scan, issues)}>
-              CSV
-            </Button>
-            <Button variant="ghost" size="sm" disabled={!issues} onClick={() => issues && downloadAuditJson(scan, issues)}>
-              JSON
-            </Button>
-          </div>
+        {scan.status === 'done' && issues && (
+          <ExportMenu scan={scan} issues={issues} reviews={reviews} />
         )}
       </header>
 
@@ -134,7 +161,7 @@ export function ScanDetail() {
         </Card>
       )}
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Card className="flex items-center gap-5">
           <ScoreRing score={scan.score} label="Taux de conformité global" />
           <div>
@@ -145,9 +172,9 @@ export function ScanDetail() {
           </div>
         </Card>
         <Card className="flex items-center gap-5">
-          <ScoreRing score={scan.rgaa_score} size={72} label="Score RGAA 4.1" />
+          <ScoreRing score={scan.rgaa_score} size={72} label="Score RGAA 4.1.2" />
           <div>
-            <div className="text-sm font-semibold">RGAA 4.1</div>
+            <div className="text-sm font-semibold">RGAA 4.1.2</div>
             <p className="text-xs text-text-dim mt-1">Référentiel français</p>
           </div>
         </Card>
@@ -158,80 +185,205 @@ export function ScanDetail() {
             <p className="text-xs text-text-dim mt-1">Standard international / EAA</p>
           </div>
         </Card>
+        <Card className="flex items-center gap-5">
+          <ScoreRing score={conformity.rate} size={72} label="Taux de conformité RGAA sur les critères évalués" />
+          <div>
+            <div className="text-sm font-semibold">Taux RGAA officiel</div>
+            <p className="text-xs text-text-dim mt-1">
+              {conformity.ok} conformes · {conformity.nonConformes} NC · {conformity.aVerifier} à vérifier
+              {conformity.nonApplicables > 0 && <> · {conformity.nonApplicables} NA</>}
+            </p>
+          </div>
+        </Card>
       </div>
 
-      {scan.status === 'done' && (scan.page_scores?.length ?? 0) > 1 && (
-        <Card>
-          <h2 className="text-lg font-bold mb-4">
-            Score par page <span className="text-text-dim font-normal">({scan.page_scores!.length})</span>
-          </h2>
-          <ul className="space-y-2">
-            {scan.page_scores!.map((p) => (
-              <li key={p.url} className="flex items-center gap-3 rounded-[10px] border border-border px-4 py-2.5 text-sm">
-                <span
-                  className="shrink-0 font-bold tabular-nums w-12 text-right"
-                  style={{ color: scoreColor(p.score) }}
-                >
-                  {p.score !== null ? `${Math.round(p.score)}%` : '—'}
-                </span>
-                <span className="flex-1 min-w-0 truncate text-text-soft">{p.url}</span>
-                <span className="shrink-0 text-xs text-text-dim">
-                  {p.issues} issue{p.issues > 1 ? 's' : ''}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
-
       {scan.status === 'done' && (
-      <Card>
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-          <h2 className="text-lg font-bold">
-            Non-conformités <span className="text-text-dim font-normal">({filtered.length})</span>
-          </h2>
-          <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer par sévérité">
-            <FilterChip active={severityFilter === 'all'} onClick={() => setSeverityFilter('all')}>
-              Toutes
-            </FilterChip>
-            {SEVERITIES.map((s) => (
-              <FilterChip key={s} active={severityFilter === s} onClick={() => setSeverityFilter(s)}>
-                {SEVERITY_META[s].label} ({counts[s]})
-              </FilterChip>
+        <>
+          <div role="tablist" aria-label="Sections du rapport" className="flex flex-wrap gap-1 border-b border-border">
+            {tabs.map((t) => (
+              <button
+                key={t.key}
+                role="tab"
+                id={`tab-${t.key}`}
+                aria-selected={tab === t.key}
+                aria-controls={`panel-${t.key}`}
+                onClick={() => setTab(t.key)}
+                className={
+                  tab === t.key
+                    ? 'rounded-t-[10px] border border-border border-b-transparent bg-surface px-4 py-2.5 text-sm font-semibold text-white -mb-px'
+                    : 'rounded-t-[10px] px-4 py-2.5 text-sm font-semibold text-text-muted hover:text-white'
+                }
+              >
+                {t.label}
+              </button>
             ))}
-            <label className="ml-2 inline-flex items-center gap-2 text-sm text-text-muted">
-              <input
-                type="checkbox"
-                checked={hideFixed}
-                onChange={(e) => setHideFixed(e.target.checked)}
-                className="size-4 accent-primary"
-              />
-              Masquer les corrigées
-            </label>
           </div>
-        </div>
 
-        {filtered.length === 0 ? (
-          <p className="text-sm text-text-muted py-8 text-center">
-            {issues?.length === 0
-              ? '🎉 Aucune non-conformité détectée sur les règles automatisables.'
-              : 'Aucune issue ne correspond aux filtres.'}
-          </p>
-        ) : (
-          <ul className="space-y-3">
-            {filtered.map((issue) => (
-              <IssueRow key={issue.id} issue={issue} />
-            ))}
-          </ul>
-        )}
-      </Card>
+          <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
+            {tab === 'issues' && (
+              <Card>
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+                  <h2 className="text-lg font-bold">
+                    Non-conformités <span className="text-text-dim font-normal">({filtered.length})</span>
+                  </h2>
+                  <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer par sévérité">
+                    <FilterChip active={severityFilter === 'all'} onClick={() => setSeverityFilter('all')}>
+                      Toutes
+                    </FilterChip>
+                    {SEVERITIES.map((s) => (
+                      <FilterChip key={s} active={severityFilter === s} onClick={() => setSeverityFilter(s)}>
+                        {SEVERITY_META[s].label} ({counts[s]})
+                      </FilterChip>
+                    ))}
+                    <label className="ml-2 inline-flex items-center gap-2 text-sm text-text-muted">
+                      <input
+                        type="checkbox"
+                        checked={hideFixed}
+                        onChange={(e) => setHideFixed(e.target.checked)}
+                        className="size-4 accent-primary"
+                      />
+                      Masquer les corrigées
+                    </label>
+                  </div>
+                </div>
+
+                {filtered.length === 0 ? (
+                  <p className="text-sm text-text-muted py-8 text-center">
+                    {issues?.length === 0
+                      ? '🎉 Aucune non-conformité détectée sur les règles automatisables.'
+                      : 'Aucune issue ne correspond aux filtres.'}
+                  </p>
+                ) : (
+                  <ul className="space-y-3">
+                    {filtered.map((issue) => (
+                      <IssueRow key={issue.id} issue={issue} />
+                    ))}
+                  </ul>
+                )}
+              </Card>
+            )}
+
+            {tab === 'criteria' && (
+              <Card>
+                <h2 className="text-lg font-bold mb-1">Les 106 critères du RGAA 4.1.2</h2>
+                <p className="text-xs text-text-dim mb-5">
+                  Le référentiel officiel français, exigé par la directive européenne 2019/882 (EAA).
+                  Survolez le « ? » de chaque critère pour une explication en français courant, et
+                  évaluez vous-même les critères non automatisables (« Évaluer ») pour un audit complet
+                  selon la méthode officielle.
+                </p>
+                <RgaaCriteriaList
+                  issues={issues ?? []}
+                  reviews={reviews}
+                  onReview={handleReview}
+                  reviewPending={setReview.isPending}
+                />
+              </Card>
+            )}
+
+            {tab === 'pages' && (
+              <Card>
+                <h2 className="text-lg font-bold mb-1">
+                  Rapport par page <span className="text-text-dim font-normal">({scan.page_scores?.length ?? 0})</span>
+                </h2>
+                <p className="text-xs text-text-dim mb-5">
+                  Chaque page auditée dispose de son propre rapport exportable (les 106 critères + les
+                  non-conformités de la page) en Markdown, HTML ou PDF.
+                </p>
+                {(scan.page_scores?.length ?? 0) === 0 ? (
+                  <p className="text-sm text-text-muted py-6 text-center">Aucun détail par page disponible pour cet audit.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {scan.page_scores!.map((p) => (
+                      <li key={p.url} className="flex flex-wrap items-center gap-3 rounded-[10px] border border-border px-4 py-2.5 text-sm">
+                        <span
+                          className="shrink-0 font-bold tabular-nums w-12 text-right"
+                          style={{ color: scoreColor(p.score) }}
+                        >
+                          {p.score !== null ? `${Math.round(p.score)}%` : '—'}
+                        </span>
+                        <span className="flex-1 min-w-40 truncate text-text-soft">{p.url}</span>
+                        <span className="shrink-0 text-xs text-text-dim">
+                          {p.issues} issue{p.issues > 1 ? 's' : ''}
+                        </span>
+                        <span className="flex shrink-0 gap-1.5" role="group" aria-label={`Exporter le rapport de ${p.url}`}>
+                          <Button size="sm" variant="outline" disabled={!issues} onClick={() => issues && downloadAuditMarkdown(scan, issues, { pageUrl: p.url, reviews })}>
+                            MD
+                          </Button>
+                          <Button size="sm" variant="outline" disabled={!issues} onClick={() => issues && downloadAuditReport(scan, issues, { pageUrl: p.url, reviews })}>
+                            HTML
+                          </Button>
+                          <Button size="sm" variant="outline" disabled={!issues} onClick={() => issues && printAuditReport(scan, issues, { pageUrl: p.url, reviews })}>
+                            PDF
+                          </Button>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Card>
+            )}
+
+            {tab === 'badge' && (
+              <Card>
+                <h2 className="text-lg font-bold mb-4">Badge de conformité</h2>
+                {badgeRate !== null ? (
+                  <BadgeGenerator rate={badgeRate} date={scan.created_at} siteUrl={scan.sites?.url} />
+                ) : (
+                  <p className="text-sm text-text-muted">
+                    Le badge sera disponible dès qu'un taux de conformité aura pu être calculé.
+                  </p>
+                )}
+              </Card>
+            )}
+          </div>
+        </>
       )}
 
       <p className="text-xs text-text-dim">
-        Un audit automatique couvre les critères détectables par machine (~30 % du RGAA). Pour une
-        conformité totale opposable, complétez avec un audit manuel — c'est inclus dans notre offre
-        accompagnée.
+        Un audit automatique couvre les critères détectables par machine (~30 % du RGAA). Les critères
+        « à vérifier manuellement » de l'onglet 106 critères listent précisément le travail restant. Pour
+        une conformité totale opposable, complétez avec un audit manuel — c'est inclus dans notre offre
+        accompagnée.{' '}
+        <Link to="/guide-accessibilite" className="underline hover:text-white">
+          Consulter le guide complet EAA / RGAA
+        </Link>
+        .
       </p>
+    </div>
+  )
+}
+
+function ExportMenu({
+  scan,
+  issues,
+  reviews,
+}: {
+  scan: Scan
+  issues: ScanIssue[]
+  reviews?: CriterionReview[]
+}) {
+  const scope: ReportScope = { reviews }
+  return (
+    <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Exporter le rapport">
+      <Button variant="primary" onClick={() => printAuditReport(scan, issues, scope)}>
+        Exporter en PDF
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => downloadAuditReport(scan, issues, scope)}>
+        HTML
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => downloadAuditMarkdown(scan, issues, scope)}>
+        Markdown
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => downloadAttestation(scan, issues, scope)}>
+        Attestation
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => downloadAuditCsv(scan, issues)}>
+        CSV
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => downloadAuditJson(scan, issues)}>
+        JSON
+      </Button>
     </div>
   )
 }

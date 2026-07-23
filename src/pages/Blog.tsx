@@ -8,7 +8,7 @@ export function Blog() {
     <div className="mx-auto max-w-4xl px-6 py-14">
       <Seo
         title="Blog accessibilité web : RGAA, WCAG, EAA"
-        description="Guides pratiques et actualités sur l'accessibilité numérique : RGAA 4.1, WCAG 2.2, European Accessibility Act, corrections concrètes."
+        description="Guides pratiques et actualités sur l'accessibilité numérique : RGAA 4.1.2, WCAG 2.2, European Accessibility Act, corrections concrètes."
         path="/blog"
       />
       <p className="text-xs font-semibold uppercase tracking-wider text-link mb-3">Blog</p>

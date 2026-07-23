@@ -21,6 +21,10 @@ const Settings = lazy(() => import('@/pages/dashboard/Settings').then((m) => ({ 
 const Blog = lazy(() => import('@/pages/Blog').then((m) => ({ default: m.Blog })))
 const BlogPost = lazy(() => import('@/pages/BlogPost').then((m) => ({ default: m.BlogPost })))
 const Rgaa = lazy(() => import('@/pages/Rgaa').then((m) => ({ default: m.Rgaa })))
+const GuideAccessibilite = lazy(() =>
+  import('@/pages/GuideAccessibilite').then((m) => ({ default: m.GuideAccessibilite })),
+)
+const Glossaire = lazy(() => import('@/pages/Glossaire').then((m) => ({ default: m.Glossaire })))
 const Pricing = lazy(() => import('@/pages/Pricing').then((m) => ({ default: m.Pricing })))
 const About = lazy(() => import('@/pages/About').then((m) => ({ default: m.About })))
 const Contact = lazy(() => import('@/pages/Contact').then((m) => ({ default: m.Contact })))
@@ -50,6 +54,8 @@ function App() {
               <Route path="blog" element={<Blog />} />
               <Route path="blog/:slug" element={<BlogPost />} />
               <Route path="rgaa" element={<Rgaa />} />
+              <Route path="guide-accessibilite" element={<GuideAccessibilite />} />
+              <Route path="glossaire" element={<Glossaire />} />
               <Route path="tarifs" element={<Pricing />} />
               <Route path="a-propos" element={<About />} />
               <Route path="contact" element={<Contact />} />

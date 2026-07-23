@@ -22,14 +22,14 @@ export function Rgaa() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-14">
       <Seo
-        title="Guide RGAA 4.1 : les 106 critères expliqués"
-        description="Le RGAA 4.1 en clair : 13 thématiques, 106 critères, niveaux de conformité, obligations légales françaises et lien avec les WCAG 2.2 et l'EAA."
+        title="Guide RGAA 4.1.2 : les 106 critères expliqués"
+        description="Le RGAA 4.1.2 en clair : 13 thématiques, 106 critères, niveaux de conformité, obligations légales françaises et lien avec les WCAG 2.2 et l'EAA."
         path="/rgaa"
         jsonLd={[
           {
             '@context': 'https://schema.org',
             '@type': 'Article',
-            headline: 'Guide RGAA 4.1 : les 106 critères expliqués',
+            headline: 'Guide RGAA 4.1.2 : les 106 critères expliqués',
             inLanguage: 'fr-FR',
             author: { '@type': 'Organization', name: 'Konforme' },
             publisher: { '@type': 'Organization', name: 'KAYZEN SASU' },
@@ -39,7 +39,7 @@ export function Rgaa() {
 
       <p className="text-xs font-semibold uppercase tracking-wider text-link mb-3">Guide</p>
       <h1 className="text-4xl font-extrabold tracking-tight mb-6">
-        RGAA 4.1 : le référentiel français d'accessibilité
+        RGAA 4.1.2 : le référentiel français d'accessibilité
       </h1>
       <p className="text-lg text-text-muted leading-relaxed mb-10">
         Le <strong className="text-text">Référentiel Général d'Amélioration de l'Accessibilité</strong> (RGAA)
@@ -67,7 +67,7 @@ export function Rgaa() {
         </h2>
         <div className="overflow-x-auto rounded-[14px] border border-border">
           <table className="w-full text-sm">
-            <caption className="sr-only">Les 13 thématiques du RGAA 4.1 et leurs critères</caption>
+            <caption className="sr-only">Les 13 thématiques du RGAA 4.1.2 et leurs critères</caption>
             <thead>
               <tr className="border-b border-border bg-surface text-left text-xs uppercase tracking-wider text-text-muted">
                 <th scope="col" className="px-4 py-3 font-semibold">N°</th>

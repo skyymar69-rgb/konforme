@@ -69,7 +69,7 @@ export const SOFTWARE_JSONLD: JsonLd = {
   operatingSystem: 'Web',
   url: SITE_URL,
   description:
-    "Plateforme SaaS d'audit d'accessibilité web : conformité RGAA 4.1 et WCAG 2.2, corrections assistées par IA, déclaration d'accessibilité automatique.",
+    "Plateforme SaaS d'audit d'accessibilité web : conformité RGAA 4.1.2 et WCAG 2.2, corrections assistées par IA, déclaration d'accessibilité automatique.",
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR', description: 'Audit gratuit' },
   publisher: { '@type': 'Organization', name: 'KAYZEN SASU' },
 }

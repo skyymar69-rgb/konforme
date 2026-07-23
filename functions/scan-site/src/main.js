@@ -1,4 +1,4 @@
-// Konforme — moteur d'audit d'accessibilité (RGAA 4.1 / WCAG 2.2)
+// Konforme — moteur d'audit d'accessibilité (RGAA 4.1.2 / WCAG 2.2)
 // Fonction Appwrite (Node). Deux modes :
 //  - { scan_id } : crawle le site (max_pages du scan), exécute ~40 règles
 //    RGAA maison + axe-core (~60 règles WCAG suppl.) et complète scan+issues ;
@@ -1158,7 +1158,7 @@ module.exports = async ({ req, res, log, error }) => {
     const ex = body.explain
     const title = String(ex.title || '').slice(0, 300)
     if (!title) return res.json({ error: 'title requis' }, 400)
-    const prompt = `Tu es un expert en accessibilité web (RGAA 4.1 / WCAG 2.2) qui aide un développeur français.
+    const prompt = `Tu es un expert en accessibilité web (RGAA 4.1.2 / WCAG 2.2) qui aide un développeur français.
 
 Non-conformité détectée par l'audit automatique :
 - Règle : ${String(ex.rule_id || '').slice(0, 100)} — ${title}

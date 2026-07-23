@@ -32,7 +32,7 @@ export const POSTS: Post[] = [
         heading: 'Que faut-il faire concrètement ?',
         paragraphs: ["La démarche tient en quatre étapes :"],
         list: [
-          "Auditer : mesurer l'écart avec les WCAG 2.1/2.2 niveau AA (le RGAA 4.1 en France).",
+          "Auditer : mesurer l'écart avec les WCAG 2.1/2.2 niveau AA (le RGAA 4.1.2 en France).",
           'Corriger : traiter en priorité les blocages critiques — images sans alternative, formulaires sans étiquette, contrastes insuffisants, navigation clavier impossible.',
           "Déclarer : publier une déclaration d'accessibilité indiquant votre niveau de conformité et les moyens de recours.",
           'Maintenir : chaque mise en production peut réintroduire des régressions ; un audit récurrent est indispensable.',
@@ -69,7 +69,7 @@ export const POSTS: Post[] = [
       {
         heading: "RGAA : la méthode d'application française",
         paragraphs: [
-          "Le RGAA 4.1 traduit les WCAG en 106 critères et plus de 2 500 tests opérationnels. Il précise comment tester, ce que les WCAG laissent parfois à l'interprétation. Il est obligatoire pour le secteur public français et sert de référence aux audits en France.",
+          "Le RGAA 4.1.2 traduit les WCAG en 106 critères et plus de 2 500 tests opérationnels. Il précise comment tester, ce que les WCAG laissent parfois à l'interprétation. Il est obligatoire pour le secteur public français et sert de référence aux audits en France.",
           "Concrètement : être conforme RGAA implique d'être conforme WCAG 2.1 AA. L'inverse n'est pas garanti, car le RGAA impose des tests plus précis (par exemple sur les éléments obligatoires du document HTML).",
         ],
       },
@@ -77,7 +77,7 @@ export const POSTS: Post[] = [
         heading: 'Lequel viser ?',
         paragraphs: [
           "Si votre marché est français : visez le RGAA — il inclut les WCAG et c'est lui que les auditeurs français utiliseront. Si votre produit est international : les WCAG 2.2 AA suffisent, et c'est la référence retenue par l'EAA via la norme EN 301 549.",
-          'Konforme mesure les deux : chaque audit produit un score RGAA 4.1 et un score WCAG 2.2, avec les références croisées sur chaque non-conformité.',
+          'Konforme mesure les deux : chaque audit produit un score RGAA 4.1.2 et un score WCAG 2.2, avec les références croisées sur chaque non-conformité.',
         ],
       },
     ],

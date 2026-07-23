@@ -71,6 +71,24 @@ export type ScanIssue = {
   created_at: string
 }
 
+/** Verdict d'une évaluation manuelle d'un critère RGAA (méthode officielle). */
+export type ReviewStatus = 'conforme' | 'non_conforme' | 'non_applicable'
+
+/**
+ * Évaluation manuelle d'un critère RGAA pour un site : complète l'audit
+ * automatique pour couvrir les 106 critères (audit complet, méthode RGAA).
+ */
+export type CriterionReview = {
+  id: string
+  site_id: string
+  organization_id: string
+  criterion_id: string
+  status: ReviewStatus
+  note: string | null
+  reviewed_at: string
+  created_at: string
+}
+
 export type Declaration = {
   id: string
   site_id: string

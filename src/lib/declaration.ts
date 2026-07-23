@@ -48,7 +48,7 @@ export function buildDeclarationHtml(input: DeclarationInput): string {
 ${conformityDetail}
 
 <h2>Résultats des tests</h2>
-<p>L'audit de conformité réalisé le ${date} par la plateforme Konforme (audit automatisé RGAA 4.1 / WCAG 2.2) révèle que <strong>${rate}</strong> des critères testés sont respectés.</p>
+<p>L'audit de conformité réalisé le ${date} par la plateforme Konforme (audit automatisé RGAA 4.1.2 / WCAG 2.2) révèle que <strong>${rate}</strong> des critères testés sont respectés.</p>
 <p>Cet audit automatisé couvre les critères vérifiables par machine. Il est recommandé de le compléter par un audit manuel pour les critères nécessitant une vérification humaine.</p>
 
 <h2>Établissement de cette déclaration d'accessibilité</h2>

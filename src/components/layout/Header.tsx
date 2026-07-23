@@ -11,6 +11,7 @@ const NAV = [
   { to: '/tarifs', label: 'Tarifs' },
   { to: '/blog', label: 'Blog' },
   { to: '/rgaa', label: 'RGAA' },
+  { to: '/guide-accessibilite', label: 'Guide EAA' },
   { to: '/a-propos', label: 'À propos' },
 ]
 

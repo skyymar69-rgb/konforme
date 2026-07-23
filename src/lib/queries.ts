@@ -10,8 +10,10 @@ import {
   teams,
 } from '@/lib/appwrite'
 import type {
+  CriterionReview,
   Declaration,
   Membership,
+  ReviewStatus,
   Scan,
   ScanIssue,
   Site,
@@ -95,12 +97,25 @@ function rowToDeclaration(r: Row): Declaration {
     organization_id: r.team_id as string,
     conformity_level: r.conformity_level as Declaration['conformity_level'],
     conformity_rate: (r.conformity_rate as number | null) ?? null,
-    reference_standard: (r.reference_standard as string) ?? 'RGAA-4.1',
+    reference_standard: (r.reference_standard as string) ?? 'RGAA-4.1.2',
     audit_method: (r.audit_method as string) ?? 'auto',
     contact_email: (r.contact_email as string | null) ?? null,
     published_at: (r.published_at as string) ?? r.$createdAt,
     created_at: r.$createdAt,
     sites: { name: (r.site_name as string) ?? '—', url: (r.site_url as string) ?? '' },
+  }
+}
+
+function rowToCriterionReview(r: Row): CriterionReview {
+  return {
+    id: r.$id,
+    site_id: r.site_id as string,
+    organization_id: r.team_id as string,
+    criterion_id: r.criterion_id as string,
+    status: r.status as CriterionReview['status'],
+    note: (r.note as string | null) ?? null,
+    reviewed_at: (r.reviewed_at as string) ?? r.$updatedAt,
+    created_at: r.$createdAt,
   }
 }
 
@@ -409,6 +424,82 @@ export function useUpdateIssueStatus() {
   })
 }
 
+/* ------------------------------------------------------------------ */
+/* Évaluations manuelles des critères RGAA (audit complet)             */
+/* ------------------------------------------------------------------ */
+
+export function useCriteriaReviews(siteId: string | undefined) {
+  return useQuery({
+    queryKey: ['criteria-reviews', siteId],
+    enabled: !!siteId,
+    queryFn: async (): Promise<CriterionReview[]> => {
+      const res = await tables.listRows({
+        databaseId: DB_ID,
+        tableId: TABLES.criteria_reviews,
+        queries: [Query.equal('site_id', siteId!), Query.limit(200)],
+      })
+      return res.rows.map(rowToCriterionReview)
+    },
+  })
+}
+
+/**
+ * Enregistre (upsert) ou efface (status: null) l'évaluation manuelle d'un
+ * critère RGAA pour un site.
+ */
+export function useSetCriterionReview() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: {
+      siteId: string
+      teamId: string
+      criterionId: string
+      status: ReviewStatus | null
+      note?: string
+      /** Id de l'évaluation existante, si connue (mise à jour / suppression). */
+      existingId?: string
+    }) => {
+      if (input.status === null) {
+        if (input.existingId) {
+          await tables.deleteRow({
+            databaseId: DB_ID,
+            tableId: TABLES.criteria_reviews,
+            rowId: input.existingId,
+          })
+        }
+        return
+      }
+      const data = {
+        status: input.status,
+        note: input.note ?? null,
+        reviewed_at: new Date().toISOString(),
+      }
+      if (input.existingId) {
+        await tables.updateRow({
+          databaseId: DB_ID,
+          tableId: TABLES.criteria_reviews,
+          rowId: input.existingId,
+          data,
+        })
+      } else {
+        await tables.createRow({
+          databaseId: DB_ID,
+          tableId: TABLES.criteria_reviews,
+          rowId: ID.unique(),
+          data: {
+            ...data,
+            team_id: input.teamId,
+            site_id: input.siteId,
+            criterion_id: input.criterionId,
+          },
+          permissions: teamPermissions(input.teamId),
+        })
+      }
+    },
+    onSuccess: (_d, v) => qc.invalidateQueries({ queryKey: ['criteria-reviews', v.siteId] }),
+  })
+}
+
 /** Nombre d'issues critiques ouvertes sur un ensemble de scans. */
 export async function countCriticalIssues(scanIds: string[]): Promise<number> {
   if (scanIds.length === 0) return 0
@@ -550,7 +641,7 @@ export function useCreateDeclaration(orgId: string | undefined) {
           conformity_level: input.conformity_level,
           conformity_rate: input.conformity_rate,
           contact_email: input.contact_email,
-          reference_standard: 'RGAA-4.1',
+          reference_standard: 'RGAA-4.1.2',
           audit_method: 'auto',
           published_at: new Date().toISOString(),
         },

@@ -95,7 +95,7 @@ function ProductMockup() {
 
 const FEATURES = [
   {
-    title: 'Audit RGAA 4.1',
+    title: 'Audit RGAA 4.1.2',
     desc: 'Analyse automatisée sur les critères vérifiables par machine du référentiel français.',
     icon: <IconFlag />,
   },
@@ -133,7 +133,7 @@ const FAQ = [
   },
   {
     q: 'Quelle différence entre RGAA et WCAG ?',
-    a: "Les WCAG sont le standard international du W3C. Le RGAA 4.1 est la méthode d'application française : 106 critères qui traduisent les WCAG en tests concrets, exigés pour le secteur public français et recommandés pour le privé.",
+    a: "Les WCAG sont le standard international du W3C. Le RGAA 4.1.2 est la méthode d'application française : 106 critères qui traduisent les WCAG en tests concrets, exigés pour le secteur public français et recommandés pour le privé.",
   },
   {
     q: "Un audit automatique suffit-il pour être conforme ?",
@@ -161,7 +161,7 @@ export function Landing() {
     <>
       <Seo
         title="Konforme — Accessibilité web RGAA & WCAG automatisée"
-        description="Scannez, corrigez et surveillez l'accessibilité de votre site. Audit RGAA 4.1 & WCAG 2.2 automatisé, corrections guidées, déclaration légale. EAA 2025 en vigueur."
+        description="Scannez, corrigez et surveillez l'accessibilité de votre site. Audit RGAA 4.1.2 & WCAG 2.2 automatisé, corrections guidées, déclaration légale. EAA 2025 en vigueur."
         path="/"
         jsonLd={[
           ORGANIZATION_JSONLD,
@@ -182,7 +182,7 @@ export function Landing() {
         <div className="mx-auto max-w-7xl px-6 pt-16 pb-16 md:pt-24 md:pb-24 grid items-center gap-12 lg:grid-cols-2">
           <div className="text-center lg:text-left">
             <p className="inline-block rounded-full border border-primary/40 bg-primary/10 px-4 py-1.5 text-xs font-semibold tracking-wide text-link uppercase mb-6">
-              EAA 2025 · RGAA 4.1 · WCAG 2.2
+              EAA 2025 · RGAA 4.1.2 · WCAG 2.2
             </p>
             <h1 className="gradient-text text-balance text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.08] mb-6">
               L'accessibilité de votre <AnimatedWord />
@@ -190,7 +190,7 @@ export function Landing() {
               enfin automatisée
             </h1>
             <p className="text-lg md:text-xl text-text-muted max-w-2xl mx-auto lg:mx-0 mb-8 leading-relaxed text-balance">
-              Une centaine de règles RGAA 4.1 / WCAG 2.2 vérifiées automatiquement, chaque
+              Une centaine de règles RGAA 4.1.2 / WCAG 2.2 vérifiées automatiquement, chaque
               correction expliquée, la déclaration légale générée, et vos sites surveillés
               semaine après semaine.
             </p>
@@ -225,7 +225,7 @@ export function Landing() {
           {[
             { v: '≈100', l: 'règles vérifiées automatiquement' },
             { v: '~1 min', l: 'par audit multi-pages' },
-            { v: '2 référentiels', l: 'RGAA 4.1 + WCAG 2.2 AA' },
+            { v: '2 référentiels', l: 'RGAA 4.1.2 + WCAG 2.2 AA' },
             { v: 'Hebdo', l: 'surveillance planifiée des sites' },
           ].map((s) => (
             <div key={s.l}>

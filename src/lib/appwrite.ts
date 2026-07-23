@@ -32,6 +32,7 @@ export const TABLES = {
   sites: 'sites',
   scans: 'scans',
   scan_issues: 'scan_issues',
+  criteria_reviews: 'criteria_reviews',
   declarations: 'declarations',
 } as const
 

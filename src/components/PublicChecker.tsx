@@ -68,7 +68,7 @@ export function PublicChecker() {
           Votre site est-il accessible ? Testez-le maintenant
         </h2>
         <p className="text-sm md:text-base text-text-muted mb-6">
-          Gratuit, sans compte, sans script à installer. Une centaine de règles RGAA 4.1 / WCAG 2.2
+          Gratuit, sans compte, sans script à installer. Une centaine de règles RGAA 4.1.2 / WCAG 2.2
           vérifiées en ~20 secondes sur votre page d'accueil.
         </p>
 

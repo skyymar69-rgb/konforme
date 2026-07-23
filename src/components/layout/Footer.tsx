@@ -9,6 +9,8 @@ const SECTIONS = [
       { to: '/dashboard', label: 'Tableau de bord' },
       { to: '/blog', label: 'Blog' },
       { to: '/rgaa', label: 'RGAA' },
+      { to: '/guide-accessibilite', label: 'Guide EAA / RGAA' },
+      { to: '/glossaire', label: 'Glossaire RGAA' },
     ],
   },
   {
@@ -40,7 +42,7 @@ export function Footer() {
           <div>
             <Logo />
             <p className="mt-3 text-sm text-text-muted max-w-xs leading-relaxed">
-              Plateforme d'accessibilité web RGAA 4.1 &amp; WCAG 2.2 automatisée par IA. Édité par KAYZEN SASU.
+              Plateforme d'accessibilité web RGAA 4.1.2 &amp; WCAG 2.2 automatisée par IA. Édité par KAYZEN SASU.
             </p>
             <p className="mt-4 text-xs text-text-dim">
               6 rue Pierre Termier, 69009 Lyon

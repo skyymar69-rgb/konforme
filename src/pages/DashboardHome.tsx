@@ -124,7 +124,7 @@ export function DashboardHome() {
           <ol className="space-y-3">
             {[
               { title: 'Ajoutez votre premier site', desc: 'URL et nom du site, en 30 secondes.' },
-              { title: 'Lancez un scan complet', desc: "Jusqu'à 5 pages analysées sur ~30 règles RGAA 4.1 / WCAG 2.2." },
+              { title: 'Lancez un scan complet', desc: "Jusqu'à 5 pages analysées sur ~30 règles RGAA 4.1.2 / WCAG 2.2." },
               { title: 'Corrigez avec les suggestions', desc: 'Chaque non-conformité vient avec le code concerné et la correction.' },
               { title: 'Générez votre déclaration légale', desc: "Document conforme à l'article 47 de la loi de 2005, prêt à publier." },
             ].map((step, i) => (

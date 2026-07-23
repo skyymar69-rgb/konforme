@@ -1,0 +1,52 @@
+import { useId, useState } from 'react'
+import { cn } from '@/lib/utils'
+
+/**
+ * Info-bulle accessible : déclenchée au survol ET au focus clavier,
+ * refermable avec Échap (RGAA 10.13), reliée par aria-describedby.
+ */
+export function Tooltip({
+  content,
+  label = 'Plus d’informations',
+  className,
+}: {
+  content: React.ReactNode
+  label?: string
+  className?: string
+}) {
+  const id = useId()
+  const [open, setOpen] = useState(false)
+
+  return (
+    <span
+      className={cn('relative inline-flex', className)}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <button
+        type="button"
+        aria-label={label}
+        aria-describedby={open ? id : undefined}
+        aria-expanded={open}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+        onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') setOpen(false)
+        }}
+        className="inline-flex size-[18px] items-center justify-center rounded-full border border-border-strong text-[10px] font-bold text-text-muted hover:text-white hover:border-primary focus-visible:outline-2 focus-visible:outline-primary"
+      >
+        ?
+      </button>
+      {open && (
+        <span
+          id={id}
+          role="tooltip"
+          className="absolute left-1/2 bottom-full z-30 mb-2 w-72 -translate-x-1/2 rounded-[10px] border border-border-strong bg-bg-deep px-3.5 py-3 text-xs leading-relaxed text-text-soft shadow-xl"
+        >
+          {content}
+        </span>
+      )}
+    </span>
+  )
+}

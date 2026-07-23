@@ -24,7 +24,7 @@ export function About() {
         </p>
         <p>
           Nous avons construit une plateforme qui automatise ce qui peut l'être : détection des
-          non-conformités RGAA 4.1 et WCAG 2.2, corrections guidées avec le code concerné, suivi
+          non-conformités RGAA 4.1.2 et WCAG 2.2, corrections guidées avec le code concerné, suivi
           du score dans le temps et génération de la déclaration d'accessibilité légale.
         </p>
         <p>

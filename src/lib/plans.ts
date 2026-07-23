@@ -32,7 +32,7 @@ export const PLANS: Record<PlanId, Plan> = {
       '1 site surveillé',
       '5 audits par mois',
       '5 pages analysées par audit',
-      '≈100 règles RGAA 4.1 / WCAG 2.2',
+      '≈100 règles RGAA 4.1.2 / WCAG 2.2',
       'Rapport d’audit téléchargeable',
       'Déclaration d’accessibilité générée',
     ],
