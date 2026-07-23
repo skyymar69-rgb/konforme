@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { account } from '@/lib/appwrite'
 import { useAuth } from '@/contexts/AuthContext'
 
 export function AuthCallback() {
@@ -9,9 +10,15 @@ export function AuthCallback() {
   useEffect(() => {
     let cancelled = false
     async function run() {
-      // Appwrite a posé le cookie de session pendant la redirection OAuth :
-      // on recharge le compte puis on route.
       try {
+        // Flux OAuth « token » : Appwrite renvoie userId + secret en query
+        // string ; on échange contre une session via XHR (le cookie tiers
+        // étant bloqué par les navigateurs récents).
+        const params = new URLSearchParams(window.location.search)
+        const userId = params.get('userId')
+        const secret = params.get('secret')
+        if (!userId || !secret) throw new Error('Paramètres OAuth absents')
+        await account.createSession({ userId, secret })
         await refresh()
         if (!cancelled) navigate('/dashboard', { replace: true })
       } catch {

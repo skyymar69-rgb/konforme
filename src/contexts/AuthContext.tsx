@@ -64,8 +64,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = React.useCallback(async () => {
     assertConfigured()
     const origin = window.location.origin
-    // Redirection complète vers Google via Appwrite, puis retour sur /auth/callback
-    account.createOAuth2Session({
+    // Flux « token » (et non session-cookie) : le cookie de session Appwrite
+    // est un cookie tiers depuis notre domaine, bloqué par Chrome/Safari.
+    // Appwrite renvoie userId+secret sur /auth/callback, où la session est
+    // créée en XHR (mécanisme de secours localStorage du SDK, fiable).
+    account.createOAuth2Token({
       provider: OAuthProvider.Google,
       success: `${origin}/auth/callback`,
       failure: `${origin}/login?error=oauth`,

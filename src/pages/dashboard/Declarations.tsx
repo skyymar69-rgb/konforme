@@ -7,12 +7,15 @@ import { Seo } from '@/components/Seo'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   useCreateDeclaration,
+  useCriteriaReviews,
   useDeclarations,
   useMembership,
+  useScanIssues,
   useScans,
   useSites,
 } from '@/lib/queries'
 import { buildDeclarationHtml, downloadDeclaration } from '@/lib/declaration'
+import { computeConformity } from '@/lib/conformity'
 import { CONFORMITY_META, conformityFromScore, formatDate } from '@/lib/format'
 import type { Declaration } from '@/lib/database.types'
 
@@ -33,17 +36,27 @@ export function Declarations() {
     scans?.some((sc) => sc.site_id === s.id && sc.status === 'done'),
   )
 
+  // Dernier audit terminé du site sélectionné : le taux de la déclaration se
+  // calcule selon la méthode officielle (critères conformes / évalués), en
+  // intégrant les évaluations manuelles.
+  const selectedLastScan = scans?.find((sc) => sc.site_id === siteId && sc.status === 'done')
+  const { data: lastScanIssues } = useScanIssues(selectedLastScan?.id)
+  const { data: reviews } = useCriteriaReviews(siteId || undefined)
+
   async function onGenerate(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
     const site = sites?.find((s) => s.id === siteId)
-    const lastScan = scans?.find((sc) => sc.site_id === siteId && sc.status === 'done')
+    const lastScan = selectedLastScan
     if (!site || !lastScan) {
       setError('Sélectionnez un site ayant au moins un audit terminé.')
       return
     }
-    const rate = lastScan.score !== null ? Math.round(lastScan.score * 10) / 10 : null
-    const level = conformityFromScore(lastScan.score)
+    const summary = computeConformity(lastScanIssues ?? [], undefined, reviews)
+    // Taux officiel si calculable, sinon repli sur le score technique du scan
+    const rate =
+      summary.rate ?? (lastScan.score !== null ? Math.round(lastScan.score * 10) / 10 : null)
+    const level = conformityFromScore(rate)
     try {
       await createDecl.mutateAsync({
         site,

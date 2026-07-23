@@ -11,6 +11,7 @@ import { BadgeGenerator } from '@/components/report/BadgeGenerator'
 import { RgaaCriteriaList, type ReviewInput } from '@/components/report/RgaaCriteriaList'
 import { useCriteriaReviews, useScan, useScanIssues, useSetCriterionReview, useUpdateIssueStatus } from '@/lib/queries'
 import { functions, SCAN_FUNCTION_ID } from '@/lib/appwrite'
+import { buildActionPlan, EFFORT_META, quickWins } from '@/lib/action-plan'
 import { computeConformity } from '@/lib/conformity'
 import {
   downloadAttestation,
@@ -18,6 +19,7 @@ import {
   downloadAuditJson,
   downloadAuditMarkdown,
   downloadAuditReport,
+  downloadJiraCsv,
   printAuditReport,
   type ReportScope,
 } from '@/lib/report'
@@ -27,7 +29,7 @@ import type { CriterionReview, Scan, ScanIssue, Severity } from '@/lib/database.
 
 const SEVERITIES: Severity[] = ['critical', 'serious', 'moderate', 'minor']
 
-type TabKey = 'issues' | 'criteria' | 'pages' | 'badge'
+type TabKey = 'issues' | 'plan' | 'criteria' | 'pages' | 'badge'
 
 export function ScanDetail() {
   const { scanId } = useParams<{ scanId: string }>()
@@ -108,8 +110,12 @@ export function ScanDetail() {
   const st = STATUS_META[scan.status]
   const badgeRate = conformity.rate ?? scan.score
 
+  const plan = buildActionPlan(issues ?? [])
+  const wins = quickWins(plan)
+
   const tabs: { key: TabKey; label: string }[] = [
     { key: 'issues', label: `Non-conformités (${filtered.length})` },
+    { key: 'plan', label: `Plan d'action (${plan.length})` },
     { key: 'criteria', label: 'Les 106 critères RGAA' },
     { key: 'pages', label: `Pages (${scan.page_scores?.length ?? 0})` },
     { key: 'badge', label: 'Badge de conformité' },
@@ -259,6 +265,60 @@ export function ScanDetail() {
                       <IssueRow key={issue.id} issue={issue} />
                     ))}
                   </ul>
+                )}
+              </Card>
+            )}
+
+            {tab === 'plan' && (
+              <Card>
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-1">
+                  <h2 className="text-lg font-bold">
+                    Plan d'action <span className="text-text-dim font-normal">({plan.length} correctifs)</span>
+                  </h2>
+                  <Button size="sm" variant="ghost" disabled={!issues} onClick={() => issues && downloadJiraCsv(scan, issues)}>
+                    Exporter en tickets (CSV Jira/Trello/Linear)
+                  </Button>
+                </div>
+                <p className="text-xs text-text-dim mb-5">
+                  Les non-conformités regroupées par correctif à appliquer, triées par gravité puis par
+                  nombre d'occurrences.{' '}
+                  {wins.length > 0 && (
+                    <>
+                      <strong className="text-success-soft">{wins.length} victoire{wins.length > 1 ? 's' : ''} rapide{wins.length > 1 ? 's' : ''}</strong>{' '}
+                      : des corrections critiques qui ne demandent souvent qu'un attribut HTML.
+                    </>
+                  )}
+                </p>
+                {plan.length === 0 ? (
+                  <p className="text-sm text-text-muted py-8 text-center">
+                    🎉 Aucune action en attente : toutes les non-conformités détectées sont traitées.
+                  </p>
+                ) : (
+                  <ol className="space-y-2">
+                    {plan.map((a, idx) => (
+                      <li key={a.ruleId} className="flex flex-wrap items-center gap-3 rounded-[10px] border border-border px-4 py-3">
+                        <span className="shrink-0 w-6 text-right text-sm font-bold text-text-dim tabular-nums">
+                          {idx + 1}.
+                        </span>
+                        <Badge className={`${SEVERITY_META[a.severity].className} shrink-0`}>
+                          {SEVERITY_META[a.severity].label}
+                        </Badge>
+                        <span className="flex-1 min-w-48">
+                          <span className="block text-sm font-semibold">{a.title}</span>
+                          <span className="block text-xs text-text-dim">
+                            {a.ruleId}
+                            {a.criterionId ? ` · critère ${a.criterionId}` : ''} · {a.count} occurrence{a.count > 1 ? 's' : ''} sur {a.pages.length || 1} page{a.pages.length > 1 ? 's' : ''}
+                          </span>
+                          {a.suggestedFix && (
+                            <span className="mt-1 block text-xs text-success-soft">{a.suggestedFix}</span>
+                          )}
+                        </span>
+                        <Badge className={`${EFFORT_META[a.effort].className} shrink-0`}>
+                          {EFFORT_META[a.effort].label}
+                        </Badge>
+                      </li>
+                    ))}
+                  </ol>
                 )}
               </Card>
             )}

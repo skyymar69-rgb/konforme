@@ -511,6 +511,54 @@ export function downloadAuditCsv(scan: Scan, issues: ScanIssue[]) {
   downloadBlob(buildIssuesCsv(issues), `audit-${fileSuffix(scan)}.csv`, 'text/csv;charset=utf-8')
 }
 
+/* ------------------------------------------------------------------ */
+/* Export tickets (CSV compatible import Jira)                          */
+/* ------------------------------------------------------------------ */
+
+const JIRA_PRIORITY: Record<Severity, string> = {
+  critical: 'Highest',
+  serious: 'High',
+  moderate: 'Medium',
+  minor: 'Low',
+}
+
+function jiraCell(v: string): string {
+  return `"${v.replace(/"/g, '""')}"`
+}
+
+/**
+ * CSV prêt pour l'import Jira (System > External System Import > CSV) :
+ * une ligne par non-conformité ouverte, avec priorité mappée sur la sévérité.
+ * Fonctionne aussi pour Trello, Linear, Asana (import CSV générique).
+ */
+export function buildJiraCsv(issues: ScanIssue[]): string {
+  const open = issues.filter((i) => i.status === 'open' || i.status === 'in_progress')
+  const header = ['Summary', 'Description', 'Priority', 'Labels'].join(',')
+  const rows = open.map((i) => {
+    const description = [
+      `Règle : ${i.rule_id}`,
+      i.page_url ? `Page : ${i.page_url}` : null,
+      i.selector ? `Sélecteur : ${i.selector}` : null,
+      i.description ? `Détail : ${i.description.replace(/\r?\n/g, ' ')}` : null,
+      i.suggested_fix ? `Correction suggérée : ${i.suggested_fix}` : null,
+      i.html_snippet ? `Code : ${i.html_snippet.replace(/\r?\n/g, ' ')}` : null,
+    ]
+      .filter(Boolean)
+      .join('\n')
+    return [
+      jiraCell(`[A11y] ${i.title}`),
+      jiraCell(description),
+      jiraCell(JIRA_PRIORITY[i.severity]),
+      jiraCell('accessibilite rgaa'),
+    ].join(',')
+  })
+  return [header, ...rows].join('\r\n')
+}
+
+export function downloadJiraCsv(scan: Scan, issues: ScanIssue[]) {
+  downloadBlob(buildJiraCsv(issues), `tickets-a11y-${fileSuffix(scan)}.csv`, 'text/csv;charset=utf-8')
+}
+
 export function downloadAuditJson(scan: Scan, issues: ScanIssue[]) {
   const payload = {
     site: scan.sites ?? null,

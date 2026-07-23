@@ -16,7 +16,15 @@ const GOOGLE_AUTH_ENABLED = import.meta.env.VITE_GOOGLE_AUTH === 'on'
 export function Login() {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail, user } = useAuth()
   const [mode, setMode] = useState<Mode>('signin')
-  const [error, setError] = useState<string | null>(null)
+  // Retour d'un flux OAuth interrompu (?error=oauth|callback) : erreur explicite
+  const [error, setError] = useState<string | null>(() => {
+    const oauthError = new URLSearchParams(window.location.search).get('error')
+    if (oauthError === 'oauth')
+      return 'La connexion Google a été annulée ou a échoué. Réessayez, ou utilisez votre email et mot de passe.'
+    if (oauthError === 'callback')
+      return "La connexion Google n'a pas pu aboutir (session non créée). Réessayez, ou utilisez votre email et mot de passe."
+    return null
+  })
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const navigate = useNavigate()
