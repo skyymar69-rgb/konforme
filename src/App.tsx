@@ -1,9 +1,10 @@
-import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { lazy, Suspense, useState } from 'react'
+import { BrowserRouter, Routes, Route, Outlet, useParams } from 'react-router-dom'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { PublicLayout } from '@/components/layout/PublicLayout'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { isLang, LangProvider, storedLang, type Lang } from '@/i18n'
 import { Landing } from '@/pages/Landing'
 
 // Code-splitting par route : seul l'accueil est chargé immédiatement.
@@ -28,7 +29,6 @@ const Glossaire = lazy(() => import('@/pages/Glossaire').then((m) => ({ default:
 const PublicReport = lazy(() => import('@/pages/PublicReport').then((m) => ({ default: m.PublicReport })))
 const CriterePage = lazy(() => import('@/pages/CriterePage').then((m) => ({ default: m.CriterePage })))
 const Developpeurs = lazy(() => import('@/pages/Developpeurs').then((m) => ({ default: m.Developpeurs })))
-const LandingIntl = lazy(() => import('@/pages/LandingIntl').then((m) => ({ default: m.LandingIntl })))
 const Pricing = lazy(() => import('@/pages/Pricing').then((m) => ({ default: m.Pricing })))
 const About = lazy(() => import('@/pages/About').then((m) => ({ default: m.About })))
 const Contact = lazy(() => import('@/pages/Contact').then((m) => ({ default: m.Contact })))
@@ -45,6 +45,64 @@ function PageLoader() {
   )
 }
 
+/** Pages publiques, identiques pour la racine (fr) et chaque préfixe de langue. */
+function publicRoutes() {
+  return (
+    <>
+      <Route index element={<Landing />} />
+      <Route path="blog" element={<Blog />} />
+      <Route path="blog/:slug" element={<BlogPost />} />
+      <Route path="rgaa" element={<Rgaa />} />
+      <Route path="rgaa/critere/:id" element={<CriterePage />} />
+      <Route path="guide-accessibilite" element={<GuideAccessibilite />} />
+      <Route path="glossaire" element={<Glossaire />} />
+      <Route path="developpeurs" element={<Developpeurs />} />
+      <Route path="tarifs" element={<Pricing />} />
+      <Route path="a-propos" element={<About />} />
+      <Route path="contact" element={<Contact />} />
+      <Route path="accessibilite" element={<Accessibilite />} />
+      <Route path="legal/:slug" element={<LegalPage />} />
+      <Route path="r/:token" element={<PublicReport />} />
+    </>
+  )
+}
+
+/** Coque publique française (racine). */
+function PublicShellFr() {
+  return (
+    <LangProvider lang="fr">
+      <PublicLayout />
+    </LangProvider>
+  )
+}
+
+/** Coque publique préfixée /:lang — 404 si le préfixe n'est pas une langue. */
+function PublicShellLang() {
+  const { lang } = useParams<{ lang: string }>()
+  if (!isLang(lang)) {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <NotFound />
+      </Suspense>
+    )
+  }
+  return (
+    <LangProvider lang={lang}>
+      <PublicLayout />
+    </LangProvider>
+  )
+}
+
+/** Coque du dashboard : langue = préférence utilisateur (localStorage). */
+function DashboardShell() {
+  const [lang] = useState<Lang>(() => storedLang())
+  return (
+    <LangProvider lang={lang}>
+      <Outlet />
+    </LangProvider>
+  )
+}
+
 function App() {
   return (
     <ErrorBoundary>
@@ -52,48 +110,39 @@ function App() {
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>
-            {/* Public */}
-            <Route element={<PublicLayout />}>
-              <Route index element={<Landing />} />
-              <Route path="blog" element={<Blog />} />
-              <Route path="blog/:slug" element={<BlogPost />} />
-              <Route path="rgaa" element={<Rgaa />} />
-              <Route path="rgaa/critere/:id" element={<CriterePage />} />
-              <Route path="guide-accessibilite" element={<GuideAccessibilite />} />
-              <Route path="glossaire" element={<Glossaire />} />
-              <Route path="developpeurs" element={<Developpeurs />} />
-              <Route path="r/:token" element={<PublicReport />} />
-              <Route path="en" element={<LandingIntl lang="en" />} />
-              <Route path="de" element={<LandingIntl lang="de" />} />
-              <Route path="es" element={<LandingIntl lang="es" />} />
-              <Route path="it" element={<LandingIntl lang="it" />} />
-              <Route path="tarifs" element={<Pricing />} />
-              <Route path="a-propos" element={<About />} />
-              <Route path="contact" element={<Contact />} />
-              <Route path="accessibilite" element={<Accessibilite />} />
-              <Route path="legal/:slug" element={<LegalPage />} />
+            {/* Public — français à la racine */}
+            <Route element={<PublicShellFr />}>
+              {publicRoutes()}
+              <Route path="*" element={<NotFound />} />
+            </Route>
+
+            {/* Public — préfixes de langue /en /de /es /it */}
+            <Route path=":lang" element={<PublicShellLang />}>
+              {publicRoutes()}
               <Route path="*" element={<NotFound />} />
             </Route>
 
             {/* Auth */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route element={<DashboardShell />}>
+              <Route path="/login" element={<Login />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
 
-            {/* Dashboard (protégé) */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<DashboardHome />} />
-              <Route path="sites" element={<Sites />} />
-              <Route path="scans" element={<Scans />} />
-              <Route path="scans/:scanId" element={<ScanDetail />} />
-              <Route path="declarations" element={<Declarations />} />
-              <Route path="settings" element={<Settings />} />
+              {/* Dashboard (protégé) */}
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<DashboardHome />} />
+                <Route path="sites" element={<Sites />} />
+                <Route path="scans" element={<Scans />} />
+                <Route path="scans/:scanId" element={<ScanDetail />} />
+                <Route path="declarations" element={<Declarations />} />
+                <Route path="settings" element={<Settings />} />
+              </Route>
             </Route>
           </Routes>
         </Suspense>

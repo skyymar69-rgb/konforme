@@ -17,9 +17,124 @@ import {
 import { buildDeclarationHtml, downloadDeclaration } from '@/lib/declaration'
 import { computeConformity } from '@/lib/conformity'
 import { CONFORMITY_META, conformityFromScore, formatDate } from '@/lib/format'
+import { defineMessages, useLang, useMessages } from '@/i18n'
 import type { Declaration } from '@/lib/database.types'
 
+const L = defineMessages({
+  fr: {
+    seoTitle: 'Déclarations',
+    seoDesc: "Déclarations d'accessibilité RGAA.",
+    title: "Déclarations d'accessibilité",
+    subtitle:
+      "Document légal requis par l'article 47 de la loi n° 2005-102, généré depuis votre dernier audit.",
+    generateTitle: 'Générer une déclaration',
+    noScannedSites: 'Aucun site avec audit terminé.',
+    runAuditFirst: "Lancez d'abord un audit",
+    siteLabel: 'Site',
+    choosePlaceholder: 'Choisir un site…',
+    generating: 'Génération…',
+    generateCta: 'Générer et télécharger (HTML)',
+    selectSiteError: 'Sélectionnez un site ayant au moins un audit terminé.',
+    generateError: 'Génération impossible.',
+    modelNote:
+      "Le document généré suit le modèle officiel : état de conformité, résultats des tests, retour d'information et voies de recours (Défenseur des droits). Publiez-le sur une page « /accessibilite » de votre site.",
+    historyTitle: 'Historique',
+    loading: 'Chargement…',
+    noDeclarations: "Aucune déclaration générée pour l'instant.",
+    download: 'Télécharger',
+  },
+  en: {
+    seoTitle: 'Statements',
+    seoDesc: 'RGAA accessibility statements.',
+    title: 'Accessibility statements',
+    subtitle:
+      'Legal document required by Article 47 of French act no. 2005-102, generated from your latest audit.',
+    generateTitle: 'Generate a statement',
+    noScannedSites: 'No website with a completed audit.',
+    runAuditFirst: 'Run an audit first',
+    siteLabel: 'Website',
+    choosePlaceholder: 'Choose a website…',
+    generating: 'Generating…',
+    generateCta: 'Generate and download (HTML)',
+    selectSiteError: 'Select a website that has at least one completed audit.',
+    generateError: 'Generation failed.',
+    modelNote:
+      'The generated document follows the official template: compliance status, test results, feedback channel and remedies (French Defender of Rights). Publish it on an “/accessibilite” page of your website.',
+    historyTitle: 'History',
+    loading: 'Loading…',
+    noDeclarations: 'No statement generated yet.',
+    download: 'Download',
+  },
+  de: {
+    seoTitle: 'Erklärungen',
+    seoDesc: 'Barrierefreiheitserklärungen nach RGAA.',
+    title: 'Barrierefreiheitserklärungen',
+    subtitle:
+      'Rechtlich vorgeschriebenes Dokument gemäß Artikel 47 des französischen Gesetzes Nr. 2005-102, erzeugt aus Ihrem letzten Audit.',
+    generateTitle: 'Erklärung erzeugen',
+    noScannedSites: 'Keine Website mit abgeschlossenem Audit.',
+    runAuditFirst: 'Starten Sie zuerst ein Audit',
+    siteLabel: 'Website',
+    choosePlaceholder: 'Website auswählen…',
+    generating: 'Wird erzeugt…',
+    generateCta: 'Erzeugen und herunterladen (HTML)',
+    selectSiteError: 'Wählen Sie eine Website mit mindestens einem abgeschlossenen Audit aus.',
+    generateError: 'Erzeugung nicht möglich.',
+    modelNote:
+      'Das erzeugte Dokument folgt der amtlichen Vorlage: Konformitätsstand, Testergebnisse, Rückmeldemöglichkeit und Rechtsbehelfe (französische Ombudsstelle). Veröffentlichen Sie es auf einer Seite „/accessibilite“ Ihrer Website.',
+    historyTitle: 'Verlauf',
+    loading: 'Wird geladen…',
+    noDeclarations: 'Noch keine Erklärung erzeugt.',
+    download: 'Herunterladen',
+  },
+  es: {
+    seoTitle: 'Declaraciones',
+    seoDesc: 'Declaraciones de accesibilidad RGAA.',
+    title: 'Declaraciones de accesibilidad',
+    subtitle:
+      'Documento legal exigido por el artículo 47 de la ley francesa n.º 2005-102, generado a partir de su última auditoría.',
+    generateTitle: 'Generar una declaración',
+    noScannedSites: 'Ningún sitio con auditoría finalizada.',
+    runAuditFirst: 'Lance primero una auditoría',
+    siteLabel: 'Sitio',
+    choosePlaceholder: 'Elegir un sitio…',
+    generating: 'Generando…',
+    generateCta: 'Generar y descargar (HTML)',
+    selectSiteError: 'Seleccione un sitio que tenga al menos una auditoría finalizada.',
+    generateError: 'No se ha podido generar.',
+    modelNote:
+      'El documento generado sigue el modelo oficial: estado de conformidad, resultados de las pruebas, canal de contacto y vías de recurso (Defensor de Derechos francés). Publíquelo en una página «/accessibilite» de su sitio.',
+    historyTitle: 'Historial',
+    loading: 'Cargando…',
+    noDeclarations: 'Todavía no se ha generado ninguna declaración.',
+    download: 'Descargar',
+  },
+  it: {
+    seoTitle: 'Dichiarazioni',
+    seoDesc: 'Dichiarazioni di accessibilità RGAA.',
+    title: 'Dichiarazioni di accessibilità',
+    subtitle:
+      "Documento legale richiesto dall'articolo 47 della legge francese n. 2005-102, generato dal suo ultimo audit.",
+    generateTitle: 'Genera una dichiarazione',
+    noScannedSites: 'Nessun sito con audit completato.',
+    runAuditFirst: 'Avvii prima un audit',
+    siteLabel: 'Sito',
+    choosePlaceholder: 'Scelga un sito…',
+    generating: 'Generazione…',
+    generateCta: 'Genera e scarica (HTML)',
+    selectSiteError: 'Selezioni un sito con almeno un audit completato.',
+    generateError: 'Generazione impossibile.',
+    modelNote:
+      'Il documento generato segue il modello ufficiale: stato di conformità, risultati dei test, canale di segnalazione e mezzi di ricorso (Difensore dei diritti francese). Lo pubblichi su una pagina «/accessibilite» del suo sito.',
+    historyTitle: 'Cronologia',
+    loading: 'Caricamento…',
+    noDeclarations: 'Nessuna dichiarazione generata per il momento.',
+    download: 'Scarica',
+  },
+})
+
 export function Declarations() {
+  const t = useMessages(L)
   const { user } = useAuth()
   const { data: membership } = useMembership()
   const orgId = membership?.organization_id
@@ -49,7 +164,7 @@ export function Declarations() {
     const site = sites?.find((s) => s.id === siteId)
     const lastScan = selectedLastScan
     if (!site || !lastScan) {
-      setError('Sélectionnez un site ayant au moins un audit terminé.')
+      setError(t.selectSiteError)
       return
     }
     const summary = computeConformity(lastScanIssues ?? [], undefined, reviews)
@@ -75,34 +190,34 @@ export function Declarations() {
       })
       downloadDeclaration(html, site.name)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Génération impossible.')
+      setError(err instanceof Error ? err.message : t.generateError)
     }
   }
 
   return (
     <div className="space-y-6">
-      <Seo title="Déclarations" description="Déclarations d'accessibilité RGAA." path="/dashboard/declarations" noindex />
+      <Seo title={t.seoTitle} description={t.seoDesc} path="/dashboard/declarations" noindex />
       <header>
-        <h1 className="text-2xl font-bold tracking-tight">Déclarations d'accessibilité</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t.title}</h1>
         <p className="text-text-muted mt-1">
-          Document légal requis par l'article 47 de la loi n° 2005-102, généré depuis votre dernier audit.
+          {t.subtitle}
         </p>
       </header>
 
       <Card>
-        <h2 className="text-lg font-bold mb-4">Générer une déclaration</h2>
+        <h2 className="text-lg font-bold mb-4">{t.generateTitle}</h2>
         {scannedSites.length === 0 ? (
           <p className="text-sm text-text-muted">
-            Aucun site avec audit terminé.{' '}
+            {t.noScannedSites}{' '}
             <Link to="/dashboard/sites" className="text-link hover:underline">
-              Lancez d'abord un audit
+              {t.runAuditFirst}
             </Link>
             .
           </p>
         ) : (
           <form onSubmit={onGenerate} className="flex flex-wrap items-end gap-3">
             <div className="min-w-64">
-              <label htmlFor="decl-site" className="block text-sm font-semibold mb-1.5">Site</label>
+              <label htmlFor="decl-site" className="block text-sm font-semibold mb-1.5">{t.siteLabel}</label>
               <select
                 id="decl-site"
                 value={siteId}
@@ -110,14 +225,14 @@ export function Declarations() {
                 required
                 className="w-full rounded-[10px] border border-border-strong bg-bg px-3 py-2.5 text-sm text-text"
               >
-                <option value="">Choisir un site…</option>
+                <option value="">{t.choosePlaceholder}</option>
                 {scannedSites.map((s) => (
                   <option key={s.id} value={s.id}>{s.name}</option>
                 ))}
               </select>
             </div>
             <Button type="submit" variant="primary" disabled={createDecl.isPending}>
-              {createDecl.isPending ? 'Génération…' : 'Générer et télécharger (HTML)'}
+              {createDecl.isPending ? t.generating : t.generateCta}
             </Button>
           </form>
         )}
@@ -127,17 +242,15 @@ export function Declarations() {
           </p>
         )}
         <p className="mt-4 text-xs text-text-dim">
-          Le document généré suit le modèle officiel : état de conformité, résultats des tests,
-          retour d'information et voies de recours (Défenseur des droits). Publiez-le sur une page
-          « /accessibilite » de votre site.
+          {t.modelNote}
         </p>
       </Card>
 
       <Card>
-        <h2 className="text-lg font-bold mb-4">Historique</h2>
-        {isLoading && <p role="status" className="text-sm text-text-muted">Chargement…</p>}
+        <h2 className="text-lg font-bold mb-4">{t.historyTitle}</h2>
+        {isLoading && <p role="status" className="text-sm text-text-muted">{t.loading}</p>}
         {!isLoading && (declarations?.length ?? 0) === 0 && (
-          <p className="text-sm text-text-muted">Aucune déclaration générée pour l'instant.</p>
+          <p className="text-sm text-text-muted">{t.noDeclarations}</p>
         )}
         <ul className="divide-y divide-border/60">
           {declarations?.map((d) => (
@@ -158,6 +271,9 @@ function DeclarationRow({
   orgName: string
   contactEmail: string
 }) {
+  const t = useMessages(L)
+  const lang = useLang()
+
   function redownload() {
     const html = buildDeclarationHtml({
       siteName: decl.sites?.name ?? 'Site',
@@ -176,7 +292,7 @@ function DeclarationRow({
       <div>
         <div className="font-semibold text-sm">{decl.sites?.name ?? '—'}</div>
         <div className="text-xs text-text-dim">
-          {formatDate(decl.published_at)} · {decl.reference_standard}
+          {formatDate(decl.published_at, false, lang)} · {decl.reference_standard}
           {decl.conformity_rate !== null ? ` · ${decl.conformity_rate}%` : ''}
         </div>
       </div>
@@ -193,7 +309,7 @@ function DeclarationRow({
           {CONFORMITY_META[decl.conformity_level]}
         </Badge>
         <Button size="sm" variant="ghost" onClick={redownload}>
-          Télécharger
+          {t.download}
         </Button>
       </div>
     </li>

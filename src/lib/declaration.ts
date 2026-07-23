@@ -1,3 +1,4 @@
+import type { Lang } from '@/i18n'
 import type { ConformityLevel } from '@/lib/database.types'
 import { CONFORMITY_META } from '@/lib/format'
 
@@ -12,13 +13,50 @@ type DeclarationInput = {
 }
 
 /**
+ * Note affichée en tête du document lorsque l'utilisateur travaille dans une
+ * autre langue que le français : la déclaration d'accessibilité est un document
+ * légal français, publié en français, dont le texte ne doit pas être traduit.
+ */
+const FOREIGN_LANG_NOTE: Record<Exclude<Lang, 'fr'>, string> = {
+  en: `<strong>Note.</strong> The accessibility statement is an official French legal document,
+  drawn up and published in French under Article 47 of French Act No. 2005-102 of 11 February 2005
+  and the RGAA. It is therefore reproduced below in French and must be published as such on the
+  website; only the surrounding editorial content may be translated.`,
+  de: `<strong>Hinweis.</strong> Die Barrierefreiheitserklärung ist ein offizielles französisches
+  Rechtsdokument, das gemäß Artikel 47 des französischen Gesetzes Nr. 2005-102 vom 11. Februar 2005
+  und dem RGAA in französischer Sprache erstellt und veröffentlicht wird. Sie wird daher nachstehend
+  auf Französisch wiedergegeben und muss so auf der Website veröffentlicht werden; übersetzt werden
+  darf lediglich der umgebende redaktionelle Inhalt.`,
+  es: `<strong>Nota.</strong> La declaración de accesibilidad es un documento legal francés oficial,
+  redactado y publicado en francés en virtud del artículo 47 de la Ley francesa n.º 2005-102 de 11 de
+  febrero de 2005 y del RGAA. Por ello se reproduce a continuación en francés y debe publicarse tal
+  cual en el sitio web; únicamente puede traducirse el contenido editorial circundante.`,
+  it: `<strong>Nota.</strong> La dichiarazione di accessibilità è un documento legale francese
+  ufficiale, redatto e pubblicato in francese ai sensi dell'articolo 47 della legge francese
+  n. 2005-102 dell'11 febbraio 2005 e del RGAA. Per questo motivo è riportata di seguito in francese e
+  deve essere pubblicata come tale sul sito; può essere tradotto soltanto il contenuto editoriale
+  circostante.`,
+}
+
+/**
  * Génère la déclaration d'accessibilité au format HTML, selon le modèle
  * prévu par l'article 47 de la loi n° 2005-102 et le RGAA 4.1.
+ *
+ * Le document reste **en français** quelle que soit la valeur de `lang` : c'est
+ * un document légal français officiel. Lorsque `lang` vaut autre chose que
+ * 'fr', une note traduite est simplement ajoutée en tête pour l'expliquer.
  */
-export function buildDeclarationHtml(input: DeclarationInput): string {
+export function buildDeclarationHtml(input: DeclarationInput, lang: Lang = 'fr'): string {
   const date = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' }).format(new Date(input.auditDate))
   const levelText = CONFORMITY_META[input.conformityLevel]
   const rate = input.conformityRate !== null ? `${input.conformityRate} %` : 'non mesuré'
+  const note = lang !== 'fr' ? FOREIGN_LANG_NOTE[lang] : null
+  const langNote = note
+    ? `<div lang="${lang}" style="background:#f6f7fb;border:1px solid #e3e3ee;border-radius:10px;padding:.8rem 1rem;font-size:.85rem;color:#444;margin-bottom:1.5rem">
+  ${note}
+</div>
+`
+    : ''
 
   const conformityDetail =
     input.conformityLevel === 'total'
@@ -40,7 +78,7 @@ export function buildDeclarationHtml(input: DeclarationInput): string {
 </style>
 </head>
 <body>
-<h1>Déclaration d'accessibilité</h1>
+${langNote}<h1>Déclaration d'accessibilité</h1>
 <p><strong>${escapeHtml(input.orgName)}</strong> s'engage à rendre son site internet accessible conformément à l'article 47 de la loi n° 2005-102 du 11 février 2005.</p>
 <p>Cette déclaration d'accessibilité s'applique au site <a href="${escapeHtml(input.siteUrl)}">${escapeHtml(input.siteUrl)}</a>.</p>
 

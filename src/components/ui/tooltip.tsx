@@ -1,5 +1,14 @@
 import { useId, useState } from 'react'
+import { defineMessages, useMessages } from '@/i18n'
 import { cn } from '@/lib/utils'
+
+const L = defineMessages({
+  fr: { more: 'Plus d’informations' },
+  en: { more: 'More information' },
+  de: { more: 'Weitere Informationen' },
+  es: { more: 'Más información' },
+  it: { more: 'Maggiori informazioni' },
+})
 
 /**
  * Info-bulle accessible : déclenchée au survol ET au focus clavier,
@@ -7,15 +16,17 @@ import { cn } from '@/lib/utils'
  */
 export function Tooltip({
   content,
-  label = 'Plus d’informations',
+  label,
   className,
 }: {
   content: React.ReactNode
   label?: string
   className?: string
 }) {
+  const t = useMessages(L)
   const id = useId()
   const [open, setOpen] = useState(false)
+  const buttonLabel = label ?? t.more
 
   return (
     <span
@@ -25,7 +36,7 @@ export function Tooltip({
     >
       <button
         type="button"
-        aria-label={label}
+        aria-label={buttonLabel}
         aria-describedby={open ? id : undefined}
         aria-expanded={open}
         onFocus={() => setOpen(true)}

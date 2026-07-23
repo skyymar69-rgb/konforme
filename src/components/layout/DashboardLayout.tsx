@@ -4,18 +4,93 @@ import { Logo } from '@/components/ui/logo'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { useAuth } from '@/contexts/AuthContext'
+import { defineMessages, useMessages } from '@/i18n'
 import { cn } from '@/lib/utils'
 
+const L = defineMessages({
+  fr: {
+    nav: {
+      overview: 'Vue d’ensemble',
+      sites: 'Sites',
+      scans: 'Scans',
+      declarations: 'Déclarations',
+      settings: 'Paramètres',
+    },
+    navLabel: 'Navigation tableau de bord',
+    guest: 'Invité',
+    signOut: 'Se déconnecter',
+    exit: 'Sortir',
+    loading: 'Chargement…',
+  },
+  en: {
+    nav: {
+      overview: 'Overview',
+      sites: 'Sites',
+      scans: 'Scans',
+      declarations: 'Statements',
+      settings: 'Settings',
+    },
+    navLabel: 'Dashboard navigation',
+    guest: 'Guest',
+    signOut: 'Sign out',
+    exit: 'Sign out',
+    loading: 'Loading…',
+  },
+  de: {
+    nav: {
+      overview: 'Übersicht',
+      sites: 'Websites',
+      scans: 'Scans',
+      declarations: 'Erklärungen',
+      settings: 'Einstellungen',
+    },
+    navLabel: 'Dashboard-Navigation',
+    guest: 'Gast',
+    signOut: 'Abmelden',
+    exit: 'Abmelden',
+    loading: 'Wird geladen…',
+  },
+  es: {
+    nav: {
+      overview: 'Vista general',
+      sites: 'Sitios',
+      scans: 'Análisis',
+      declarations: 'Declaraciones',
+      settings: 'Ajustes',
+    },
+    navLabel: 'Navegación del panel',
+    guest: 'Invitado',
+    signOut: 'Cerrar sesión',
+    exit: 'Salir',
+    loading: 'Cargando…',
+  },
+  it: {
+    nav: {
+      overview: 'Panoramica',
+      sites: 'Siti',
+      scans: 'Scansioni',
+      declarations: 'Dichiarazioni',
+      settings: 'Impostazioni',
+    },
+    navLabel: 'Navigazione della dashboard',
+    guest: 'Ospite',
+    signOut: 'Disconnettersi',
+    exit: 'Esci',
+    loading: 'Caricamento…',
+  },
+})
+
 const NAV = [
-  { to: '/dashboard', label: 'Vue d’ensemble', icon: HomeIcon },
-  { to: '/dashboard/sites', label: 'Sites', icon: SitesIcon },
-  { to: '/dashboard/scans', label: 'Scans', icon: ScanIcon },
-  { to: '/dashboard/declarations', label: 'Déclarations', icon: DocIcon },
-  { to: '/dashboard/settings', label: 'Paramètres', icon: GearIcon },
-]
+  { to: '/dashboard', key: 'overview', icon: HomeIcon },
+  { to: '/dashboard/sites', key: 'sites', icon: SitesIcon },
+  { to: '/dashboard/scans', key: 'scans', icon: ScanIcon },
+  { to: '/dashboard/declarations', key: 'declarations', icon: DocIcon },
+  { to: '/dashboard/settings', key: 'settings', icon: GearIcon },
+] as const
 
 export function DashboardLayout() {
   const { user, signOut } = useAuth()
+  const t = useMessages(L)
   const initial = (user?.name?.[0] || user?.email?.[0] || 'K').toUpperCase()
 
   return (
@@ -26,7 +101,7 @@ export function DashboardLayout() {
             <Logo />
           </Link>
         </div>
-        <nav className="flex-1 p-3 space-y-1" aria-label="Navigation tableau de bord">
+        <nav className="flex-1 p-3 space-y-1" aria-label={t.navLabel}>
           {NAV.map((n) => {
             const Icon = n.icon
             return (
@@ -42,7 +117,7 @@ export function DashboardLayout() {
                 }
               >
                 <Icon />
-                {n.label}
+                {t.nav[n.key]}
               </NavLink>
             )
           })}
@@ -54,7 +129,7 @@ export function DashboardLayout() {
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-sm font-medium truncate">
-                {user?.name || user?.email?.split('@')[0] || 'Invité'}
+                {user?.name || user?.email?.split('@')[0] || t.guest}
               </div>
               <div className="text-xs text-text-dim truncate">{user?.email}</div>
             </div>
@@ -62,7 +137,7 @@ export function DashboardLayout() {
           <div className="mt-2 flex items-center gap-2">
             <ThemeToggle />
             <Button size="sm" variant="ghost" className="flex-1" onClick={() => signOut()}>
-              Se déconnecter
+              {t.signOut}
             </Button>
           </div>
         </div>
@@ -76,7 +151,7 @@ export function DashboardLayout() {
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Button size="sm" variant="ghost" onClick={() => signOut()}>
-              Sortir
+              {t.exit}
             </Button>
           </div>
         </header>
@@ -85,7 +160,7 @@ export function DashboardLayout() {
             fallback={
               <div className="min-h-[40vh] grid place-items-center" role="status">
                 <div className="size-10 rounded-full border-4 border-border border-t-primary-2 animate-spin" aria-hidden="true" />
-                <span className="sr-only">Chargement…</span>
+                <span className="sr-only">{t.loading}</span>
               </div>
             }
           >

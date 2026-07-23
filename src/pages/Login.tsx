@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Logo } from '@/components/ui/logo'
 import { useAuth } from '@/contexts/AuthContext'
+import { defineMessages, localizePath, useLang, useMessages } from '@/i18n'
 import { Seo } from '@/components/Seo'
 
 type Mode = 'signin' | 'signup'
@@ -13,28 +14,259 @@ type Mode = 'signin' | 'signup'
 // écran). Mettre VITE_GOOGLE_AUTH=on une fois le provider activé.
 const GOOGLE_AUTH_ENABLED = import.meta.env.VITE_GOOGLE_AUTH === 'on'
 
+const L = defineMessages({
+  fr: {
+    seoTitle: 'Connexion',
+    seoDesc: 'Connectez-vous à votre tableau de bord Konforme.',
+    homeAria: 'Konforme accueil',
+    titleSignin: 'Bienvenue',
+    titleSignup: 'Créer un compte',
+    subtitleSignin: "Connectez-vous pour accéder à votre tableau de bord d'accessibilité",
+    subtitleSignup: '14 jours d’essai Pro inclus — sans carte bancaire',
+    name: 'Nom complet',
+    namePlaceholder: 'Prénom Nom',
+    email: 'Email',
+    emailPlaceholder: 'vous@exemple.fr',
+    password: 'Mot de passe',
+    passwordHelp: '8 caractères minimum.',
+    submitSignin: 'Se connecter',
+    submitSignup: 'Créer mon compte',
+    loadingSignin: 'Connexion…',
+    loadingSignup: 'Création…',
+    noAccount: 'Pas encore de compte ?',
+    toSignup: 'Créer un compte',
+    haveAccount: 'Déjà inscrit ?',
+    toSignin: 'Se connecter',
+    or: 'ou',
+    googleRedirect: 'Redirection...',
+    googleContinue: 'Continuer avec Google',
+    termsPrefix: 'En continuant vous acceptez nos',
+    terms: 'CGU',
+    termsMiddle: 'et notre',
+    privacy: 'politique de confidentialité',
+    backHome: '← Retour à l’accueil',
+    oauthCancelled:
+      'La connexion Google a été annulée ou a échoué. Réessayez, ou utilisez votre email et mot de passe.',
+    oauthCallback:
+      "La connexion Google n'a pas pu aboutir (session non créée). Réessayez, ou utilisez votre email et mot de passe.",
+    oauthProvider:
+      'Google a refusé la connexion (configuration du fournisseur en cours de correction). Utilisez votre email et mot de passe en attendant.',
+    oauthDetail: (msg: string) => `Connexion Google impossible : ${msg}`,
+    oauthGeneric: 'La connexion Google a échoué. Utilisez votre email et mot de passe.',
+    errCredentials: 'Email ou mot de passe incorrect.',
+    errPasswordLength: 'Le mot de passe doit faire au moins 8 caractères.',
+    errExists: 'Un compte existe déjà avec cet email — connectez-vous.',
+    errRateLimit: 'Trop de tentatives. Réessayez dans quelques minutes.',
+    errBackend: "Le backend n'est pas encore configuré (projet Appwrite manquant).",
+    errUnknown: 'Erreur inconnue',
+  },
+  en: {
+    seoTitle: 'Sign in',
+    seoDesc: 'Sign in to your Konforme dashboard.',
+    homeAria: 'Konforme home',
+    titleSignin: 'Welcome',
+    titleSignup: 'Create an account',
+    subtitleSignin: 'Sign in to access your accessibility dashboard',
+    subtitleSignup: '14-day Pro trial included — no credit card required',
+    name: 'Full name',
+    namePlaceholder: 'First name Last name',
+    email: 'Email',
+    emailPlaceholder: 'you@example.com',
+    password: 'Password',
+    passwordHelp: '8 characters minimum.',
+    submitSignin: 'Sign in',
+    submitSignup: 'Create my account',
+    loadingSignin: 'Signing in…',
+    loadingSignup: 'Creating…',
+    noAccount: 'No account yet?',
+    toSignup: 'Create an account',
+    haveAccount: 'Already registered?',
+    toSignin: 'Sign in',
+    or: 'or',
+    googleRedirect: 'Redirecting...',
+    googleContinue: 'Continue with Google',
+    termsPrefix: 'By continuing you accept our',
+    terms: 'Terms of use',
+    termsMiddle: 'and our',
+    privacy: 'privacy policy',
+    backHome: '← Back to home',
+    oauthCancelled:
+      'Google sign-in was cancelled or failed. Try again, or use your email and password.',
+    oauthCallback:
+      'Google sign-in could not be completed (no session was created). Try again, or use your email and password.',
+    oauthProvider:
+      'Google refused the sign-in (provider configuration is being fixed). Please use your email and password in the meantime.',
+    oauthDetail: (msg: string) => `Google sign-in failed: ${msg}`,
+    oauthGeneric: 'Google sign-in failed. Please use your email and password.',
+    errCredentials: 'Incorrect email or password.',
+    errPasswordLength: 'The password must be at least 8 characters long.',
+    errExists: 'An account already exists with this email — please sign in.',
+    errRateLimit: 'Too many attempts. Try again in a few minutes.',
+    errBackend: 'The backend is not configured yet (Appwrite project missing).',
+    errUnknown: 'Unknown error',
+  },
+  de: {
+    seoTitle: 'Anmelden',
+    seoDesc: 'Melden Sie sich in Ihrem Konforme-Dashboard an.',
+    homeAria: 'Konforme Startseite',
+    titleSignin: 'Willkommen',
+    titleSignup: 'Konto erstellen',
+    subtitleSignin: 'Melden Sie sich an, um auf Ihr Dashboard für Barrierefreiheit zuzugreifen',
+    subtitleSignup: '14 Tage Pro-Testphase inklusive — ohne Kreditkarte',
+    name: 'Vollständiger Name',
+    namePlaceholder: 'Vorname Nachname',
+    email: 'E-Mail',
+    emailPlaceholder: 'sie@beispiel.de',
+    password: 'Passwort',
+    passwordHelp: 'Mindestens 8 Zeichen.',
+    submitSignin: 'Anmelden',
+    submitSignup: 'Mein Konto erstellen',
+    loadingSignin: 'Anmeldung…',
+    loadingSignup: 'Wird erstellt…',
+    noAccount: 'Noch kein Konto?',
+    toSignup: 'Konto erstellen',
+    haveAccount: 'Bereits registriert?',
+    toSignin: 'Anmelden',
+    or: 'oder',
+    googleRedirect: 'Weiterleitung...',
+    googleContinue: 'Mit Google fortfahren',
+    termsPrefix: 'Mit dem Fortfahren akzeptieren Sie unsere',
+    terms: 'Nutzungsbedingungen',
+    termsMiddle: 'und unsere',
+    privacy: 'Datenschutzerklärung',
+    backHome: '← Zurück zur Startseite',
+    oauthCancelled:
+      'Die Google-Anmeldung wurde abgebrochen oder ist fehlgeschlagen. Versuchen Sie es erneut oder verwenden Sie E-Mail und Passwort.',
+    oauthCallback:
+      'Die Google-Anmeldung konnte nicht abgeschlossen werden (keine Sitzung erstellt). Versuchen Sie es erneut oder verwenden Sie E-Mail und Passwort.',
+    oauthProvider:
+      'Google hat die Anmeldung abgelehnt (die Anbieterkonfiguration wird gerade korrigiert). Verwenden Sie in der Zwischenzeit E-Mail und Passwort.',
+    oauthDetail: (msg: string) => `Google-Anmeldung nicht möglich: ${msg}`,
+    oauthGeneric: 'Die Google-Anmeldung ist fehlgeschlagen. Verwenden Sie E-Mail und Passwort.',
+    errCredentials: 'E-Mail-Adresse oder Passwort ist falsch.',
+    errPasswordLength: 'Das Passwort muss mindestens 8 Zeichen lang sein.',
+    errExists: 'Mit dieser E-Mail-Adresse besteht bereits ein Konto — bitte melden Sie sich an.',
+    errRateLimit: 'Zu viele Versuche. Versuchen Sie es in einigen Minuten erneut.',
+    errBackend: 'Das Backend ist noch nicht konfiguriert (Appwrite-Projekt fehlt).',
+    errUnknown: 'Unbekannter Fehler',
+  },
+  es: {
+    seoTitle: 'Iniciar sesión',
+    seoDesc: 'Inicie sesión en su panel de control Konforme.',
+    homeAria: 'Konforme inicio',
+    titleSignin: 'Bienvenido',
+    titleSignup: 'Crear una cuenta',
+    subtitleSignin: 'Inicie sesión para acceder a su panel de accesibilidad',
+    subtitleSignup: '14 días de prueba Pro incluidos — sin tarjeta bancaria',
+    name: 'Nombre completo',
+    namePlaceholder: 'Nombre Apellidos',
+    email: 'Correo electrónico',
+    emailPlaceholder: 'usted@ejemplo.es',
+    password: 'Contraseña',
+    passwordHelp: '8 caracteres como mínimo.',
+    submitSignin: 'Iniciar sesión',
+    submitSignup: 'Crear mi cuenta',
+    loadingSignin: 'Conectando…',
+    loadingSignup: 'Creando…',
+    noAccount: '¿Todavía no tiene cuenta?',
+    toSignup: 'Crear una cuenta',
+    haveAccount: '¿Ya está registrado?',
+    toSignin: 'Iniciar sesión',
+    or: 'o',
+    googleRedirect: 'Redirigiendo...',
+    googleContinue: 'Continuar con Google',
+    termsPrefix: 'Al continuar acepta nuestras',
+    terms: 'Condiciones de uso',
+    termsMiddle: 'y nuestra',
+    privacy: 'política de privacidad',
+    backHome: '← Volver al inicio',
+    oauthCancelled:
+      'La conexión con Google se ha cancelado o ha fallado. Vuelva a intentarlo o utilice su correo electrónico y contraseña.',
+    oauthCallback:
+      'La conexión con Google no ha podido completarse (sesión no creada). Vuelva a intentarlo o utilice su correo electrónico y contraseña.',
+    oauthProvider:
+      'Google ha rechazado la conexión (la configuración del proveedor se está corrigiendo). Mientras tanto, utilice su correo electrónico y contraseña.',
+    oauthDetail: (msg: string) => `Conexión con Google imposible: ${msg}`,
+    oauthGeneric:
+      'La conexión con Google ha fallado. Utilice su correo electrónico y contraseña.',
+    errCredentials: 'Correo electrónico o contraseña incorrectos.',
+    errPasswordLength: 'La contraseña debe tener al menos 8 caracteres.',
+    errExists: 'Ya existe una cuenta con este correo electrónico — inicie sesión.',
+    errRateLimit: 'Demasiados intentos. Vuelva a intentarlo dentro de unos minutos.',
+    errBackend: 'El backend todavía no está configurado (falta el proyecto Appwrite).',
+    errUnknown: 'Error desconocido',
+  },
+  it: {
+    seoTitle: 'Accesso',
+    seoDesc: 'Acceda alla sua dashboard Konforme.',
+    homeAria: 'Konforme home',
+    titleSignin: 'Benvenuto',
+    titleSignup: 'Creare un account',
+    subtitleSignin: 'Acceda per entrare nella sua dashboard di accessibilità',
+    subtitleSignup: '14 giorni di prova Pro inclusi — senza carta di credito',
+    name: 'Nome completo',
+    namePlaceholder: 'Nome Cognome',
+    email: 'Email',
+    emailPlaceholder: 'lei@esempio.it',
+    password: 'Password',
+    passwordHelp: 'Almeno 8 caratteri.',
+    submitSignin: 'Accedi',
+    submitSignup: 'Crea il mio account',
+    loadingSignin: 'Accesso…',
+    loadingSignup: 'Creazione…',
+    noAccount: 'Non ha ancora un account?',
+    toSignup: 'Creare un account',
+    haveAccount: 'Già registrato?',
+    toSignin: 'Accedi',
+    or: 'oppure',
+    googleRedirect: 'Reindirizzamento...',
+    googleContinue: 'Continua con Google',
+    termsPrefix: 'Continuando accetta le nostre',
+    terms: 'Condizioni d’uso',
+    termsMiddle: 'e la nostra',
+    privacy: 'informativa sulla privacy',
+    backHome: '← Torna alla home',
+    oauthCancelled:
+      'L’accesso con Google è stato annullato o non è riuscito. Riprovi, oppure utilizzi email e password.',
+    oauthCallback:
+      'L’accesso con Google non è andato a buon fine (sessione non creata). Riprovi, oppure utilizzi email e password.',
+    oauthProvider:
+      'Google ha rifiutato l’accesso (la configurazione del fornitore è in corso di correzione). Nel frattempo utilizzi email e password.',
+    oauthDetail: (msg: string) => `Accesso con Google impossibile: ${msg}`,
+    oauthGeneric: 'L’accesso con Google non è riuscito. Utilizzi email e password.',
+    errCredentials: 'Email o password non corretti.',
+    errPasswordLength: 'La password deve contenere almeno 8 caratteri.',
+    errExists: 'Esiste già un account con questa email — effettui l’accesso.',
+    errRateLimit: 'Troppi tentativi. Riprovi tra qualche minuto.',
+    errBackend: 'Il backend non è ancora configurato (progetto Appwrite mancante).',
+    errUnknown: 'Errore sconosciuto',
+  },
+})
+
+type Messages = (typeof L)['fr']
+
 export function Login() {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail, user } = useAuth()
+  const t = useMessages(L)
+  const lang = useLang()
   const [mode, setMode] = useState<Mode>('signin')
   // Retour d'un flux OAuth interrompu : erreur explicite. Appwrite remplace
   // parfois notre ?error=oauth par un objet JSON décrivant l'échec provider.
   const [error, setError] = useState<string | null>(() => {
     const oauthError = new URLSearchParams(window.location.search).get('error')
     if (!oauthError) return null
-    if (oauthError === 'oauth')
-      return 'La connexion Google a été annulée ou a échoué. Réessayez, ou utilisez votre email et mot de passe.'
-    if (oauthError === 'callback')
-      return "La connexion Google n'a pas pu aboutir (session non créée). Réessayez, ou utilisez votre email et mot de passe."
+    if (oauthError === 'oauth') return t.oauthCancelled
+    if (oauthError === 'callback') return t.oauthCallback
     try {
       const parsed = JSON.parse(oauthError) as { type?: string; message?: string }
       if (parsed.type === 'user_oauth2_provider_failure') {
-        return 'Google a refusé la connexion (configuration du fournisseur en cours de correction). Utilisez votre email et mot de passe en attendant.'
+        return t.oauthProvider
       }
-      if (parsed.message) return `Connexion Google impossible : ${parsed.message}`
+      if (parsed.message) return t.oauthDetail(parsed.message)
     } catch {
       /* paramètre inattendu : message générique */
     }
-    return 'La connexion Google a échoué. Utilisez votre email et mot de passe.'
+    return t.oauthGeneric
   })
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
@@ -60,7 +292,7 @@ export function Login() {
       }
       // La redirection est gérée par l'effet sur `user`
     } catch (e) {
-      setError(friendlyAuthError(e))
+      setError(friendlyAuthError(e, t))
       setLoading(false)
     }
   }
@@ -72,36 +304,34 @@ export function Login() {
       await signInWithGoogle()
       // OAuth : redirection complète, rien d'autre à faire ici
     } catch (e) {
-      setError(friendlyAuthError(e))
+      setError(friendlyAuthError(e, t))
       setGoogleLoading(false)
     }
   }
 
   return (
     <div className="min-h-screen grid place-items-center px-6 py-10">
-      <Seo title="Connexion" description="Connectez-vous à votre tableau de bord Konforme." path="/login" noindex />
+      <Seo title={t.seoTitle} description={t.seoDesc} path="/login" noindex />
       <div className="w-full max-w-md">
         <div className="mb-6 flex justify-center">
-          <Link to="/" aria-label="Konforme accueil">
+          <Link to={localizePath(lang, '/')} aria-label={t.homeAria}>
             <Logo />
           </Link>
         </div>
 
         <Card className="p-8">
           <h1 className="gradient-text text-2xl font-bold tracking-tight text-center mb-2">
-            {mode === 'signin' ? 'Bienvenue' : 'Créer un compte'}
+            {mode === 'signin' ? t.titleSignin : t.titleSignup}
           </h1>
           <p className="text-center text-sm text-text-muted mb-6">
-            {mode === 'signin'
-              ? "Connectez-vous pour accéder à votre tableau de bord d'accessibilité"
-              : '14 jours d’essai Pro inclus — sans carte bancaire'}
+            {mode === 'signin' ? t.subtitleSignin : t.subtitleSignup}
           </p>
 
           <form onSubmit={onSubmit} className="space-y-4" noValidate>
             {mode === 'signup' && (
               <div>
                 <label htmlFor="auth-name" className="block text-sm font-semibold mb-1.5">
-                  Nom complet
+                  {t.name}
                 </label>
                 <input
                   id="auth-name"
@@ -109,13 +339,13 @@ export function Login() {
                   type="text"
                   autoComplete="name"
                   className="w-full rounded-[10px] border border-border-strong bg-bg px-3.5 py-2.5 text-sm text-text placeholder:text-text-dim"
-                  placeholder="Prénom Nom"
+                  placeholder={t.namePlaceholder}
                 />
               </div>
             )}
             <div>
               <label htmlFor="auth-email" className="block text-sm font-semibold mb-1.5">
-                Email
+                {t.email}
               </label>
               <input
                 id="auth-email"
@@ -125,12 +355,12 @@ export function Login() {
                 autoComplete="email"
                 inputMode="email"
                 className="w-full rounded-[10px] border border-border-strong bg-bg px-3.5 py-2.5 text-sm text-text placeholder:text-text-dim"
-                placeholder="vous@exemple.fr"
+                placeholder={t.emailPlaceholder}
               />
             </div>
             <div>
               <label htmlFor="auth-password" className="block text-sm font-semibold mb-1.5">
-                Mot de passe
+                {t.password}
               </label>
               <input
                 id="auth-password"
@@ -144,7 +374,7 @@ export function Login() {
               />
               {mode === 'signup' && (
                 <p id="auth-password-help" className="mt-1 text-xs text-text-dim">
-                  8 caractères minimum.
+                  {t.passwordHelp}
                 </p>
               )}
             </div>
@@ -162,12 +392,12 @@ export function Login() {
               {loading ? (
                 <>
                   <span className="size-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                  {mode === 'signin' ? 'Connexion…' : 'Création…'}
+                  {mode === 'signin' ? t.loadingSignin : t.loadingSignup}
                 </>
               ) : mode === 'signin' ? (
-                'Se connecter'
+                t.submitSignin
               ) : (
-                'Créer mon compte'
+                t.submitSignup
               )}
             </Button>
           </form>
@@ -175,24 +405,24 @@ export function Login() {
           <p className="mt-4 text-center text-sm text-text-muted">
             {mode === 'signin' ? (
               <>
-                Pas encore de compte ?{' '}
+                {t.noAccount}{' '}
                 <button
                   type="button"
                   onClick={() => { setMode('signup'); setError(null) }}
                   className="text-link font-semibold hover:underline"
                 >
-                  Créer un compte
+                  {t.toSignup}
                 </button>
               </>
             ) : (
               <>
-                Déjà inscrit ?{' '}
+                {t.haveAccount}{' '}
                 <button
                   type="button"
                   onClick={() => { setMode('signin'); setError(null) }}
                   className="text-link font-semibold hover:underline"
                 >
-                  Se connecter
+                  {t.toSignin}
                 </button>
               </>
             )}
@@ -202,7 +432,7 @@ export function Login() {
             <>
               <div className="my-5 flex items-center gap-3" role="presentation">
                 <span className="h-px flex-1 bg-border" />
-                <span className="text-xs text-text-dim">ou</span>
+                <span className="text-xs text-text-dim">{t.or}</span>
                 <span className="h-px flex-1 bg-border" />
               </div>
 
@@ -216,12 +446,12 @@ export function Login() {
                 {googleLoading ? (
                   <>
                     <span className="size-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                    Redirection...
+                    {t.googleRedirect}
                   </>
                 ) : (
                   <>
                     <GoogleIcon />
-                    Continuer avec Google
+                    {t.googleContinue}
                   </>
                 )}
               </Button>
@@ -229,21 +459,21 @@ export function Login() {
           )}
 
           <p className="mt-6 text-center text-xs text-text-dim leading-relaxed">
-            En continuant vous acceptez nos{' '}
-            <Link to="/legal/cgu" className="text-link hover:underline">
-              CGU
+            {t.termsPrefix}{' '}
+            <Link to={localizePath(lang, '/legal/cgu')} className="text-link hover:underline">
+              {t.terms}
             </Link>{' '}
-            et notre{' '}
-            <Link to="/legal/confidentialite" className="text-link hover:underline">
-              politique de confidentialité
+            {t.termsMiddle}{' '}
+            <Link to={localizePath(lang, '/legal/confidentialite')} className="text-link hover:underline">
+              {t.privacy}
             </Link>
             .
           </p>
         </Card>
 
         <div className="mt-6 text-center text-sm text-text-muted">
-          <Link to="/" className="hover:text-white">
-            ← Retour à l'accueil
+          <Link to={localizePath(lang, '/')} className="hover:text-white">
+            {t.backHome}
           </Link>
         </div>
       </div>
@@ -252,17 +482,15 @@ export function Login() {
 }
 
 /** Traduit les erreurs Appwrite les plus courantes en message actionnable. */
-function friendlyAuthError(e: unknown): string {
+function friendlyAuthError(e: unknown, t: Messages): string {
   const msg = e instanceof Error ? e.message : String(e)
   if (/invalid credentials|invalid email|password/i.test(msg) && !/at least/i.test(msg))
-    return 'Email ou mot de passe incorrect.'
-  if (/at least 8|password.*length/i.test(msg)) return 'Le mot de passe doit faire au moins 8 caractères.'
-  if (/already exists|user_already_exists/i.test(msg))
-    return 'Un compte existe déjà avec cet email — connectez-vous.'
-  if (/rate limit/i.test(msg)) return 'Trop de tentatives. Réessayez dans quelques minutes.'
-  if (/project.*not.*found|missing.*project/i.test(msg))
-    return "Le backend n'est pas encore configuré (projet Appwrite manquant)."
-  return msg || 'Erreur inconnue'
+    return t.errCredentials
+  if (/at least 8|password.*length/i.test(msg)) return t.errPasswordLength
+  if (/already exists|user_already_exists/i.test(msg)) return t.errExists
+  if (/rate limit/i.test(msg)) return t.errRateLimit
+  if (/project.*not.*found|missing.*project/i.test(msg)) return t.errBackend
+  return msg || t.errUnknown
 }
 
 function GoogleIcon() {

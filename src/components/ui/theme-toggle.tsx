@@ -1,16 +1,26 @@
 import { useState } from 'react'
 import { getCurrentTheme, setTheme, type Theme } from '@/lib/theme'
+import { defineMessages, useMessages } from '@/i18n'
 import { cn } from '@/lib/utils'
 
+const L = defineMessages({
+  fr: { toLight: 'Activer le thème clair', toDark: 'Activer le thème sombre', light: 'Thème clair', dark: 'Thème sombre' },
+  en: { toLight: 'Switch to light theme', toDark: 'Switch to dark theme', light: 'Light theme', dark: 'Dark theme' },
+  de: { toLight: 'Helles Design aktivieren', toDark: 'Dunkles Design aktivieren', light: 'Helles Design', dark: 'Dunkles Design' },
+  es: { toLight: 'Activar el tema claro', toDark: 'Activar el tema oscuro', light: 'Tema claro', dark: 'Tema oscuro' },
+  it: { toLight: 'Attiva il tema chiaro', toDark: 'Attiva il tema scuro', light: 'Tema chiaro', dark: 'Tema scuro' },
+})
+
 export function ThemeToggle({ className }: { className?: string }) {
+  const t = useMessages(L)
   const [theme, setThemeState] = useState<Theme>(() => getCurrentTheme())
   const next: Theme = theme === 'dark' ? 'light' : 'dark'
 
   return (
     <button
       type="button"
-      aria-label={next === 'light' ? 'Activer le thème clair' : 'Activer le thème sombre'}
-      title={next === 'light' ? 'Thème clair' : 'Thème sombre'}
+      aria-label={next === 'light' ? t.toLight : t.toDark}
+      title={next === 'light' ? t.light : t.dark}
       onClick={() => {
         setTheme(next)
         setThemeState(next)

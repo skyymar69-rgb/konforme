@@ -1,14 +1,25 @@
+import { defineMessages, useMessages } from '@/i18n'
 import { scoreColor } from '@/lib/format'
+
+const L = defineMessages({
+  fr: { rate: 'Taux de conformité', unavailable: 'non disponible' },
+  en: { rate: 'Compliance rate', unavailable: 'not available' },
+  de: { rate: 'Konformitätsgrad', unavailable: 'nicht verfügbar' },
+  es: { rate: 'Tasa de conformidad', unavailable: 'no disponible' },
+  it: { rate: 'Tasso di conformità', unavailable: 'non disponibile' },
+})
 
 export function ScoreRing({
   score,
   size = 96,
-  label = 'Taux de conformité',
+  label,
 }: {
   score: number | null
   size?: number
   label?: string
 }) {
+  const t = useMessages(L)
+  const ringLabel = label ?? t.rate
   const stroke = size / 12
   const r = (size - stroke) / 2
   const c = 2 * Math.PI * r
@@ -20,7 +31,7 @@ export function ScoreRing({
       height={size}
       viewBox={`0 0 ${size} ${size}`}
       role="img"
-      aria-label={score === null ? `${label} : non disponible` : `${label} : ${pct} %`}
+      aria-label={score === null ? `${ringLabel} : ${t.unavailable}` : `${ringLabel} : ${pct} %`}
     >
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--color-border)" strokeWidth={stroke} />
       <circle

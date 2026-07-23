@@ -1,4 +1,6 @@
 /* eslint-disable react-refresh/only-export-components -- constantes SEO co-localisées volontairement */
+import { alternatesFor, localizePath, useLang } from '@/i18n'
+
 const SITE_URL = 'https://konforme.kayzen-lyon.fr'
 const SITE_NAME = 'Konforme'
 
@@ -17,23 +19,32 @@ type SeoProps = {
   lang?: string
   /** Versions linguistiques alternatives : hrefLang → chemin. */
   alternates?: Record<string, string>
+  /**
+   * Page publique disponible dans les 5 langues : canonical préfixé selon la
+   * langue courante + hreflang automatiques (`path` reste le chemin non préfixé).
+   */
+  localized?: boolean
 }
 
 /**
  * Métadonnées par route. React 19 hisse nativement <title>, <meta> et <link>
  * dans le <head> du document.
  */
-export function Seo({ title, description, path, type = 'website', noindex, jsonLd, lang, alternates }: SeoProps) {
+export function Seo({ title, description, path, type = 'website', noindex, jsonLd, lang, alternates, localized }: SeoProps) {
+  const currentLang = useLang()
   const fullTitle = title.includes(SITE_NAME) ? title : `${title} — ${SITE_NAME}`
-  const url = `${SITE_URL}${path === '/' ? '' : path}`
+  const effectiveLang = lang ?? (localized ? currentLang : undefined)
+  const effectivePath = localized ? localizePath(currentLang, path) : path
+  const effectiveAlternates = alternates ?? (localized ? alternatesFor(path) : undefined)
+  const url = `${SITE_URL}${effectivePath === '/' ? '' : effectivePath}`
   return (
     <>
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
       <link rel="canonical" href={url} />
-      {lang && <meta property="og:locale" content={lang} />}
-      {alternates &&
-        Object.entries(alternates).map(([hrefLang, p]) => (
+      {effectiveLang && <meta property="og:locale" content={effectiveLang} />}
+      {effectiveAlternates &&
+        Object.entries(effectiveAlternates).map(([hrefLang, p]) => (
           <link key={hrefLang} rel="alternate" hrefLang={hrefLang} href={`${SITE_URL}${p === '/' ? '' : p}`} />
         ))}
       {noindex && <meta name="robots" content="noindex, nofollow" />}

@@ -2,10 +2,20 @@ import { useMemo, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tooltip } from '@/components/ui/tooltip'
-import { computeConformity, COVERAGE_META, CRITERION_STATUS_META, type CriterionResult, type CriterionStatus } from '@/lib/conformity'
+import {
+  computeConformity,
+  coverageLabel,
+  criterionStatusL10n,
+  CRITERION_STATUS_META,
+  type CriterionResult,
+  type CriterionStatus,
+} from '@/lib/conformity'
 import type { CriterionReview, ReviewStatus, ScanIssue } from '@/lib/database.types'
-import { SEVERITY_META } from '@/lib/format'
+import { severityLabel, SEVERITY_META } from '@/lib/format'
 import { rgaaCriterionUrl } from '@/lib/rgaa'
+import { defineMessages, useLang, useMessages, type Lang } from '@/i18n'
+import { localizeCriterion, localizeTopic } from '@/i18n/rgaa-i18n'
+import { localizeIssueTitle } from '@/i18n/rules-i18n'
 
 export type ReviewInput = {
   criterionId: string
@@ -13,6 +23,182 @@ export type ReviewInput = {
   note?: string
   existingId?: string
 }
+
+const L = defineMessages({
+  fr: {
+    ratePrefix: 'Taux de conformité RGAA :',
+    rateDetail: (ok: number, tested: number) =>
+      `(${ok} conformes / ${tested} critères évalués, méthode officielle).`,
+    remainingBefore: 'Encore',
+    remainingAfter: 'critères à évaluer manuellement.',
+    noneEvaluated: 'Aucun critère n’a encore pu être évalué sur cet échantillon.',
+    filterGroup: 'Filtrer les critères par statut',
+    filterAll: 'Tous les critères',
+    filterNonConforme: 'Non conformes',
+    filterOk: 'Conformes',
+    filterAVerifier: 'À vérifier',
+    filterNonApplicable: 'Non applicables',
+    ncCount: (n: number) => `${n} NC`,
+    okCount: (n: number) => `${n} conforme${n > 1 ? 's' : ''}`,
+    toCheckCount: (n: number) => `${n} à vérifier`,
+    naCount: (n: number) => `${n} NA`,
+    tooltipLabel: (id: string) => `Comprendre le critère ${id}`,
+    tooltipTitle: 'Pourquoi c’est important',
+    manuallyReviewed: 'évalué manuellement',
+    issuesCount: (n: number) => `${n} non-conformité${n > 1 ? 's' : ''}`,
+    assess: 'Évaluer',
+    detail: 'Détail',
+    handled: 'Traitée',
+    reviewTitle: 'Évaluation manuelle (méthode RGAA)',
+    reviewGroup: (id: string) => `Évaluer le critère ${id}`,
+    reset: 'Réinitialiser',
+    noteLabel: 'Note (facultative — utile pour justifier une dérogation ou un « non applicable ») :',
+    notePlaceholder: 'Ex. : aucun contenu multimédia sur le site.',
+    blockedByIssues:
+      "Ce critère a des non-conformités détectées par le moteur : corrigez-les (ou marquez-les en faux positif) avant de l'évaluer manuellement.",
+    officialText: (id: string) =>
+      `Texte officiel du critère ${id} et ses tests (accessibilite.numerique.gouv.fr) ↗`,
+  },
+  en: {
+    ratePrefix: 'RGAA compliance rate:',
+    rateDetail: (ok: number, tested: number) =>
+      `(${ok} compliant / ${tested} criteria assessed, official method).`,
+    remainingBefore: 'Still',
+    remainingAfter: 'criteria to assess manually.',
+    noneEvaluated: 'No criterion could be assessed on this sample yet.',
+    filterGroup: 'Filter the criteria by status',
+    filterAll: 'All criteria',
+    filterNonConforme: 'Non-compliant',
+    filterOk: 'Compliant',
+    filterAVerifier: 'To check',
+    filterNonApplicable: 'Not applicable',
+    ncCount: (n: number) => `${n} non-compliant`,
+    okCount: (n: number) => `${n} compliant`,
+    toCheckCount: (n: number) => `${n} to check`,
+    naCount: (n: number) => `${n} N/A`,
+    tooltipLabel: (id: string) => `Understand criterion ${id}`,
+    tooltipTitle: 'Why it matters',
+    manuallyReviewed: 'assessed manually',
+    issuesCount: (n: number) => `${n} issue${n > 1 ? 's' : ''}`,
+    assess: 'Assess',
+    detail: 'Details',
+    handled: 'Handled',
+    reviewTitle: 'Manual assessment (RGAA method)',
+    reviewGroup: (id: string) => `Assess criterion ${id}`,
+    reset: 'Reset',
+    noteLabel: 'Note (optional — useful to justify an exemption or a “not applicable”):',
+    notePlaceholder: 'E.g. no multimedia content on this website.',
+    blockedByIssues:
+      'This criterion has issues detected by the engine: fix them (or mark them as false positives) before assessing it manually.',
+    officialText: (id: string) =>
+      `Official text of criterion ${id} and its tests (accessibilite.numerique.gouv.fr) ↗`,
+  },
+  de: {
+    ratePrefix: 'RGAA-Konformitätsgrad:',
+    rateDetail: (ok: number, tested: number) =>
+      `(${ok} konform / ${tested} bewertete Kriterien, offizielle Methode).`,
+    remainingBefore: 'Noch',
+    remainingAfter: 'Kriterien manuell zu bewerten.',
+    noneEvaluated: 'Für diese Stichprobe konnte noch kein Kriterium bewertet werden.',
+    filterGroup: 'Kriterien nach Status filtern',
+    filterAll: 'Alle Kriterien',
+    filterNonConforme: 'Nicht konform',
+    filterOk: 'Konform',
+    filterAVerifier: 'Zu prüfen',
+    filterNonApplicable: 'Nicht anwendbar',
+    ncCount: (n: number) => `${n} nicht konform`,
+    okCount: (n: number) => `${n} konform`,
+    toCheckCount: (n: number) => `${n} zu prüfen`,
+    naCount: (n: number) => `${n} n. a.`,
+    tooltipLabel: (id: string) => `Kriterium ${id} verstehen`,
+    tooltipTitle: 'Warum das wichtig ist',
+    manuallyReviewed: 'manuell bewertet',
+    issuesCount: (n: number) => `${n} ${n > 1 ? 'Mängel' : 'Mangel'}`,
+    assess: 'Bewerten',
+    detail: 'Details',
+    handled: 'Bearbeitet',
+    reviewTitle: 'Manuelle Bewertung (RGAA-Methode)',
+    reviewGroup: (id: string) => `Kriterium ${id} bewerten`,
+    reset: 'Zurücksetzen',
+    noteLabel:
+      'Notiz (optional – nützlich, um eine Ausnahme oder ein „nicht anwendbar“ zu begründen):',
+    notePlaceholder: 'Z. B.: keine multimedialen Inhalte auf der Website.',
+    blockedByIssues:
+      'Für dieses Kriterium hat die Engine Mängel festgestellt: Beheben Sie sie (oder markieren Sie sie als Falschmeldung), bevor Sie es manuell bewerten.',
+    officialText: (id: string) =>
+      `Offizieller Text des Kriteriums ${id} und seiner Tests (accessibilite.numerique.gouv.fr) ↗`,
+  },
+  es: {
+    ratePrefix: 'Tasa de conformidad RGAA:',
+    rateDetail: (ok: number, tested: number) =>
+      `(${ok} conformes / ${tested} criterios evaluados, método oficial).`,
+    remainingBefore: 'Aún quedan',
+    remainingAfter: 'criterios por evaluar manualmente.',
+    noneEvaluated: 'Todavía no se ha podido evaluar ningún criterio en esta muestra.',
+    filterGroup: 'Filtrar los criterios por estado',
+    filterAll: 'Todos los criterios',
+    filterNonConforme: 'No conformes',
+    filterOk: 'Conformes',
+    filterAVerifier: 'Por verificar',
+    filterNonApplicable: 'No aplicables',
+    ncCount: (n: number) => `${n} no conformes`,
+    okCount: (n: number) => `${n} conforme${n > 1 ? 's' : ''}`,
+    toCheckCount: (n: number) => `${n} por verificar`,
+    naCount: (n: number) => `${n} N/A`,
+    tooltipLabel: (id: string) => `Comprender el criterio ${id}`,
+    tooltipTitle: 'Por qué es importante',
+    manuallyReviewed: 'evaluado manualmente',
+    issuesCount: (n: number) => `${n} incumplimiento${n > 1 ? 's' : ''}`,
+    assess: 'Evaluar',
+    detail: 'Detalle',
+    handled: 'Tratado',
+    reviewTitle: 'Evaluación manual (método RGAA)',
+    reviewGroup: (id: string) => `Evaluar el criterio ${id}`,
+    reset: 'Restablecer',
+    noteLabel:
+      'Nota (opcional: útil para justificar una excepción o un «no aplicable»):',
+    notePlaceholder: 'Ej.: ningún contenido multimedia en el sitio.',
+    blockedByIssues:
+      'Este criterio presenta incumplimientos detectados por el motor: corríjalos (o márquelos como falso positivo) antes de evaluarlo manualmente.',
+    officialText: (id: string) =>
+      `Texto oficial del criterio ${id} y sus pruebas (accessibilite.numerique.gouv.fr) ↗`,
+  },
+  it: {
+    ratePrefix: 'Tasso di conformità RGAA:',
+    rateDetail: (ok: number, tested: number) =>
+      `(${ok} conformi / ${tested} criteri valutati, metodo ufficiale).`,
+    remainingBefore: 'Restano ancora',
+    remainingAfter: 'criteri da valutare manualmente.',
+    noneEvaluated: 'Nessun criterio ha ancora potuto essere valutato su questo campione.',
+    filterGroup: 'Filtra i criteri per stato',
+    filterAll: 'Tutti i criteri',
+    filterNonConforme: 'Non conformi',
+    filterOk: 'Conformi',
+    filterAVerifier: 'Da verificare',
+    filterNonApplicable: 'Non applicabili',
+    ncCount: (n: number) => `${n} non conformi`,
+    okCount: (n: number) => `${n} conform${n > 1 ? 'i' : 'e'}`,
+    toCheckCount: (n: number) => `${n} da verificare`,
+    naCount: (n: number) => `${n} N/A`,
+    tooltipLabel: (id: string) => `Comprendere il criterio ${id}`,
+    tooltipTitle: 'Perché è importante',
+    manuallyReviewed: 'valutato manualmente',
+    issuesCount: (n: number) => `${n} non conformità`,
+    assess: 'Valuta',
+    detail: 'Dettaglio',
+    handled: 'Trattata',
+    reviewTitle: 'Valutazione manuale (metodo RGAA)',
+    reviewGroup: (id: string) => `Valuta il criterio ${id}`,
+    reset: 'Reimposta',
+    noteLabel:
+      'Nota (facoltativa — utile per motivare una deroga o un « non applicabile ») :',
+    notePlaceholder: 'Es.: nessun contenuto multimediale sul sito.',
+    blockedByIssues:
+      "Questo criterio presenta non conformità rilevate dal motore: le corregga (o le contrassegni come falso positivo) prima di valutarlo manualmente.",
+    officialText: (id: string) =>
+      `Testo ufficiale del criterio ${id} e dei suoi test (accessibilite.numerique.gouv.fr) ↗`,
+  },
+})
 
 /**
  * Les 106 critères du RGAA 4.1.2, regroupés par thématique, avec le statut
@@ -33,15 +219,17 @@ export function RgaaCriteriaList({
   onReview?: (input: ReviewInput) => void
   reviewPending?: boolean
 }) {
+  const t = useMessages(L)
+  const lang = useLang()
   const summary = useMemo(() => computeConformity(issues, pageUrl, reviews), [issues, pageUrl, reviews])
   const [filter, setFilter] = useState<CriterionStatus | 'all'>('all')
 
   const filters: { key: CriterionStatus | 'all'; label: string; count: number }[] = [
-    { key: 'all', label: 'Tous les critères', count: summary.results.length },
-    { key: 'non_conforme', label: 'Non conformes', count: summary.nonConformes },
-    { key: 'ok', label: 'Conformes', count: summary.ok },
-    { key: 'a_verifier', label: 'À vérifier', count: summary.aVerifier },
-    { key: 'non_applicable', label: 'Non applicables', count: summary.nonApplicables },
+    { key: 'all', label: t.filterAll, count: summary.results.length },
+    { key: 'non_conforme', label: t.filterNonConforme, count: summary.nonConformes },
+    { key: 'ok', label: t.filterOk, count: summary.ok },
+    { key: 'a_verifier', label: t.filterAVerifier, count: summary.aVerifier },
+    { key: 'non_applicable', label: t.filterNonApplicable, count: summary.nonApplicables },
   ]
 
   return (
@@ -50,17 +238,17 @@ export function RgaaCriteriaList({
         <p className="text-sm text-text-muted">
           {summary.rate !== null ? (
             <>
-              Taux de conformité RGAA : <strong className="text-white">{summary.rate} %</strong>{' '}
-              ({summary.ok} conformes / {summary.tested} critères évalués, méthode officielle).{' '}
+              {t.ratePrefix} <strong className="text-white">{summary.rate} %</strong>{' '}
+              {t.rateDetail(summary.ok, summary.tested)}{' '}
               {summary.aVerifier > 0 && (
-                <>Encore <strong className="text-white">{summary.aVerifier}</strong> critères à évaluer manuellement.</>
+                <>{t.remainingBefore} <strong className="text-white">{summary.aVerifier}</strong> {t.remainingAfter}</>
               )}
             </>
           ) : (
-            'Aucun critère n’a encore pu être évalué sur cet échantillon.'
+            t.noneEvaluated
           )}
         </p>
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrer les critères par statut">
+        <div className="flex flex-wrap gap-2" role="group" aria-label={t.filterGroup}>
           {filters.map((f) => (
             <button
               key={f.key}
@@ -80,25 +268,26 @@ export function RgaaCriteriaList({
       </div>
 
       <div className="space-y-4">
-        {summary.topics.map((t) => {
-          const visible = filter === 'all' ? t.results : t.results.filter((r) => r.status === filter)
+        {summary.topics.map((tp) => {
+          const visible = filter === 'all' ? tp.results : tp.results.filter((r) => r.status === filter)
           if (visible.length === 0) return null
+          const topic = localizeTopic(lang, tp.topic)
           return (
-            <section key={t.topic.id} aria-labelledby={`rgaa-topic-${t.topic.id}`}>
+            <section key={tp.topic.id} aria-labelledby={`rgaa-topic-${tp.topic.id}`}>
               <header className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-                <h3 id={`rgaa-topic-${t.topic.id}`} className="text-sm font-bold">
-                  {t.topic.id}. {t.topic.name}
-                  <span className="ml-2 font-normal text-text-dim text-xs">{t.topic.description}</span>
+                <h3 id={`rgaa-topic-${tp.topic.id}`} className="text-sm font-bold">
+                  {tp.topic.id}. {topic.name}
+                  <span className="ml-2 font-normal text-text-dim text-xs">{topic.description}</span>
                 </h3>
                 <span className="text-xs text-text-dim tabular-nums">
-                  {t.nonConformes > 0 && (
+                  {tp.nonConformes > 0 && (
                     <>
-                      <span className="text-danger-soft font-semibold">{t.nonConformes} NC</span>
+                      <span className="text-danger-soft font-semibold">{t.ncCount(tp.nonConformes)}</span>
                       {' · '}
                     </>
                   )}
-                  {t.ok} conforme{t.ok > 1 ? 's' : ''} · {t.aVerifier} à vérifier
-                  {t.nonApplicables > 0 && <> · {t.nonApplicables} NA</>}
+                  {t.okCount(tp.ok)} · {t.toCheckCount(tp.aVerifier)}
+                  {tp.nonApplicables > 0 && <> · {t.naCount(tp.nonApplicables)}</>}
                 </span>
               </header>
               <ul className="space-y-1.5">
@@ -114,11 +303,15 @@ export function RgaaCriteriaList({
   )
 }
 
-const REVIEW_OPTIONS: { status: ReviewStatus; label: string; activeClass: string }[] = [
-  { status: 'conforme', label: 'Conforme', activeClass: 'bg-success-bg/70 text-success-soft border-success/50' },
-  { status: 'non_conforme', label: 'Non conforme', activeClass: 'bg-danger-bg/70 text-danger-soft border-danger/50' },
-  { status: 'non_applicable', label: 'Non applicable', activeClass: 'bg-raise text-white border-border-strong' },
+const REVIEW_OPTIONS: { status: ReviewStatus; statusKey: CriterionStatus; activeClass: string }[] = [
+  { status: 'conforme', statusKey: 'ok', activeClass: 'bg-success-bg/70 text-success-soft border-success/50' },
+  { status: 'non_conforme', statusKey: 'non_conforme', activeClass: 'bg-danger-bg/70 text-danger-soft border-danger/50' },
+  { status: 'non_applicable', statusKey: 'non_applicable', activeClass: 'bg-raise text-white border-border-strong' },
 ]
+
+function reviewOptionLabel(lang: Lang, statusKey: CriterionStatus): string {
+  return criterionStatusL10n(lang, statusKey).label
+}
 
 function CriterionRow({
   result,
@@ -129,8 +322,12 @@ function CriterionRow({
   onReview?: (input: ReviewInput) => void
   reviewPending?: boolean
 }) {
+  const t = useMessages(L)
+  const lang = useLang()
   const { criterion, status, openIssues, resolvedIssues, review } = result
   const meta = CRITERION_STATUS_META[status]
+  const statusLabels = criterionStatusL10n(lang, status)
+  const c = localizeCriterion(lang, criterion)
   const linked = [...openIssues, ...resolvedIssues]
   const [open, setOpen] = useState(false)
   const [note, setNote] = useState(review?.note ?? '')
@@ -142,27 +339,27 @@ function CriterionRow({
     <li className="rounded-[10px] border border-border">
       <div className="flex items-center gap-3 px-3.5 py-2.5">
         <Badge className={`${meta.className} hidden sm:inline-flex shrink-0 w-28 justify-center`}>
-          {meta.shortLabel}
+          {statusLabels.shortLabel}
         </Badge>
         <span className="flex-1 min-w-0 text-sm">
-          <Badge className={`${meta.className} sm:hidden mr-2`}>{meta.shortLabel}</Badge>
+          <Badge className={`${meta.className} sm:hidden mr-2`}>{statusLabels.shortLabel}</Badge>
           <span className="font-semibold text-text-soft">
-            <span className="text-text-dim font-normal tabular-nums">{criterion.id}</span> {criterion.title}
+            <span className="text-text-dim font-normal tabular-nums">{criterion.id}</span> {c.title}
           </span>
           <span className="ml-2 inline-flex items-center gap-1.5 align-middle">
             <Tooltip
-              label={`Comprendre le critère ${criterion.id}`}
+              label={t.tooltipLabel(criterion.id)}
               content={
                 <>
-                  <strong className="block mb-1 text-white">Pourquoi c’est important</strong>
-                  {criterion.plain}
-                  <span className="mt-2 block text-text-dim">{COVERAGE_META[criterion.coverage]}.</span>
+                  <strong className="block mb-1 text-white">{t.tooltipTitle}</strong>
+                  {c.plain}
+                  <span className="mt-2 block text-text-dim">{coverageLabel(lang, criterion.coverage)}.</span>
                 </>
               }
             />
             <span className="rounded border border-border px-1 text-[10px] text-text-dim">{criterion.level}</span>
             <span className="text-[10px] text-text-dim whitespace-nowrap">WCAG {criterion.wcag.join(', ')}</span>
-            {review && <span className="text-[10px] text-info-soft whitespace-nowrap">évalué manuellement</span>}
+            {review && <span className="text-[10px] text-info-soft whitespace-nowrap">{t.manuallyReviewed}</span>}
           </span>
         </span>
         <button
@@ -173,10 +370,10 @@ function CriterionRow({
         >
           <span className="tabular-nums">
             {openIssues.length > 0
-              ? `${openIssues.length} non-conformité${openIssues.length > 1 ? 's' : ''}`
+              ? t.issuesCount(openIssues.length)
               : onReview
-                ? 'Évaluer'
-                : 'Détail'}
+                ? t.assess
+                : t.detail}
           </span>
           <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true" className={`transition-transform ${open ? 'rotate-180' : ''}`}>
             <path d="M6 9l6 6 6-6" />
@@ -191,12 +388,12 @@ function CriterionRow({
               {linked.map((i) => (
                 <li key={i.id} className="flex items-center gap-2 text-xs">
                   <Badge className={`${SEVERITY_META[i.severity].className} shrink-0`}>
-                    {SEVERITY_META[i.severity].label}
+                    {severityLabel(lang, i.severity)}
                   </Badge>
-                  <span className="min-w-0 flex-1 truncate text-text-soft">{i.title}</span>
+                  <span className="min-w-0 flex-1 truncate text-text-soft">{localizeIssueTitle(lang, i)}</span>
                   {i.page_url && <span className="hidden md:inline shrink-0 max-w-56 truncate text-text-dim">{i.page_url}</span>}
                   {(i.status === 'fixed' || i.status === 'false_positive') && (
-                    <Badge className="bg-success-bg/60 text-success-soft border-success/40 shrink-0">Traitée</Badge>
+                    <Badge className="bg-success-bg/60 text-success-soft border-success/40 shrink-0">{t.handled}</Badge>
                   )}
                 </li>
               ))}
@@ -206,9 +403,9 @@ function CriterionRow({
           {reviewable && (
             <div className="rounded-[10px] border border-border bg-bg px-3.5 py-3">
               <p className="text-xs font-bold uppercase tracking-wider text-text-muted mb-2">
-                Évaluation manuelle (méthode RGAA)
+                {t.reviewTitle}
               </p>
-              <div className="flex flex-wrap gap-2" role="group" aria-label={`Évaluer le critère ${criterion.id}`}>
+              <div className="flex flex-wrap gap-2" role="group" aria-label={t.reviewGroup(criterion.id)}>
                 {REVIEW_OPTIONS.map((opt) => (
                   <button
                     key={opt.status}
@@ -229,7 +426,7 @@ function CriterionRow({
                         : 'border-border-strong text-text-muted hover:bg-raise hover:text-white'
                     }`}
                   >
-                    {opt.label}
+                    {reviewOptionLabel(lang, opt.statusKey)}
                   </button>
                 ))}
                 {review && (
@@ -239,12 +436,12 @@ function CriterionRow({
                     disabled={reviewPending}
                     onClick={() => onReview!({ criterionId: criterion.id, status: null, existingId: review.id })}
                   >
-                    Réinitialiser
+                    {t.reset}
                   </Button>
                 )}
               </div>
               <label htmlFor={`note-${criterion.id}`} className="mt-3 mb-1 block text-xs text-text-dim">
-                Note (facultative — utile pour justifier une dérogation ou un « non applicable ») :
+                {t.noteLabel}
               </label>
               <textarea
                 id={`note-${criterion.id}`}
@@ -252,15 +449,14 @@ function CriterionRow({
                 onChange={(e) => setNote(e.target.value)}
                 rows={2}
                 className="w-full rounded-[8px] border border-border bg-surface px-3 py-2 text-xs text-text-soft"
-                placeholder="Ex. : aucun contenu multimédia sur le site."
+                placeholder={t.notePlaceholder}
               />
             </div>
           )}
 
           {!reviewable && onReview && openIssues.length > 0 && (
             <p className="text-xs text-text-dim">
-              Ce critère a des non-conformités détectées par le moteur : corrigez-les (ou marquez-les en faux
-              positif) avant de l'évaluer manuellement.
+              {t.blockedByIssues}
             </p>
           )}
 
@@ -270,7 +466,7 @@ function CriterionRow({
             rel="noreferrer"
             className="inline-block text-xs text-link underline hover:text-white"
           >
-            Texte officiel du critère {criterion.id} et ses tests (accessibilite.numerique.gouv.fr) ↗
+            {t.officialText(criterion.id)}
           </a>
         </div>
       )}

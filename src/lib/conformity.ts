@@ -1,3 +1,4 @@
+import type { Lang } from '@/i18n'
 import type { CriterionReview, ScanIssue } from '@/lib/database.types'
 import { criterionForRule, RGAA_CRITERIA, RGAA_TOPICS, type RgaaCriterion } from '@/lib/rgaa'
 
@@ -166,6 +167,82 @@ export const CRITERION_STATUS_META: Record<
     shortLabel: 'À vérifier',
     className: 'bg-warning-bg/60 text-warning-soft border-warning/40',
   },
+}
+
+/* ------------------------------------------------------------------ */
+/* Libellés localisés (les *_META restent en français pour les exports) */
+/* ------------------------------------------------------------------ */
+
+const CRITERION_STATUS_L10N: Record<Lang, Record<CriterionStatus, { label: string; shortLabel: string }>> = {
+  fr: {
+    ok: { label: 'Conforme', shortLabel: 'Conforme' },
+    non_conforme: { label: 'Non conforme', shortLabel: 'Non conforme' },
+    non_applicable: { label: 'Non applicable', shortLabel: 'Non applicable' },
+    a_verifier: { label: 'À vérifier manuellement', shortLabel: 'À vérifier' },
+  },
+  en: {
+    ok: { label: 'Compliant', shortLabel: 'Compliant' },
+    non_conforme: { label: 'Non-compliant', shortLabel: 'Non-compliant' },
+    non_applicable: { label: 'Not applicable', shortLabel: 'Not applicable' },
+    a_verifier: { label: 'Manual check required', shortLabel: 'To check' },
+  },
+  de: {
+    ok: { label: 'Konform', shortLabel: 'Konform' },
+    non_conforme: { label: 'Nicht konform', shortLabel: 'Nicht konform' },
+    non_applicable: { label: 'Nicht anwendbar', shortLabel: 'Nicht anwendbar' },
+    a_verifier: { label: 'Manuelle Prüfung erforderlich', shortLabel: 'Zu prüfen' },
+  },
+  es: {
+    ok: { label: 'Conforme', shortLabel: 'Conforme' },
+    non_conforme: { label: 'No conforme', shortLabel: 'No conforme' },
+    non_applicable: { label: 'No aplicable', shortLabel: 'No aplicable' },
+    a_verifier: { label: 'Requiere verificación manual', shortLabel: 'Por verificar' },
+  },
+  it: {
+    ok: { label: 'Conforme', shortLabel: 'Conforme' },
+    non_conforme: { label: 'Non conforme', shortLabel: 'Non conforme' },
+    non_applicable: { label: 'Non applicabile', shortLabel: 'Non applicabile' },
+    a_verifier: { label: 'Richiede verifica manuale', shortLabel: 'Da verificare' },
+  },
+}
+
+const COVERAGE_L10N: Record<Lang, Record<RgaaCriterion['coverage'], string>> = {
+  fr: {
+    auto: 'Testé automatiquement',
+    partial: 'Testé partiellement (compléter par une revue manuelle)',
+    manual: 'Nécessite une vérification humaine',
+  },
+  en: {
+    auto: 'Tested automatically',
+    partial: 'Partially tested (complete with a manual review)',
+    manual: 'Requires a human check',
+  },
+  de: {
+    auto: 'Automatisch geprüft',
+    partial: 'Teilweise geprüft (durch manuelle Prüfung ergänzen)',
+    manual: 'Erfordert eine manuelle Prüfung',
+  },
+  es: {
+    auto: 'Comprobado automáticamente',
+    partial: 'Comprobado parcialmente (complete con una revisión manual)',
+    manual: 'Requiere una verificación humana',
+  },
+  it: {
+    auto: 'Verificato automaticamente',
+    partial: 'Verificato parzialmente (da completare con una revisione manuale)',
+    manual: 'Richiede una verifica umana',
+  },
+}
+
+export function criterionStatusL10n(
+  lang: Lang,
+  status: CriterionStatus,
+): { label: string; shortLabel: string } {
+  return (CRITERION_STATUS_L10N[lang] ?? CRITERION_STATUS_L10N.fr)[status]
+}
+
+export function coverageLabel(lang: Lang, coverage: RgaaCriterion['coverage']): string {
+  return (COVERAGE_L10N[lang] ?? COVERAGE_L10N.fr)[coverage]
 }
 
 export const COVERAGE_META: Record<RgaaCriterion['coverage'], string> = {

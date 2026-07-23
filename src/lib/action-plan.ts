@@ -1,3 +1,4 @@
+import type { Lang } from '@/i18n'
 import type { ScanIssue, Severity } from '@/lib/database.types'
 import { SEVERITY_META } from '@/lib/format'
 import { criterionForRule } from '@/lib/rgaa'
@@ -28,6 +29,18 @@ export const EFFORT_META: Record<ActionEffort, { label: string; className: strin
   quick: { label: 'Correction rapide', className: 'bg-success-bg/60 text-success-soft border-success/40' },
   medium: { label: 'Effort moyen', className: 'bg-warning-bg/60 text-warning-soft border-warning/40' },
   complex: { label: 'Chantier', className: 'bg-info-bg/60 text-info-soft border-info/40' },
+}
+
+const EFFORT_L10N: Record<Lang, Record<ActionEffort, string>> = {
+  fr: { quick: 'Correction rapide', medium: 'Effort moyen', complex: 'Chantier' },
+  en: { quick: 'Quick fix', medium: 'Medium effort', complex: 'Larger project' },
+  de: { quick: 'Schnelle Korrektur', medium: 'Mittlerer Aufwand', complex: 'Größeres Vorhaben' },
+  es: { quick: 'Corrección rápida', medium: 'Esfuerzo medio', complex: 'Proyecto mayor' },
+  it: { quick: 'Correzione rapida', medium: 'Impegno medio', complex: 'Intervento importante' },
+}
+
+export function effortLabel(lang: Lang, effort: ActionEffort): string {
+  return (EFFORT_L10N[lang] ?? EFFORT_L10N.fr)[effort]
 }
 
 /** Estimation grossière : la plupart des corrections « attribut manquant » sont rapides. */
