@@ -42,6 +42,8 @@ type ReportL10n = {
   auditedPage: string
   /** Séparateur « libellé → valeur » (le français insère une espace avant le deux-points). */
   labelSep: string
+  /** Pourcentage formaté (le français insère une espace avant le %, l'anglais non). */
+  pct: (value: number) => string
   pagesAnalysed: (n: number) => string
   mdPagesAnalysed: (n: number) => string
 
@@ -148,6 +150,7 @@ const L10N: Record<Lang, ReportL10n> = {
     subtitle: (date) => `Audit automatisé RGAA 4.1.2 / WCAG 2.2 réalisé le ${date}`,
     auditedPage: 'Page auditée',
     labelSep: ' : ',
+    pct: (v) => `${v} %`,
     pagesAnalysed: (n) => `${n} page${n > 1 ? 's' : ''} analysée${n > 1 ? 's' : ''}`,
     mdPagesAnalysed: (n) => `${n} page(s) analysée(s)`,
 
@@ -299,6 +302,7 @@ selon la méthode technique du RGAA 4.1.2${method}.`,
     subtitle: (date) => `Automated RGAA 4.1.2 / WCAG 2.2 audit carried out on ${date}`,
     auditedPage: 'Audited page',
     labelSep: ': ',
+    pct: (v) => `${v}%`,
     pagesAnalysed: (n) => `${n} page${n > 1 ? 's' : ''} analysed`,
     mdPagesAnalysed: (n) => `${n} page(s) analysed`,
 
@@ -450,6 +454,7 @@ following the technical method of RGAA 4.1.2${method}.`,
     subtitle: (date) => `Automatisierte Prüfung nach RGAA 4.1.2 / WCAG 2.2 vom ${date}`,
     auditedPage: 'Geprüfte Seite',
     labelSep: ': ',
+    pct: (v) => `${v} %`,
     pagesAnalysed: (n) => `${n} Seite${n > 1 ? 'n' : ''} analysiert`,
     mdPagesAnalysed: (n) => `${n} Seite(n) analysiert`,
 
@@ -608,6 +613,7 @@ Konforme nach der technischen Methode des RGAA 4.1.2${method}.`,
     subtitle: (date) => `Auditoría automatizada RGAA 4.1.2 / WCAG 2.2 realizada el ${date}`,
     auditedPage: 'Página auditada',
     labelSep: ': ',
+    pct: (v) => `${v} %`,
     pagesAnalysed: (n) => `${n} página${n > 1 ? 's' : ''} analizada${n > 1 ? 's' : ''}`,
     mdPagesAnalysed: (n) => `${n} página(s) analizada(s)`,
 
@@ -766,6 +772,7 @@ según el método técnico del RGAA 4.1.2${method}.`,
     subtitle: (date) => `Audit automatizzato RGAA 4.1.2 / WCAG 2.2 effettuato il ${date}`,
     auditedPage: 'Pagina sottoposta ad audit',
     labelSep: ': ',
+    pct: (v) => `${v} %`,
     pagesAnalysed: (n) => (n > 1 ? `${n} pagine analizzate` : `${n} pagina analizzata`),
     mdPagesAnalysed: (n) => (n > 1 ? `${n} pagine analizzate` : `${n} pagina analizzata`),
 
@@ -1235,7 +1242,7 @@ export function buildAttestationHtml(
 <p>${T.attestParagraph(escapeHtml(siteName), linkHtml, date, method)}</p>
 
 <div class="rate">
-  <strong>${summary.rate !== null ? `${summary.rate} %` : '—'}</strong>
+  <strong>${summary.rate !== null ? T.pct(summary.rate) : '—'}</strong>
   <small>${T.attestRateCaption}</small>
 </div>
 
@@ -1307,14 +1314,14 @@ export function buildAuditReportMarkdown(
   lines.push(`| ${T.mdIndicator} | ${T.mdValue} |`)
   lines.push('|---|---|')
   if (!scope?.pageUrl) {
-    lines.push(`| ${T.scoreGlobal} | ${scan.score !== null ? `${Math.round(scan.score)} %` : '—'} |`)
-    lines.push(`| RGAA 4.1.2 | ${scan.rgaa_score !== null ? `${Math.round(scan.rgaa_score)} %` : '—'} |`)
-    lines.push(`| WCAG 2.2 AA | ${scan.wcag_score !== null ? `${Math.round(scan.wcag_score)} %` : '—'} |`)
+    lines.push(`| ${T.scoreGlobal} | ${scan.score !== null ? T.pct(Math.round(scan.score)) : '—'} |`)
+    lines.push(`| RGAA 4.1.2 | ${scan.rgaa_score !== null ? T.pct(Math.round(scan.rgaa_score)) : '—'} |`)
+    lines.push(`| WCAG 2.2 AA | ${scan.wcag_score !== null ? T.pct(Math.round(scan.wcag_score)) : '—'} |`)
   } else {
     const pageScore = scan.page_scores?.find((p) => p.url === scope.pageUrl)?.score ?? null
-    lines.push(`| ${T.scorePage} | ${pageScore !== null ? `${Math.round(pageScore)} %` : '—'} |`)
+    lines.push(`| ${T.scorePage} | ${pageScore !== null ? T.pct(Math.round(pageScore)) : '—'} |`)
   }
-  if (summary.rate !== null) lines.push(`| ${T.mdRateRow} | ${summary.rate} % |`)
+  if (summary.rate !== null) lines.push(`| ${T.mdRateRow} | ${T.pct(summary.rate)} |`)
   lines.push(`| ${T.mdOpenIssuesRow} | ${open.length} |`)
   lines.push('')
   for (const l of T.mdLegalLines) lines.push(l)
