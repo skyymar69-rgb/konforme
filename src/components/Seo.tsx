@@ -13,13 +13,17 @@ type SeoProps = {
   type?: 'website' | 'article'
   noindex?: boolean
   jsonLd?: JsonLd[]
+  /** Langue de la page (défaut fr). */
+  lang?: string
+  /** Versions linguistiques alternatives : hrefLang → chemin. */
+  alternates?: Record<string, string>
 }
 
 /**
  * Métadonnées par route. React 19 hisse nativement <title>, <meta> et <link>
  * dans le <head> du document.
  */
-export function Seo({ title, description, path, type = 'website', noindex, jsonLd }: SeoProps) {
+export function Seo({ title, description, path, type = 'website', noindex, jsonLd, lang, alternates }: SeoProps) {
   const fullTitle = title.includes(SITE_NAME) ? title : `${title} — ${SITE_NAME}`
   const url = `${SITE_URL}${path === '/' ? '' : path}`
   return (
@@ -27,6 +31,11 @@ export function Seo({ title, description, path, type = 'website', noindex, jsonL
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
       <link rel="canonical" href={url} />
+      {lang && <meta property="og:locale" content={lang} />}
+      {alternates &&
+        Object.entries(alternates).map(([hrefLang, p]) => (
+          <link key={hrefLang} rel="alternate" hrefLang={hrefLang} href={`${SITE_URL}${p === '/' ? '' : p}`} />
+        ))}
       {noindex && <meta name="robots" content="noindex, nofollow" />}
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description} />

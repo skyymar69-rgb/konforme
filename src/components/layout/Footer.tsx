@@ -11,6 +11,7 @@ const SECTIONS = [
       { to: '/rgaa', label: 'RGAA' },
       { to: '/guide-accessibilite', label: 'Guide EAA / RGAA' },
       { to: '/glossaire', label: 'Glossaire RGAA' },
+      { to: '/developpeurs', label: 'API & CI (développeurs)' },
     ],
   },
   {

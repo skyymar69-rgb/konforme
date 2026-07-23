@@ -163,6 +163,8 @@ export function Landing() {
         title="Konforme — Accessibilité web RGAA & WCAG automatisée"
         description="Scannez, corrigez et surveillez l'accessibilité de votre site. Audit RGAA 4.1.2 & WCAG 2.2 automatisé, corrections guidées, déclaration légale. EAA 2025 en vigueur."
         path="/"
+        lang="fr"
+        alternates={{ fr: '/', en: '/en', de: '/de', es: '/es', it: '/it', 'x-default': '/en' }}
         jsonLd={[
           ORGANIZATION_JSONLD,
           SOFTWARE_JSONLD,

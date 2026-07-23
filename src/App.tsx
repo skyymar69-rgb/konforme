@@ -26,6 +26,9 @@ const GuideAccessibilite = lazy(() =>
 )
 const Glossaire = lazy(() => import('@/pages/Glossaire').then((m) => ({ default: m.Glossaire })))
 const PublicReport = lazy(() => import('@/pages/PublicReport').then((m) => ({ default: m.PublicReport })))
+const CriterePage = lazy(() => import('@/pages/CriterePage').then((m) => ({ default: m.CriterePage })))
+const Developpeurs = lazy(() => import('@/pages/Developpeurs').then((m) => ({ default: m.Developpeurs })))
+const LandingIntl = lazy(() => import('@/pages/LandingIntl').then((m) => ({ default: m.LandingIntl })))
 const Pricing = lazy(() => import('@/pages/Pricing').then((m) => ({ default: m.Pricing })))
 const About = lazy(() => import('@/pages/About').then((m) => ({ default: m.About })))
 const Contact = lazy(() => import('@/pages/Contact').then((m) => ({ default: m.Contact })))
@@ -55,9 +58,15 @@ function App() {
               <Route path="blog" element={<Blog />} />
               <Route path="blog/:slug" element={<BlogPost />} />
               <Route path="rgaa" element={<Rgaa />} />
+              <Route path="rgaa/critere/:id" element={<CriterePage />} />
               <Route path="guide-accessibilite" element={<GuideAccessibilite />} />
               <Route path="glossaire" element={<Glossaire />} />
+              <Route path="developpeurs" element={<Developpeurs />} />
               <Route path="r/:token" element={<PublicReport />} />
+              <Route path="en" element={<LandingIntl lang="en" />} />
+              <Route path="de" element={<LandingIntl lang="de" />} />
+              <Route path="es" element={<LandingIntl lang="es" />} />
+              <Route path="it" element={<LandingIntl lang="it" />} />
               <Route path="tarifs" element={<Pricing />} />
               <Route path="a-propos" element={<About />} />
               <Route path="contact" element={<Contact />} />

@@ -16,14 +16,25 @@ const GOOGLE_AUTH_ENABLED = import.meta.env.VITE_GOOGLE_AUTH === 'on'
 export function Login() {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail, user } = useAuth()
   const [mode, setMode] = useState<Mode>('signin')
-  // Retour d'un flux OAuth interrompu (?error=oauth|callback) : erreur explicite
+  // Retour d'un flux OAuth interrompu : erreur explicite. Appwrite remplace
+  // parfois notre ?error=oauth par un objet JSON décrivant l'échec provider.
   const [error, setError] = useState<string | null>(() => {
     const oauthError = new URLSearchParams(window.location.search).get('error')
+    if (!oauthError) return null
     if (oauthError === 'oauth')
       return 'La connexion Google a été annulée ou a échoué. Réessayez, ou utilisez votre email et mot de passe.'
     if (oauthError === 'callback')
       return "La connexion Google n'a pas pu aboutir (session non créée). Réessayez, ou utilisez votre email et mot de passe."
-    return null
+    try {
+      const parsed = JSON.parse(oauthError) as { type?: string; message?: string }
+      if (parsed.type === 'user_oauth2_provider_failure') {
+        return 'Google a refusé la connexion (configuration du fournisseur en cours de correction). Utilisez votre email et mot de passe en attendant.'
+      }
+      if (parsed.message) return `Connexion Google impossible : ${parsed.message}`
+    } catch {
+      /* paramètre inattendu : message générique */
+    }
+    return 'La connexion Google a échoué. Utilisez votre email et mot de passe.'
   })
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)

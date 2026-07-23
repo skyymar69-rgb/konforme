@@ -1,4 +1,4 @@
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useState, useRef, useEffect } from 'react'
 import { Logo } from '@/components/ui/logo'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,32 @@ const NAV = [
   { to: '/guide-accessibilite', label: 'Guide EAA' },
   { to: '/a-propos', label: 'À propos' },
 ]
+
+/** Sélecteur de langue : la version française est l'app complète, les autres
+ * langues pointent vers les landings européennes (/en, /de, /es, /it). */
+function LangSelect() {
+  const navigate = useNavigate()
+  const current = ['/en', '/de', '/es', '/it'].includes(window.location.pathname)
+    ? window.location.pathname.slice(1)
+    : 'fr'
+  return (
+    <label className="hidden sm:flex items-center gap-1.5 text-xs text-text-muted">
+      <span aria-hidden="true">🌐</span>
+      <span className="sr-only">Langue du site</span>
+      <select
+        value={current}
+        onChange={(e) => navigate(e.target.value === 'fr' ? '/' : `/${e.target.value}`)}
+        className="rounded-[8px] border border-border bg-bg px-1.5 py-1 text-xs text-text-muted"
+      >
+        <option value="fr">FR</option>
+        <option value="en">EN</option>
+        <option value="de">DE</option>
+        <option value="es">ES</option>
+        <option value="it">IT</option>
+      </select>
+    </label>
+  )
+}
 
 export function Header() {
   const { user, signOut } = useAuth()
@@ -62,6 +88,7 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <LangSelect />
           <ThemeToggle />
           <button
             type="button"

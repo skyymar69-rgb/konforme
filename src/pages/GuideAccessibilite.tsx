@@ -306,6 +306,10 @@ export function GuideAccessibilite() {
                     <p className="mt-1 text-sm text-text-soft leading-relaxed">{c.plain}</p>
                     <p className="mt-1.5 text-xs text-text-dim">
                       Niveau {c.level} · WCAG {c.wcag.join(', ')} · {COVERAGE_META[c.coverage]} ·{' '}
+                      <Link to={`/rgaa/critere/${c.id}`} className="underline text-link hover:text-white">
+                        fiche détaillée
+                      </Link>{' '}
+                      ·{' '}
                       <a
                         href={rgaaCriterionUrl(c.id)}
                         target="_blank"
