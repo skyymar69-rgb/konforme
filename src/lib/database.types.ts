@@ -51,8 +51,24 @@ export type Scan = {
   wcag_score: number | null
   page_scores: PageScore[] | null
   error: string | null
+  /** Jeton de partage public du rapport (null = non partagé). */
+  share_token: string | null
   created_at: string
   sites?: { name: string; url: string }
+}
+
+/** Alerte créée par le moteur (régression de score après un audit). */
+export type Alert = {
+  id: string
+  organization_id: string
+  site_id: string
+  scan_id: string | null
+  type: 'regression'
+  message: string
+  previous_score: number | null
+  new_score: number | null
+  read: boolean
+  created_at: string
 }
 
 export type ScanIssue = {

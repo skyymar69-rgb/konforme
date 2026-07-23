@@ -9,10 +9,19 @@ import { Seo } from '@/components/Seo'
 import { Skeleton } from '@/components/ui/skeleton'
 import { BadgeGenerator } from '@/components/report/BadgeGenerator'
 import { RgaaCriteriaList, type ReviewInput } from '@/components/report/RgaaCriteriaList'
-import { useCriteriaReviews, useScan, useScanIssues, useSetCriterionReview, useUpdateIssueStatus } from '@/lib/queries'
+import {
+  useCriteriaReviews,
+  useScan,
+  useScanIssues,
+  useScans,
+  useSetCriterionReview,
+  useSetScanShare,
+  useUpdateIssueStatus,
+} from '@/lib/queries'
 import { functions, SCAN_FUNCTION_ID } from '@/lib/appwrite'
 import { buildActionPlan, EFFORT_META, quickWins } from '@/lib/action-plan'
 import { computeConformity } from '@/lib/conformity'
+import { diffScans } from '@/lib/diff'
 import {
   downloadAttestation,
   downloadAuditCsv,
@@ -29,7 +38,7 @@ import type { CriterionReview, Scan, ScanIssue, Severity } from '@/lib/database.
 
 const SEVERITIES: Severity[] = ['critical', 'serious', 'moderate', 'minor']
 
-type TabKey = 'issues' | 'plan' | 'criteria' | 'pages' | 'badge'
+type TabKey = 'issues' | 'plan' | 'evolution' | 'criteria' | 'pages' | 'badge'
 
 export function ScanDetail() {
   const { scanId } = useParams<{ scanId: string }>()
@@ -68,6 +77,21 @@ export function ScanDetail() {
 
   const { data: reviews } = useCriteriaReviews(scan?.site_id)
   const setReview = useSetCriterionReview()
+
+  // Audit précédent du même site (pour l'onglet Évolution)
+  const { data: siteScans } = useScans(scan?.organization_id, scan?.site_id)
+  const prevScan = useMemo(
+    () =>
+      (siteScans ?? []).find(
+        (s) => s.id !== scan?.id && s.status === 'done' && s.created_at < (scan?.created_at ?? ''),
+      ) ?? null,
+    [siteScans, scan],
+  )
+  const { data: prevIssues } = useScanIssues(prevScan?.id)
+  const evolution = useMemo(
+    () => (prevScan && prevIssues ? diffScans(issues ?? [], prevIssues) : null),
+    [issues, prevIssues, prevScan],
+  )
   const conformity = useMemo(
     () => computeConformity(issues ?? [], undefined, reviews),
     [issues, reviews],
@@ -116,6 +140,7 @@ export function ScanDetail() {
   const tabs: { key: TabKey; label: string }[] = [
     { key: 'issues', label: `Non-conformités (${filtered.length})` },
     { key: 'plan', label: `Plan d'action (${plan.length})` },
+    { key: 'evolution', label: 'Évolution' },
     { key: 'criteria', label: 'Les 106 critères RGAA' },
     { key: 'pages', label: `Pages (${scan.page_scores?.length ?? 0})` },
     { key: 'badge', label: 'Badge de conformité' },
@@ -141,7 +166,10 @@ export function ScanDetail() {
           </p>
         </div>
         {scan.status === 'done' && issues && (
-          <ExportMenu scan={scan} issues={issues} reviews={reviews} />
+          <div className="flex flex-col items-end gap-2">
+            <ExportMenu scan={scan} issues={issues} reviews={reviews} />
+            <SharePanel scan={scan} />
+          </div>
         )}
       </header>
 
@@ -323,6 +351,78 @@ export function ScanDetail() {
               </Card>
             )}
 
+            {tab === 'evolution' && (
+              <Card>
+                <h2 className="text-lg font-bold mb-1">Évolution depuis l'audit précédent</h2>
+                {!prevScan ? (
+                  <p className="text-sm text-text-muted py-8 text-center">
+                    Premier audit de ce site : l'évolution apparaîtra dès le prochain audit.
+                  </p>
+                ) : !evolution ? (
+                  <p role="status" className="text-sm text-text-muted py-8 text-center">Chargement de la comparaison…</p>
+                ) : (
+                  <>
+                    <p className="text-xs text-text-dim mb-5">
+                      Comparaison avec l'audit du {formatDate(prevScan.created_at, true)}.
+                      {scan.score !== null && prevScan.score !== null && (
+                        <>
+                          {' '}Score :{' '}
+                          <strong style={{ color: scoreColor(scan.score) }}>
+                            {Math.round(prevScan.score)} % → {Math.round(scan.score)} %
+                          </strong>{' '}
+                          ({scan.score - prevScan.score >= 0 ? '+' : ''}
+                          {Math.round((scan.score - prevScan.score) * 10) / 10} pts)
+                        </>
+                      )}
+                    </p>
+                    <div className="grid gap-4 sm:grid-cols-3 mb-6">
+                      <div className="rounded-[12px] border border-danger/30 bg-danger-bg/20 px-4 py-3">
+                        <span className="block text-2xl font-extrabold text-danger-soft">
+                          +{evolution.appeared.length}
+                        </span>
+                        <span className="text-sm text-text-soft">nouvelles non-conformités</span>
+                      </div>
+                      <div className="rounded-[12px] border border-success/30 bg-success-bg/20 px-4 py-3">
+                        <span className="block text-2xl font-extrabold text-success-soft">
+                          −{evolution.resolved.length}
+                        </span>
+                        <span className="text-sm text-text-soft">non-conformités résolues</span>
+                      </div>
+                      <div className="rounded-[12px] border border-border px-4 py-3">
+                        <span className="block text-2xl font-extrabold">{evolution.persisting.length}</span>
+                        <span className="text-sm text-text-soft">toujours présentes</span>
+                      </div>
+                    </div>
+                    {evolution.appeared.length > 0 && (
+                      <section className="mb-5">
+                        <h3 className="text-sm font-bold mb-2 text-danger-soft">Apparues depuis le dernier audit</h3>
+                        <ul className="space-y-1.5">
+                          {evolution.appeared.map((i) => (
+                            <EvolutionRow key={i.id} issue={i} />
+                          ))}
+                        </ul>
+                      </section>
+                    )}
+                    {evolution.resolved.length > 0 && (
+                      <section>
+                        <h3 className="text-sm font-bold mb-2 text-success-soft">Résolues depuis le dernier audit</h3>
+                        <ul className="space-y-1.5">
+                          {evolution.resolved.map((i) => (
+                            <EvolutionRow key={i.id} issue={i} />
+                          ))}
+                        </ul>
+                      </section>
+                    )}
+                    {evolution.appeared.length === 0 && evolution.resolved.length === 0 && (
+                      <p className="text-sm text-text-muted py-4 text-center">
+                        Aucun changement entre les deux audits.
+                      </p>
+                    )}
+                  </>
+                )}
+              </Card>
+            )}
+
             {tab === 'criteria' && (
               <Card>
                 <h2 className="text-lg font-bold mb-1">Les 106 critères du RGAA 4.1.2</h2>
@@ -443,6 +543,73 @@ function ExportMenu({
       </Button>
       <Button variant="ghost" size="sm" onClick={() => downloadAuditJson(scan, issues)}>
         JSON
+      </Button>
+    </div>
+  )
+}
+
+function EvolutionRow({ issue }: { issue: ScanIssue }) {
+  return (
+    <li className="flex items-center gap-3 rounded-[10px] border border-border px-3.5 py-2 text-sm">
+      <Badge className={`${SEVERITY_META[issue.severity].className} shrink-0`}>
+        {SEVERITY_META[issue.severity].label}
+      </Badge>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate font-semibold">{issue.title}</span>
+        <span className="block truncate text-xs text-text-dim">
+          {issue.rule_id}
+          {issue.page_url ? ` · ${issue.page_url}` : ''}
+        </span>
+      </span>
+    </li>
+  )
+}
+
+/** Partage public du rapport : lien /r/:token en lecture seule, révocable. */
+function SharePanel({ scan }: { scan: Scan }) {
+  const setShare = useSetScanShare()
+  const [copied, setCopied] = useState(false)
+  const shareUrl = scan.share_token ? `${window.location.origin}/r/${scan.share_token}` : null
+
+  async function copy() {
+    if (!shareUrl) return
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    } catch {
+      /* clipboard indisponible */
+    }
+  }
+
+  if (!shareUrl) {
+    return (
+      <Button
+        size="sm"
+        variant="outline"
+        disabled={setShare.isPending}
+        onClick={() => setShare.mutate({ scanId: scan.id, enable: true })}
+      >
+        {setShare.isPending ? 'Création du lien…' : '🔗 Partager le rapport (lien public)'}
+      </Button>
+    )
+  }
+
+  return (
+    <div className="flex flex-wrap items-center justify-end gap-2">
+      <code className="max-w-72 truncate rounded-[8px] border border-border bg-bg px-2.5 py-1.5 text-xs text-text-soft">
+        {shareUrl}
+      </code>
+      <Button size="sm" variant="outline" onClick={() => void copy()}>
+        {copied ? '✓ Copié !' : 'Copier'}
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        disabled={setShare.isPending}
+        onClick={() => setShare.mutate({ scanId: scan.id, enable: false })}
+      >
+        Révoquer
       </Button>
     </div>
   )

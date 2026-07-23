@@ -11,7 +11,13 @@ const axe = require('axe-core')
 const axeLocaleFr = require('axe-core/locales/fr.json')
 
 const DB_ID = 'konforme'
-const T = { sites: 'sites', scans: 'scans', scan_issues: 'scan_issues' }
+const T = {
+  sites: 'sites',
+  scans: 'scans',
+  scan_issues: 'scan_issues',
+  criteria_reviews: 'criteria_reviews',
+  alerts: 'alerts',
+}
 
 const DEFAULT_MAX_PAGES = 5
 const MAX_PAGES_HARD_CAP = 30
@@ -1128,6 +1134,46 @@ function computeScores(pages) {
 }
 
 /* ------------------------------------------------------------------ */
+/* Alertes de régression                                               */
+/* ------------------------------------------------------------------ */
+
+// Baisse de score (en points) à partir de laquelle une alerte est créée
+const REGRESSION_THRESHOLD = 5
+
+/**
+ * Envoie l'alerte par email aux membres de l'équipe via Resend, si la clé
+ * RESEND_API_KEY est configurée sur la fonction. Sans clé : silencieux
+ * (l'alerte in-app reste créée).
+ */
+async function sendRegressionEmail({ teams, teamId, siteName, scanId, message, log }) {
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) {
+    log('RESEND_API_KEY absent : alerte in-app uniquement (pas d’email).')
+    return
+  }
+  try {
+    const memberships = await teams.listMemberships({ teamId, queries: [Query.limit(10)] })
+    const to = memberships.memberships.map((m) => m.userEmail).filter(Boolean).slice(0, 5)
+    if (to.length === 0) return
+    const appUrl = process.env.APP_URL || 'https://konforme-neon.vercel.app'
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        from: process.env.ALERT_EMAIL_FROM || 'Konforme <onboarding@resend.dev>',
+        to,
+        subject: `⚠ Régression d'accessibilité — ${siteName}`,
+        html: `<p>${message}</p><p><a href="${appUrl}/dashboard/scans/${scanId}">Voir le rapport détaillé</a></p><p style="color:#666;font-size:12px">Alerte automatique Konforme — surveillance d'accessibilité RGAA.</p>`,
+      }),
+    })
+    if (!r.ok) log(`Envoi email Resend ${r.status}`)
+    else log(`Alerte envoyée par email à ${to.length} destinataire(s)`)
+  } catch (e) {
+    log(`Email de régression non envoyé : ${e.message || e}`)
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Handler Appwrite                                                    */
 /* ------------------------------------------------------------------ */
 
@@ -1202,6 +1248,93 @@ Pas de préambule, pas de conclusion générique.`
       error(String(e))
       return res.json({ error: "L'assistant IA est momentanément indisponible." }, 502)
     }
+  }
+
+  /* ---- Mode rapport partagé : { report: { token } } — lecture publique ---- */
+  if (!body.scan_id && !body.url && body.report) {
+    const token = String(body.report.token || '')
+    if (!/^[A-Za-z0-9_-]{16,64}$/.test(token)) {
+      return res.json({ error: 'Lien de partage invalide.' }, 422)
+    }
+    let found
+    try {
+      found = await tables.listRows({
+        databaseId: DB_ID,
+        tableId: T.scans,
+        queries: [Query.equal('share_token', token), Query.limit(1)],
+      })
+    } catch (e) {
+      error(String(e))
+      return res.json({ error: 'Partage indisponible (base non migrée).' }, 503)
+    }
+    const s = found.rows[0]
+    if (!s || s.status !== 'done') {
+      return res.json({ error: 'Rapport introuvable ou lien révoqué.' }, 404)
+    }
+    const issues = []
+    let cursor
+    for (;;) {
+      const q = [Query.equal('scan_id', s.$id), Query.limit(100)]
+      if (cursor) q.push(Query.cursorAfter(cursor))
+      const r = await tables.listRows({ databaseId: DB_ID, tableId: T.scan_issues, queries: q })
+      issues.push(
+        ...r.rows.map((i) => ({
+          id: i.$id,
+          rule_id: i.rule_id,
+          severity: i.severity,
+          category: i.category,
+          title: i.title,
+          description: i.description,
+          page_url: i.page_url,
+          selector: i.selector,
+          html_snippet: i.html_snippet,
+          suggested_fix: i.suggested_fix,
+          status: i.status,
+          created_at: i.$createdAt,
+        })),
+      )
+      if (r.rows.length < 100) break
+      cursor = r.rows[r.rows.length - 1].$id
+    }
+    let reviews = []
+    try {
+      const r = await tables.listRows({
+        databaseId: DB_ID,
+        tableId: T.criteria_reviews,
+        queries: [Query.equal('site_id', s.site_id), Query.limit(200)],
+      })
+      reviews = r.rows.map((x) => ({
+        criterion_id: x.criterion_id,
+        status: x.status,
+        note: x.note ?? null,
+        reviewed_at: x.reviewed_at ?? x.$updatedAt,
+      }))
+    } catch {
+      /* table absente : le rapport public reste servi sans évaluations */
+    }
+    let pageScores = null
+    try {
+      const parsed = JSON.parse(s.page_scores || 'null')
+      if (Array.isArray(parsed)) pageScores = parsed
+    } catch {
+      /* JSON tronqué */
+    }
+    log(`Rapport partagé servi : scan ${s.$id}`)
+    return res.json({
+      site: { name: s.site_name ?? '—', url: s.site_url ?? '' },
+      scan: {
+        created_at: s.$createdAt,
+        finished_at: s.finished_at ?? null,
+        pages_count: s.pages_count ?? 0,
+        issues_count: s.issues_count ?? 0,
+        score: s.score ?? null,
+        rgaa_score: s.rgaa_score ?? null,
+        wcag_score: s.wcag_score ?? null,
+        page_scores: pageScores,
+      },
+      issues,
+      reviews,
+    })
   }
 
   /* ---- Mode public : { url } sans compte — mini-rapport immédiat ---- */
@@ -1409,6 +1542,52 @@ Pas de préambule, pas de conclusion générique.`
       rowId: scan.site_id,
       data: { last_scan_at: finishedAt, last_score: scores.score },
     }).catch(() => {})
+
+    // Alerte de régression : baisse de plus de 5 points par rapport au
+    // dernier audit terminé du même site (typiquement après une mise en prod).
+    try {
+      const prevList = await tables.listRows({
+        databaseId: DB_ID,
+        tableId: T.scans,
+        queries: [
+          Query.equal('site_id', scan.site_id),
+          Query.equal('status', 'done'),
+          Query.orderDesc('$createdAt'),
+          Query.limit(3),
+        ],
+      })
+      const prev = prevList.rows.find((r) => r.$id !== scanId)
+      if (
+        prev &&
+        typeof prev.score === 'number' &&
+        typeof scores.score === 'number' &&
+        scores.score < prev.score - REGRESSION_THRESHOLD
+      ) {
+        const siteName = scan.site_name || scan.site_url || 'votre site'
+        const message = `Régression détectée sur ${siteName} : le score de conformité est passé de ${Math.round(prev.score)} % à ${Math.round(scores.score)} %.`
+        await tables.createRow({
+          databaseId: DB_ID,
+          tableId: T.alerts,
+          rowId: 'unique()',
+          data: {
+            team_id: scan.team_id,
+            site_id: scan.site_id,
+            scan_id: scanId,
+            type: 'regression',
+            message: message.slice(0, 500),
+            previous_score: prev.score,
+            new_score: scores.score,
+            read: false,
+          },
+          permissions,
+        })
+        log(`Alerte de régression créée (${Math.round(prev.score)} → ${Math.round(scores.score)})`)
+        await sendRegressionEmail({ teams, teamId: scan.team_id, siteName, scanId, message, log })
+      }
+    } catch (e) {
+      // La détection ne doit jamais faire échouer un scan réussi
+      log(`Détection de régression ignorée : ${e.message || e}`)
+    }
 
     return res.json({
       scan_id: scanId,

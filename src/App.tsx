@@ -25,6 +25,7 @@ const GuideAccessibilite = lazy(() =>
   import('@/pages/GuideAccessibilite').then((m) => ({ default: m.GuideAccessibilite })),
 )
 const Glossaire = lazy(() => import('@/pages/Glossaire').then((m) => ({ default: m.Glossaire })))
+const PublicReport = lazy(() => import('@/pages/PublicReport').then((m) => ({ default: m.PublicReport })))
 const Pricing = lazy(() => import('@/pages/Pricing').then((m) => ({ default: m.Pricing })))
 const About = lazy(() => import('@/pages/About').then((m) => ({ default: m.About })))
 const Contact = lazy(() => import('@/pages/Contact').then((m) => ({ default: m.Contact })))
@@ -56,6 +57,7 @@ function App() {
               <Route path="rgaa" element={<Rgaa />} />
               <Route path="guide-accessibilite" element={<GuideAccessibilite />} />
               <Route path="glossaire" element={<Glossaire />} />
+              <Route path="r/:token" element={<PublicReport />} />
               <Route path="tarifs" element={<Pricing />} />
               <Route path="a-propos" element={<About />} />
               <Route path="contact" element={<Contact />} />

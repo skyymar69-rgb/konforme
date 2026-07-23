@@ -67,10 +67,13 @@ const TABLES = [
       D('started_at'), D('finished_at'), I('duration_ms'), I('pages_count', 0), I('issues_count', 0),
       F('score'), F('rgaa_score'), F('wcag_score'), S('error', 2000),
       I('max_pages', 5), S('page_scores', 8000),
+      // Jeton de partage public du rapport (null = non partagé)
+      S('share_token', 64),
     ],
     indexes: [
       { key: 'idx_team', columns: ['team_id'] },
       { key: 'idx_site', columns: ['site_id'] },
+      { key: 'idx_share', columns: ['share_token'] },
     ],
   },
   {
@@ -82,6 +85,19 @@ const TABLES = [
       S('status', 16, false, 'open'), D('fixed_at'),
     ],
     indexes: [{ key: 'idx_scan', columns: ['scan_id'] }],
+  },
+  {
+    // Alertes (régression de score détectée par le moteur après un audit)
+    id: 'alerts',
+    columns: [
+      S('team_id', 64, true), S('site_id', 64, true), S('scan_id', 64),
+      S('type', 24, false, 'regression'), S('message', 512),
+      F('previous_score'), F('new_score'), B('read', false),
+    ],
+    indexes: [
+      { key: 'idx_team', columns: ['team_id'] },
+      { key: 'idx_site', columns: ['site_id'] },
+    ],
   },
   {
     // Évaluations manuelles des critères RGAA (audit complet « méthode officielle » :

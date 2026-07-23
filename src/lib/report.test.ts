@@ -18,6 +18,7 @@ const scan: Scan = {
   wcag_score: 76,
   page_scores: [{ url: 'https://exemple.fr', score: 78.5, issues: 2 }],
   error: null,
+  share_token: null,
   created_at: '2026-07-14T10:00:00Z',
   sites: { name: 'Mon Site', url: 'https://exemple.fr' },
 }

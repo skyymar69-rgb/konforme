@@ -10,6 +10,7 @@ import {
   teams,
 } from '@/lib/appwrite'
 import type {
+  Alert,
   CriterionReview,
   Declaration,
   Membership,
@@ -67,8 +68,24 @@ function rowToScan(r: Row): Scan {
     rgaa_score: (r.rgaa_score as number | null) ?? null,
     wcag_score: (r.wcag_score as number | null) ?? null,
     error: (r.error as string | null) ?? null,
+    share_token: (r.share_token as string | null) ?? null,
     created_at: r.$createdAt,
     sites: { name: (r.site_name as string) ?? '—', url: (r.site_url as string) ?? '' },
+  }
+}
+
+function rowToAlert(r: Row): Alert {
+  return {
+    id: r.$id,
+    organization_id: r.team_id as string,
+    site_id: r.site_id as string,
+    scan_id: (r.scan_id as string | null) ?? null,
+    type: (r.type as Alert['type']) ?? 'regression',
+    message: (r.message as string) ?? '',
+    previous_score: (r.previous_score as number | null) ?? null,
+    new_score: (r.new_score as number | null) ?? null,
+    read: (r.read as boolean) ?? false,
+    created_at: r.$createdAt,
   }
 }
 
@@ -422,6 +439,104 @@ export function useUpdateIssueStatus() {
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['scan-issues'] }),
   })
+}
+
+/* ------------------------------------------------------------------ */
+/* Alertes de régression                                               */
+/* ------------------------------------------------------------------ */
+
+export function useAlerts(orgId: string | undefined) {
+  return useQuery({
+    queryKey: ['alerts', orgId],
+    enabled: !!orgId,
+    queryFn: async (): Promise<Alert[]> => {
+      try {
+        const res = await tables.listRows({
+          databaseId: DB_ID,
+          tableId: TABLES.alerts,
+          queries: [Query.equal('team_id', orgId!), Query.orderDesc('$createdAt'), Query.limit(20)],
+        })
+        return res.rows.map(rowToAlert)
+      } catch {
+        // Table absente (base non migrée) : pas d'alertes
+        return []
+      }
+    },
+  })
+}
+
+export function useMarkAlertRead() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (alertId: string) => {
+      await tables.updateRow({
+        databaseId: DB_ID,
+        tableId: TABLES.alerts,
+        rowId: alertId,
+        data: { read: true },
+      })
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['alerts'] }),
+  })
+}
+
+/* ------------------------------------------------------------------ */
+/* Partage public du rapport                                           */
+/* ------------------------------------------------------------------ */
+
+/** Active (jeton aléatoire) ou révoque (null) le partage public d'un scan. */
+export function useSetScanShare() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: { scanId: string; enable: boolean }): Promise<string | null> => {
+      const token = input.enable
+        ? [...crypto.getRandomValues(new Uint8Array(24))]
+            .map((b) => 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'[b % 62])
+            .join('')
+        : null
+      await tables.updateRow({
+        databaseId: DB_ID,
+        tableId: TABLES.scans,
+        rowId: input.scanId,
+        data: { share_token: token },
+      })
+      return token
+    },
+    onSuccess: (_t, v) => {
+      qc.invalidateQueries({ queryKey: ['scan', v.scanId] })
+      qc.invalidateQueries({ queryKey: ['scans'] })
+    },
+  })
+}
+
+export type SharedReport = {
+  site: { name: string; url: string }
+  scan: {
+    created_at: string
+    finished_at: string | null
+    pages_count: number
+    issues_count: number
+    score: number | null
+    rgaa_score: number | null
+    wcag_score: number | null
+    page_scores: { url: string; score: number | null; issues: number }[] | null
+  }
+  issues: ScanIssue[]
+  reviews: Pick<CriterionReview, 'criterion_id' | 'status' | 'note' | 'reviewed_at'>[]
+}
+
+/** Récupère un rapport partagé (lecture publique, sans compte). */
+export async function fetchSharedReport(token: string): Promise<SharedReport> {
+  const exec = await functions.createExecution({
+    functionId: SCAN_FUNCTION_ID,
+    body: JSON.stringify({ report: { token } }),
+    async: false,
+  })
+  const payload = JSON.parse(exec.responseBody || '{}')
+  if (exec.responseStatusCode >= 400) {
+    throw new Error(payload.error || 'Rapport introuvable.')
+  }
+  return payload as SharedReport
 }
 
 /* ------------------------------------------------------------------ */

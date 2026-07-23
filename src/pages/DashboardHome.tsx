@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Seo } from '@/components/Seo'
 import { useAuth } from '@/contexts/AuthContext'
-import { countCriticalIssues, useMembership, useScans, useSites } from '@/lib/queries'
+import { countCriticalIssues, useAlerts, useMarkAlertRead, useMembership, useScans, useSites } from '@/lib/queries'
 import { scoreColor } from '@/lib/format'
 import type { ScorePoint } from '@/components/ScoreChart'
 
@@ -18,6 +18,9 @@ export function DashboardHome() {
   const orgId = membership?.organization_id
   const { data: sites } = useSites(orgId)
   const { data: scans } = useScans(orgId)
+  const { data: alerts } = useAlerts(orgId)
+  const markRead = useMarkAlertRead()
+  const unreadAlerts = useMemo(() => (alerts ?? []).filter((a) => !a.read), [alerts])
 
   const doneScans = useMemo(() => (scans ?? []).filter((s) => s.status === 'done'), [scans])
 
@@ -75,6 +78,34 @@ export function DashboardHome() {
           <Button variant="primary">+ Ajouter un site</Button>
         </Link>
       </header>
+
+      {unreadAlerts.length > 0 && (
+        <section aria-label="Alertes de régression" className="space-y-2">
+          {unreadAlerts.map((a) => (
+            <div
+              key={a.id}
+              role="alert"
+              className="flex flex-wrap items-center gap-3 rounded-[12px] border border-danger/40 bg-danger-bg/25 px-4 py-3"
+            >
+              <span aria-hidden="true" className="text-lg">⚠️</span>
+              <span className="min-w-0 flex-1 text-sm text-text-soft">{a.message}</span>
+              {a.scan_id && (
+                <Link to={`/dashboard/scans/${a.scan_id}`}>
+                  <Button size="sm" variant="outline">Voir le rapport</Button>
+                </Link>
+              )}
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={markRead.isPending}
+                onClick={() => markRead.mutate(a.id)}
+              >
+                Marquer comme lue
+              </Button>
+            </div>
+          ))}
+        </section>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard

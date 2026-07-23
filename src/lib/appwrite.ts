@@ -33,6 +33,7 @@ export const TABLES = {
   scans: 'scans',
   scan_issues: 'scan_issues',
   criteria_reviews: 'criteria_reviews',
+  alerts: 'alerts',
   declarations: 'declarations',
 } as const
 
