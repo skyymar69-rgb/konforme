@@ -8,9 +8,15 @@
     <meta name="author" content="KAYZEN SASU" />
     <meta name="theme-color" content="#2563eb" />
     <script>
-      // Applique le thème avant le premier rendu (évite le flash de thème).
-      // Choix mémorisé (clé héritée de la v1), sinon préférence système, sinon sombre.
+      // Exécuté avant le premier rendu, donc avant que quoi que ce soit ne soit peint.
       ;(function () {
+        // Marque « JavaScript disponible ». La feuille de style ci-dessous s'en sert
+        // pour masquer le repli sémantique : sans cette classe (robot sans JS,
+        // navigateur sans JS), le repli reste visible et indexable.
+        document.documentElement.classList.add('js')
+
+        // Applique le thème (évite le flash de thème).
+        // Choix mémorisé (clé héritée de la v1), sinon préférence système, sinon sombre.
         try {
           var t = localStorage.getItem('konforme_theme')
           if (t !== 'light' && t !== 'dark') {
@@ -22,6 +28,51 @@
         }
       })()
     </script>
+
+    <!--
+      Styles d'amorçage, en ligne et non dans le paquet CSS : ils doivent être
+      appliqués au tout premier rendu, sans dépendre d'une requête réseau.
+
+      Le repli sémantique du corps de page est du HTML nu, sans classe. Il se
+      peignait donc tel quel — titre et liens en style navigateur — pendant tout
+      le temps de chargement du paquet React. C'est ce que voyait un visiteur
+      arrivant sans cache.
+
+      Il reste servi dans le HTML et lisible par les robots qui n'exécutent pas
+      JavaScript ; il n'est masqué que là où l'application va réellement le
+      remplacer. Aucun texte n'est caché à un moteur qui ne verrait pas la suite.
+    -->
+    <style>
+      html.js #boot-fallback { display: none; }
+
+      /* Écran d'attente : rien pendant 400 ms — un chargement rapide ne montre
+         qu'un fond vide — puis un repère discret si le paquet tarde. React vide
+         #root à son montage, ce qui le retire sans code de nettoyage. */
+      #boot-splash { display: none; }
+      html.js #boot-splash {
+        display: flex;
+        position: fixed;
+        inset: 0;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+        opacity: 0;
+        animation: boot-splash-in 0.4s ease 0.4s forwards;
+      }
+      #boot-splash .boot-name {
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        color: var(--color-text, #f1f5fb);
+      }
+      #boot-splash .boot-hint {
+        font-size: 0.8125rem;
+        color: var(--color-text-dim, #8b98b8);
+      }
+      @keyframes boot-splash-in { to { opacity: 1; } }
+    </style>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
     <link rel="manifest" href="/manifest.json" />
@@ -37,9 +88,19 @@
   </head>
   <body>
     <div id="root">
+      <!-- Écran d'attente, pour les navigateurs qui exécutent JavaScript.
+           Le texte est réel et non décoratif : un lecteur d'écran doit pouvoir
+           annoncer que la page est en cours de chargement, sinon il ne reste
+           rien à annoncer entre le repli masqué et le montage de React. -->
+      <div id="boot-splash" role="status">
+        <span class="boot-name">Konforme</span>
+        <span class="boot-hint">Chargement de l'application…</span>
+      </div>
+
       <!-- Contenu sémantique de repli : visible par les robots, les audits
            du HTML brut et les navigateurs sans JavaScript. Remplacé par
            l'application React au montage. -->
+      <div id="boot-fallback">
       <a href="#main">Aller au contenu principal</a>
       <main id="main">
         <h1>Konforme — L'accessibilité web enfin automatisée</h1>
@@ -57,6 +118,7 @@
           <p>Cette application nécessite JavaScript pour fonctionner.</p>
         </noscript>
       </main>
+      </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
